@@ -1,0 +1,35 @@
+{
+    "version": "2.0.0",
+    "options": {
+        "cwd": "${workspaceRoot}/build"
+    },
+    "presentation": {
+        "reveal": "always",
+        "panel": "new"
+    },
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "cmake",
+            "command": "cmake",
+            "args": ["-DCMAKE_BUILD_TYPE=Debug","../CMakeLists.txt"]
+        },
+        {
+            "type": "shell",
+            "label": "build",
+            "dependsOn": "cmake",
+            "command": "cmake",
+            "args": ["--build", "../"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "type": "shell",
+            "label": "run",
+            "dependsOn": "build",
+            "command": "${workspaceRoot}/build/hello"
+        }
+    ]
+}
