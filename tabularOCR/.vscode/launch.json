@@ -1,0 +1,41 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build/hello",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}",
+            "environment": [],
+            "MIMode": "gdb",
+            "miDebuggerArgs":"--silent",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Reduce gdb verbosity",
+                    "text": "set print thread-events off",
+                    "ignoreFailures": true
+                  }
+                ],
+                "logging": { 
+                  "moduleLoad": false, 
+                  "engineLogging": false, 
+                  "trace": false,
+                  "exceptions": false,
+                  "programOutput": false,
+                  "traceResponse": false
+                },
+            "preLaunchTask": "build"
+        }
+    ]
+}
