@@ -240,15 +240,163 @@ sequential - https://www.rug.nl/research/portal/files/14632744/thesis.pdf
 
 \section{Basic Techniques}
 
-Nowadays, two approaches are proposed for OCR. The first one is an approach based on heuristics - 
+Nowadays, two approaches are proposed for OCR. The first one is an approach based on heuristics - page segmentation, line and element detection and only after that, character detection, which is based on different approximation and sometimes naive algorithms. The second one is an approach that is widely used and researched today - and that's the use of neural networks.
+
+In this paper, we will mostly be concentrating on the heuristics approach of the OCR problem. However, deep learning also deserves a mention, and we will also briefly discuss this method in this section.
+
+A lot of OCR engines nowadays differ in the way their heuristic approaches work. They all agree on one thing, though, and that's the succession of steps that need to be implemented. Firstly, a page segmentation has to be performed. This segments(divides?) the pages for determining the elements of the image. Now, the recognition algorithm could simply take place. However, most of the existing OCR engines (like Tesseract or ....) "pre-process" the output of page segmentation. They use steps like \emph{representation} and \emph{feature extraction}, which are based on simplifying the extracted elements of image documents. This contributes to better results of the OCR, and, last but not least, helps to improve the speed of the algorithm.
+
+Only after this, the character recognition algorithm is applied.
+
+We will go over these steps in the following individual subsections.
+
+\subsection{Page Segmentation}
+
+In many cases, OCR system heavily depends on the accuracy of page segmentation process [ref1]. There are three main approaches[ref2] to this problem - either we start with an image as a whole and recursively divide it into parts until criterion is met, or we start with individual pixels and group them according to similarity of their attributes, or we use a combination of these two methods.
+
+In this section, we are going to introduce a few concrete algorithms that are based on these methods and improve them with their own heuristics:
+
+\begin{itemize}
+\item\texttt{X-Y cut } algorithm, also referred to as \emph{RXYC algorithm}. It's a tree-based algorithm, where the node of the tree presents the whole image page and leafs of the tree the individual segments. Algorithm starts by splitting the root of the tree into rectangular parts. Every step of the recursive algorithm includes projection profile and threshold computations, depending on which the node will either be (decided?) to be the end segment, or a split into two other rectangular parts will be executed. The algorithm finishes once there are no more nodes to split.
+
+Although this algorithm is easy to implement and pretty fact, according to the benchmarking test of [4], it should not be used on other images than clean, properly skewed, with no noise whatsoever. In the presence of any imperfections, it usually takes the whole image as a segment.
+
+\item\texttt{Smearing } algorithm, also referred to as run-length smearing algorithm (RLSA). It works with binarized image (which should not be a problem if preprocessing of image is present), trying to link together black areas that are no more that C pixels away from each other. This algorithm is applied both row-wise and column-wise, and the resulting bitmaps and then combined.
+
+The downside to(of?) this algorithm is that it classifies text-lines merged with noise blocks as non-text. Although its results turn out better than those of RXYC algorithm, it's still not usable for classical text-documents. However, it's widely popular among vehicle. plate recognition.
+
+\item\texttt{Voronoi-diagram based algorithm} is an algorithm based on connected components. It creates a Voronoi diagram from sample points extracted from the edges of individual connected components. It then "cleans up" the created diagram - deletes the edges that pass through a connected component, or the edges with its associating connected components that have a small distance or a too large area ratio.
+
+This method provides better results for image documents with noise. However, it does not work well on images with different fonts or styles, as the spacing is estimated from the document image. This results in over-segmentation errors, and it's advised to use this method on a homogenrous collection of documents.
+
+\item\texttt{Whitespace Analysis: } This algorithm is based on the assumption of white background (which, ones again, should not be a problem). It firstly tries to cover the the background with the union of white rectangles. These covers are then sorted in respect to a sort key based on a weighting function, which has the purpose of assigning higher weight to taller and longer blocks. Then, covers are added to form background cover until the sort key is less than the threshold.
+
+Most of the time, whitespace analysis provides satisfactory results. However, it is very sensitive to the stopping threshold, therefore results in over-segmentation or under-segmentation.
+
+\item\texttt{Constrained text-line detection} approach is similar to whitespace analysis, however, it starts with finding the whitespace rectangles that cover the page background in order of decreasing area. From these rectangles, columns separators are chosen based on their properties - aspect ratio, width, and proximity to text-sized connected components.
+
+The upside of this approach is that it's nearly parameter free - therefore, it's a good option for documents with different font sizes or layouts.
+
+\item\texttt{Docstrum} algorithm is also based on extracting connected components. It then performs a near-neighbor clustering. We already mentioned a similar approach in [deskew] section, and this algorithm also depends on the skew of the image. Firstly, connected components are divided into two groups - one with characters of the dominant font size, the other with characters from titles or section headings. For each connected component, its nearest neighbours are found. The algorithm then determines a histogram of distances and angles between nearest neighbors. Peak of the angle represents the dominant skew, which is used for determination of a within-line nearest neighbor pairs. These pairs are then merges into text-lines, which are merged into blocks.
+
+The downside to this approach is similar to the one in Voronoi diagram, and that's spacing variation. Due to different font sizes and styles, this can lead to over-segmentation. Therefore, it's advised to use this algorithm on a homogeneous collection of documents.
+
+\end{itemize}
+
+Other page segmentation algorithms approach this problem with a few other steps. For example, Tesseract OCR engine first finds different lines of the image, and then fits text to them. In section (...), we will later discuss and take apart this method (or here?).
 
 
-- HMM aprroach (hidden markov)
+In the Voronoi and docstrum algorithms, the inter-character and inter-line spacings are
+estimated from the document image. Hence spacing variations due to different font sizes and
+styles within one page result in over-segmentation errors in both algorithms. For instance,
+in many cases, they fail to estimate the inter-line distance correctly, and hence split the
+zones into individual text-lines, resulting in a large number of over-segmentation errors.
+The number of segmented zones for these two algorithms is much higher than the number
+of zones in the ground truth. In some cases, text-lines in page title are incorrectly segmented
+(see Figure 7) due to large variation in font size.
 
-- neural networks
+ref1: http://www.music.mcgill.ca/~ich/classes/mumt611_07/Evaluation/MaoKanungo2001.pdf
+ref2: http://ijcsit.com/docs/Volume%204/vol4Issue3/ijcsit2013040307.pdf
+ref4: https://www.researchgate.net/profile/Thomas_Breuel/publication/5431819_Performance_Evaluation_and_Benchmarking_of_Six-Page_Segmentation_Algorithms/links/551dd6dd0cf213ef063eb1ee.pdf
+xy cuts: G. Nagy, S. Seth, and M. Viswanathan, “A prototype document
+image analysis system for technical journals,” Computer, vol. 7,
+no. 25, pp. 10–22, 1992.
+smearing: K. Y. Wong, R. G. Casey, and F. M. Wahl, “Document analysis
+system,” IBM Journal of Research and Development, vol. 26,
+no. 6, pp. 647–656, 1982.
+Whitespace: H. S. Baird, “Background structure in document images,” in
+Document Image Analysis, H. Bunke, P. Wang, and H. S. Baird,
+Eds., World Scientific, Singapore, 1994, pp. 17–34.
+Docstrum: L. O’Gorman, “The document spectrum for page layout analysis,”
+IEEE Trans. on Pattern Analysis and Machine Intelligence, vol. 15,
+no. 11, pp. 1162–1173, Nov. 1993.
+Voronoi-diagram: K. Kise, A. Sato, and M. Iwata, “Segmentation of page images
+using the area Voronoi diagram,” Computer Vision and Image
+Understanding, vol. 70, no. 3, pp. 370–382, June 1998.
+Constrained text-line finding:T. M. Breuel, “Two geometric algorithms for layout analysis,” in
+Document Analysis Systems, Princeton, NY, Aug. 2002, pp.
+188–199.
+Whitespace Cuts by Shafait et al
+tesseractRef: https://static.googleusercontent.com/media/research.google.com/en//pubs/archive/33418.pdf
+
+\subsection{Representation and Feature Extraction}
+
+Upon extracting elements by page segmentation, we are left with an unnecessary amount of information about each element. We could feed all these information into a recognizer. This would, however, decrease accuracy of the recognizer and significantly increase its time complexity. For these reasons, a set of features is extracted for each element (class?) that distinguishes it from other classes while keeping characteristic differences.
+
+There are various approaches to representation and further feature extraction. As described in [super kniha], these representations can be either:
+\begin{itemize}
+
+\item\texttt{Global transformation and series expansion:} These methods are based on the representation of continuous signals by a linear combination of simpler functions. The coefficients of the linear combination provide a compact encoding known as transformation or series expansion. Deformations like translation and rotations are invariant under global transformation and series expansion. (nakopirovane, pochopit, preformulovat)
+This approach includes methods like \emph{Fourier} or \emph{Gabor} transform, \emph{Fourier Descriptor},\emph{Wavelets}, \emph{Moments} and \emph{Karhunen-Loeve expansion}.
+
+\item\texttt{Statistical representation} of an image uses a statistical distribution of points to take care of font and style variations to some extend. It involves methods like \emph{zoning}, \emph{crossings and distances} and \emph{projections}.
+
+\item\texttt{Geometrical and topological representation }, where the various properties of characters are represented by geometrical and topological features. These features are based on the basic line types that form the character skeleton. An output of feature extraction process is a feature vector. This representation and feature extraction technique includes \emph{extracting and counting topological structures}, \emph{measuring and approximating the geometrical properties}, \emph{coding} and \emph{graphs and trees}.
+
+
+\end{itemize}
+
+(napisat k nim viac?)
+
+To sum up, the goal of any representation and feature extraction technique is to create a "skeleton" for each character by selecting the most representative information from the raw data which maximizes the recognition rate with the least amount of elements. However, these are still a number of differences between the features. The most noticeable difference is reconstructability - for some methods, the image can be reconstructed to its previous version solely because of features. Others, like statistical representation, lose information about the original image and would need complicated approximation algorithms for (backwards ...?). Another difference is the transformations to which features are invariant.
+
+More about different representation and feature extraction can be found [refs] or [].
+
+super kniha ref: 
+https://www.researchgate.net/profile/Arindam_Chaudhuri2/publication/321518201_Optical_Character_Recognition_Systems_for_Different_Languages_with_Soft_Computing/links/5a5122e20f7e9bbc10543023/Optical-Character-Recognition-Systems-for-Different-Languages-with-Soft-Computing.pdf
+druha ref: http://www.ee.bgu.ac.il/~dinstein/stip2002/FeatureExtractionReviewTrierJainTaxt95.pdf
+
+\subsection{Character Classification}
+
+OCR engines widely use the methodologies of pattern recognition, which assigns an unknown sample into one of its predefined classes. There exist various approaches dealing with these methods, which are not necessarily independent of each other. Most often than not, OCR engines combine multiple methods to achieve the most accurate results.
+
+The first and most simple way to approach classification is by \texttt{Template Matching}. It's based on the existence of predefined \emph{templates} - multiple bitmaps containing characters of the alphabet. Improved version of this method have an extended database of templates, including numbers and special characters. Once a character is detected, it's passed to the algorithm and for every existing template, it's similarity ratio is calculated. The template with the greatest ratio is then assumed to be the recognized character. This method has various implementation depending on how the ratio is calculated - for example, cross correlation, normalized correlation or euclidean formula can be used.
+
+Although the implementation of this method is very simple, even small disfigurements and noise can greatly affect its efficiency. Also, in this case, a feature extraction would be unnecessary, as all templates are created manually.
+
+To make us of the previous steps, \texttt{statistical techniques} come in handy. They are based on statistical modeling of the data. To determine the output, extraction of the features from input image (such as size, shape, intensity) is first performed. Then, with the help of statistical decision functions, these features are compared to the statistical model.
+
+The problem with these algorithms is that they have no information about whole-part relations. For this reason, a newer approach has been tested out over the past few years - \emph{machine learning}.
+
+\texttt{Machine Learning} is a method of data analysis based on artificial intelligence. Over time, it builds models of "training data". Based on them, it makes decisions and predictions on its input. 
+
+In the case of character classification, training data is created by passing various different characters into the engine and also providing it with the correct output. In this way, the engine learns how different characters should look and applies this knowledge to its input.
+
+This method is for example used in a one of the simplest machine learning algorithms, and that's the \texttt{KNN Classification Algorithm}, or K-Nearest Neighbor algorithm. The input image is compared to the training data and chooses its K nearest (objects) (objects that are most similar). After that, the image is classified with being assigned to the class most common among its K nearest neighbors.
+
+More complex methods include the \texttt{Support Vector Machine algorithm} (SVM). This approach divides the data received into two classes - training and testing data. The goal of SVM technique is to deliver a model that predicts the output of the test set.
+
+The learning is done by a \emph{SVM kernel}. The task of the kernel is to take the input data and transform it into the desired form using a combination of mathematical functions. Other than kernel functions, there are other parameters that tune the output of the SVM algorithm. \emph{Margin} parameter tells the engine the separation of line to the closest class points. \emph{Gamma} parameter decides how far the influence of a single training example reaches and \emph{regularization} parameter controls the misclassification of elements.
+
+Many experiments have been executed in the field of machine learning for character classification. However, none of them can guarantee the accuracy of different approaches, as they all greatly depend on the training data. The more training data the machine can get, the more accurate it is. 
+
+?? (end somehow, maybe talk about deep learning more and delete its subsection)
+
+template: https://pdfs.semanticscholar.org/b5ac/80e654108b898a9fcc827eadf1580d500bcc.pdf
+ref1: https://arxiv.org/ftp/arxiv/papers/1101/1101.2491.pdf
+ref2: http://www.ijera.com/papers/Vol%201%20issue%204/BQ01417361739.pdf
+ref3: http://ijarcet.org/wp-content/uploads/IJARCET-VOL-1-ISSUE-4-131-133.pdf
+
+\subsection{Deep Learning}
 
 \section{Available Implementations}
-// mention programs for preprocessing
-// tesseract, opencv etc
+
+Over the past few years, OCR has become a part of our everyday lives. The demand for a reliable OCR engines has therefore risen, which lead to many new implementations or improvements of the already existing ones.
+
+Most people take the expression "optical character recognition" to mean solely text recognition. This term, however, has a wider meaning - it also includes the recognition of other document elements, like images, forms, tables and many more.
+
+There exist few OCR engines that provide all the features an OCR software should have - such as different types of preprocessing, support for all file extensions, recognition of different fonts, including handwritten documents - this is not needed in most cases. For example, customers using OCR for ticket validation don't need to process handwriting or different fonts, and customers trying to achieve automatic number plate recognition don't need to process tables or forms or any other elements.
+
+For this purpose, a lot of OCR engines focusing entirely on one or more cases were implemented, as it's less complicated, time consuming and does the job. However, all of these existing OCR engines, however difficult, have one thing in common - they all have to recognize text elements to some extent.
+
+It this chapter, we will go over the most popular and widely used OCR engines that focus (among other things) on word and character recognition.
+
+\subsection{Tesseract}
+
+Originally developed by Hewlett-Packard CO around 1990 [ref], Tesseract is one of the most robust and accurate open-source engines.
+
+
+\subsection{OpenCV}
+
 
 // mention somewhere that .tif images are the best
