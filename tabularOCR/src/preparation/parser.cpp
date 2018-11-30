@@ -25,7 +25,20 @@ namespace preparation
 
     ocr::Process_info parse_args(int argc, char* argv[])
     {
-        
+        ocr::Process_info result;
+        size_t i = 1;
+        while ( i < argc && argv[i].at[0]=="-")
+        {
+            //parse processing args
+            i++;
+        }
+        if (i == argc)
+        {
+            std::cout << "No input files inserted";
+            return result;
+        }
+
+
     }
 
 

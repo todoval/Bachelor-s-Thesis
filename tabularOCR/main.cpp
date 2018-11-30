@@ -8,7 +8,6 @@
 #include <basedir.h>
 
 #include "src/preparation/parser.h"
-#include "src/ocr_process/process.h"
 
 using namespace Magick;
 
@@ -32,6 +31,9 @@ int main(int argc, char* argv[]) {
 
 	ocr::Process_info process_info;
 	process_info = preparation::parse_args(argc, argv);
+	if (process_info == NULL)
+		return;
+	
 
 	Image img;
 	img.read("test_images/img/1.jpg");
