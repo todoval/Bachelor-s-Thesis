@@ -7,7 +7,13 @@
 #include <renderer.h>
 #include <basedir.h>
 
+#include "src/preparation/parser.h"
+#include "src/ocr_process/process.h"
+
+using namespace Magick;
+
 using namespace std;
+
 
 void set_border(PIX* img, BOX *box, int r, int g, int b) {
 	for (int i = 0; i < box->w; i++) {
@@ -20,13 +26,22 @@ void set_border(PIX* img, BOX *box, int r, int g, int b) {
 	}
 }
 
-int main(void) {
+
+int main(int argc, char* argv[]) {
+
+
+	ocr::Process_info process_info;
+	process_info = preparation::parse_args(argc, argv);
+
+	Image img;
+	img.read("test_images/img/1.jpg");
+
 
 	
+/*
+	//tesseract.setDatapath(System.getenv("TESSDATA_PREFIX"));
 	tesseract::TessBaseAPI *api = new tesseract::TessBaseAPI();
 	char *outText;
-	//tesseract.setDatapath(System.getenv("TESSDATA_PREFIX"));
-
 	// Initialize tesseract-ocr with English, without specifying tessdata path
 	if (api->Init(NULL, "eng", tesseract::OcrEngineMode::OEM_DEFAULT)) {
 		fprintf(stderr, "Could not initialize tesseract.\n");
@@ -85,7 +100,7 @@ int main(void) {
 	// Destroy used object and release memory
 	api->End();
 	delete[] outText;
-	pixDestroy(&image);
+	pixDestroy(&image);*/
 
     return(0);
 }

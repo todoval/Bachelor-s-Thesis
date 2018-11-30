@@ -1,3 +1,0 @@
-/home/lucia/tabularOCR/CMakeFiles/rebuild_cache.dir
-/home/lucia/tabularOCR/CMakeFiles/hello.dir
-/home/lucia/tabularOCR/CMakeFiles/edit_cache.dir

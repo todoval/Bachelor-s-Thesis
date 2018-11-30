@@ -12,14 +12,14 @@
             "type": "shell",
             "label": "cmake",
             "command": "cmake",
-            "args": ["-DCMAKE_BUILD_TYPE=Debug","../CMakeLists.txt"]
+            "args": ["-DCMAKE_BUILD_TYPE=Debug",".."]
         },
         {
             "type": "shell",
             "label": "build",
             "dependsOn": "cmake",
             "command": "cmake",
-            "args": ["--build", "../"],
+            "args": ["--build", "."],
             "group": {
                 "kind": "build",
                 "isDefault": true

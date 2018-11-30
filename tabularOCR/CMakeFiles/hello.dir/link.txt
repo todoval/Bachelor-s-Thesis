@@ -1,1 +1,0 @@
-/usr/bin/c++  -g  -rdynamic CMakeFiles/hello.dir/main.cpp.o  -o build/hello -llept -ltesseract 
