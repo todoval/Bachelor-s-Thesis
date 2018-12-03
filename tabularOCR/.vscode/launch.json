@@ -8,7 +8,7 @@
             "name": "Debug",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/build/hello",
+            "program": "${workspaceRoot}/build/bin/Debug/tabularOCR.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}",

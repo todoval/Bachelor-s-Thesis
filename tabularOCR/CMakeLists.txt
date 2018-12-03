@@ -1,36 +1,36 @@
-# Specify the minimum version for CMake
+cmake_minimum_required(VERSION 3.8)
 
-cmake_minimum_required(VERSION 2.8)
+project(tabularOCR)
 
-# Project's name
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMake Targets")
 
+set(output_dir ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${output_dir})
 
-project(hello)
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/build)
-set(LEPTONICA_PATH "/usr/include/leptonica")
-set(TESSERACT_LOCAL_PATH "/usr/local/include/tesseract")
-set(TESSERACT_PATH "/usr/include/tesseract")
-set(PREPROCESSING_PATH ${PROJECT_SOURCE_DIR}/src/preprocessing)
-set(PROCESS_PATH ${PROJECT_SOURCE_DIR}/src/ocr_process)
-set(PREPARATION_PATH ${PROJECT_SOURCE_DIR}/src/ocr_process)
+if (MSVC)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+else()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+endif()
 
-include_directories(${LEPTONICA_PATH})
-include_directories(${TESSERACT_LOCAL_PATH})
-include_directories(${TESSERACT_PATH})
-include_directories(${PREPROCESSING_PATH})
-include_directories(${PROCESS_PATH})
-include_directories(${PREPARATION_PATH})
-
+find_package(ImageMagick REQUIRED COMPONENTS Magick++)
 add_definitions( -DMAGICKCORE_QUANTUM_DEPTH=16 )
 add_definitions( -DMAGICKCORE_HDRI_ENABLE=0 )
-find_package(ImageMagick COMPONENTS Magick++)
-
 include_directories(${ImageMagick_INCLUDE_DIRS})
-message(${ImageMagick_INCLUDE_DIRS})
 
-add_executable(hello ${PROJECT_SOURCE_DIR}/main.cpp ${PROJECT_SOURCE_DIR}/src/preparation/parser.cpp ${PROJECT_SOURCE_DIR}/src/ocr_process/process.cpp)
+set(SOURCES
+    ${PROJECT_SOURCE_DIR}/main.cpp 
+    ${PROJECT_SOURCE_DIR}/src/preparation/parser.cpp 
+    ${PROJECT_SOURCE_DIR}/src/ocr_process/process.cpp)
 
-target_link_libraries(hello "/usr/lib/x86_64-linux-gnu/liblept.so")
-target_link_libraries(hello "/usr/lib/x86_64-linux-gnu/libtesseract.so")
-target_link_libraries(hello ${ImageMagick_LIBRARIES})
+add_subdirectory(.cppan)
 
+add_executable(tabularOCR ${SOURCES})
+
+target_link_libraries(tabularOCR
+    pvt.cppan.demo.google.tesseract.libtesseract
+    pvt.cppan.demo.danbloomberg.leptonica
+    ${ImageMagick_LIBRARIES}
+)

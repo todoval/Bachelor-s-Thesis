@@ -29,7 +29,7 @@
             "type": "shell",
             "label": "run",
             "dependsOn": "build",
-            "command": "${workspaceRoot}/build/hello"
+            "command": "${workspaceRoot}/build/bin/Debug/tabularOCR.exe"
         }
     ]
 }
