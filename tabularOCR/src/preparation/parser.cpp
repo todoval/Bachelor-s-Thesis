@@ -27,7 +27,7 @@ namespace preparation
     {
         ocr::Process_info result;
         size_t i = 1;
-        while ( i < argc && argv[i].at[0]=="-")
+        while ( i < argc && argv[i][0]=='-')
         {
             //parse processing args
             i++;

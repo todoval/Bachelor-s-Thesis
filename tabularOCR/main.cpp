@@ -31,8 +31,6 @@ int main(int argc, char* argv[]) {
 
 	ocr::Process_info process_info;
 	process_info = preparation::parse_args(argc, argv);
-	if (process_info == NULL)
-		return;
 	
 
 	Image img;
