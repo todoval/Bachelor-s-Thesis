@@ -1,1 +1,27 @@
 \chapter{Layout Recognition For Tabular Data}
+
+To extract elements of a table from an image document, the table first needs to be detected. This is no easy task.  Although for many people, a table is simply a collection of vertical and horizontal lines which can be detected quite easily, this is usually not the case.  Often, either the borders are partially or completely missing, the table contains cells of different sizes, multiple columns or rows are merged together on only some places… These and many other factors often cause the table to be of a different form than the well-known matrix. 
+
+Furthermore, complications arise when the image document does not correspond to the typical one-column, graphics-free layout. This often causes complications of reading order and therefore confusing results of text recognition, errors with table detection as spaces between columns can be interpreted as table column borders, and, if tables, forms or other graphic elements are misinterpreted as simple text lines, a text page without any contextual sense. Therefore, in most cases, a \emph{layout analysis} first needs to performed.
+
+\section{Layout Analysis}
+
+\textbf{Layout analysis} is the process of identifying and categorizing image document elements, such as illustrations, tables, forms, math symbols, headers, footers or simple paragraph text and semantically labeling them according to their logical roles.
+This is closely connected to already mentioned page segmentation, representation and feature extraction from our previous [] chapter. However, here we also need to determine the logical relations between various elements.
+
+This is sometimes hard even for a human eye. With various differently aligned columns with different font sizes, or with image captions appearing on different sides of the image in every document, people often determine which elements belong together only according to their intuition (e.g. when reading about a recent earthquake, caption saying “Rescued puppy” probably belongs to the picture of a dog instead of a flooded beach, although in can be placed right in the middle of these two images). Computer has no notion of such things. This is often a cause of many errors and a reason why a lot of OCR engines claim to work on only documents with specified layouts, e.g. single-column, non-graphical…
+
+In this thesis, we focus only on table recognition. This means that most of layout analysis is useless to us and can only cause problems. However, we can not simply ignore this step. 
+
+\section{Table Detection}
+
+
+\section{Table Recognition}
+
+- available implementations? 
+
+
+
+
+
+

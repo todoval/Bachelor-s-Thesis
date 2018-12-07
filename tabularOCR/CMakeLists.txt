@@ -15,11 +15,6 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 endif()
 
-find_package(ImageMagick REQUIRED COMPONENTS Magick++)
-add_definitions( -DMAGICKCORE_QUANTUM_DEPTH=16 )
-add_definitions( -DMAGICKCORE_HDRI_ENABLE=0 )
-include_directories(${ImageMagick_INCLUDE_DIRS})
-
 set(SOURCES
     ${PROJECT_SOURCE_DIR}/main.cpp 
     ${PROJECT_SOURCE_DIR}/src/preparation/parser.cpp 
@@ -32,5 +27,6 @@ add_executable(tabularOCR ${SOURCES})
 target_link_libraries(tabularOCR
     pvt.cppan.demo.google.tesseract.libtesseract
     pvt.cppan.demo.danbloomberg.leptonica
-    ${ImageMagick_LIBRARIES}
+    pvt.cppan.demo.intel.opencv.ml
+    pvt.cppan.demo.intel.opencv.imgproc
 )

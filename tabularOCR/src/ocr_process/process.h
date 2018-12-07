@@ -1,3 +1,5 @@
+#include <vector>
+
 
 namespace ocr
 {
@@ -10,7 +12,7 @@ public:
 	
 	// preprocessing argument vector
 
-	// converted .tiff file vector
+	//std::vector<pre_arg> preproc_args;
 
 	// processing argument vector
 

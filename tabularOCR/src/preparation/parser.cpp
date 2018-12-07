@@ -1,27 +1,18 @@
 #include <string>
 #include <iostream>
+#include <fstream>
 #include "parser.h"
-#include <vector>
 
-using namespace Magick;
 
 namespace preparation
 {
 
-    void convert_to_tiff(std::vector<Image> & input_vector)
-    {
-        try
-        {
-            for (size_t i = 0; i < input_vector.size(); i++)
-            {
-                input_vector[i].write("out.tiff");
-            }
-        }
-        catch (Magick::WarningCoder &e)
-        {
-            std::cout << "Warning " << e.what() << std::endl;
-        }
-    }
+	std::string get_filename(std::string & input_path)
+	{
+		int start = input_path.find_last_of("/\\");
+		int end = input_path.find_last_of(".");
+		return input_path.substr(start + 1, end-start-1);
+	}
 
     ocr::Process_info parse_args(int argc, char* argv[])
     {
@@ -37,9 +28,18 @@ namespace preparation
             std::cout << "No input files inserted";
             return result;
         }
-
-
+		while (i < argc) // process all files
+		{
+			std::ifstream input(argv[i]);
+			if (!input.good()) // check whether file exists
+			{
+				std::cout << "File " + std::string(argv[i]) + " does not exist" << std::endl;
+				i++;
+				continue;
+			}
+			i++;
+		}
+		return result;
     }
-
 
 }
