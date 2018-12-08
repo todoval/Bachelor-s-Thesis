@@ -1,11 +1,10 @@
 #include <iostream>
 #include <memory>
 
-#include <allheaders.h>
+#include <leptonica/allheaders.h>
 
-#include <baseapi.h>
-#include <renderer.h>
-#include <basedir.h>
+#include <tesseract/baseapi.h>
+#include <tesseract/renderer.h>
 
 #include "src/preparation/parser.h"
 
