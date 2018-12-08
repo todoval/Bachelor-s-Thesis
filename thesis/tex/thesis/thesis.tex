@@ -31,8 +31,14 @@
 %% Character encoding: usually latin2, cp1250 or utf8:
 \usepackage[utf8]{inputenc}
 
-%% Prefer Latin Modern fonts
-\usepackage{lmodern}
+% Let's use a decent modern font
+\usepackage[T1]{fontenc}
+\usepackage[mono=false]{libertine}
+%other choices -- URW schoolbook: 
+%\usepackage{fouriernc}
+% or URW palladio
+%\usepackage[sc]{mathpazo}
+%\linespread{1.05}
 
 %% Further useful packages (included in most LaTeX distributions)
 \usepackage{amsmath}        % extensions for typesetting of math
@@ -49,7 +55,7 @@
 \usepackage{dcolumn}        % improved alignment of table columns
 \usepackage{booktabs}       % improved horizontal lines in tables
 \usepackage{paralist}       % improved enumerate and itemize
-\usepackage[usenames]{xcolor}  % typesetting in color
+%\usepackage[usenames]{xcolor}  % typesetting in color
 
 %%% Basic information on the thesis
 
