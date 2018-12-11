@@ -17,8 +17,9 @@ endif()
 
 set(SOURCES
     ${PROJECT_SOURCE_DIR}/main.cpp 
-    ${PROJECT_SOURCE_DIR}/src/preparation/parser.cpp 
-    ${PROJECT_SOURCE_DIR}/src/ocr_process/process.cpp)
+    ${PROJECT_SOURCE_DIR}/src/preprocessing/parser.cpp 
+    ${PROJECT_SOURCE_DIR}/src/ocr_process/process.cpp
+	${PROJECT_SOURCE_DIR}/src/preprocessing/preprocess.cpp)
 
 add_subdirectory(.cppan)
 
@@ -29,4 +30,7 @@ target_link_libraries(tabularOCR
     pvt.cppan.demo.danbloomberg.leptonica
     pvt.cppan.demo.intel.opencv.ml
     pvt.cppan.demo.intel.opencv.imgproc
+    pvt.cppan.demo.intel.opencv.highgui
+    pvt.cppan.demo.intel.opencv.imgcodecs
+    pvt.cppan.demo.intel.opencv.core
 )

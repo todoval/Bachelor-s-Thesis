@@ -1,5 +1,10 @@
 dependencies:
     pvt.cppan.demo.google.tesseract.libtesseract: master
     pvt.cppan.demo.danbloomberg.leptonica: 1.76.0
+    pvt.cppan.demo.intel.opencv.highgui: 3.4.2
     pvt.cppan.demo.intel.opencv.ml: 3.4.2
     pvt.cppan.demo.intel.opencv.imgproc: 3.4.2
+    pvt.cppan.demo.intel.opencv.imgcodecs: 3.4.2
+    pvt.cppan.demo.intel.opencv.core: 3.4.2
+
+
