@@ -27,69 +27,104 @@ namespace preprocessing
 		return false;
 	}
 
+	bool process_binar_arg(std::string & arg, config & cfg)
+	{
+		std::transform(arg.begin(), arg.end(), arg.begin(), ::toupper);
+		if (arg == "GLOBAL")
+			cfg.bin_method = binarization_method::GLOBAL;
+		else if (arg == "OTSU")
+			cfg.bin_method = binarization_method::OTSU;
+		else if (arg == "ADAPTIVEG")
+			cfg.bin_method = binarization_method::ADAP_GAUS;
+		else if (arg == "ADAPTIVEM")
+			cfg.bin_method = binarization_method::ADAP_MEAN;
+		else if (arg == "BERNSEN")
+			cfg.bin_method = binarization_method::BERNSEN;
+		else if (arg == "NIBLACK")
+			cfg.bin_method = binarization_method::NIBLACK;
+		else if (arg == "SAUVOLA")
+			cfg.bin_method = binarization_method::SAUVOLA;
+		else
+			return false;
+		return true;
+	}
+
 	bool process_greyscale_arg(std::string & arg, config & cfg)
 	{
 		std::transform(arg.begin(), arg.end(), arg.begin(), ::toupper);
-		if (arg == "SIMPLE")
-		{
-			cfg.gs_method = greyscale_method::SIMPLE;
-			return true;
-		}
+		if (arg == "AVG")
+			cfg.gs_method = greyscale_method::AVG;
 		else if (arg == "LUMA")
-		{
 			cfg.gs_method = greyscale_method::LUMA;
-			return true;
-		}
 		else if (arg == "RED")
-		{
 			cfg.gs_method = greyscale_method::SINGLE_R;
-			return true;
-		}
 		else if (arg == "GREEN")
-		{
 			cfg.gs_method = greyscale_method::SINGLE_G;
-			return true;
-		}
 		else if (arg == "BLUE")
-		{
 			cfg.gs_method = greyscale_method::SINGLE_B;
-			return true;
-		}
 		else if (arg == "DESATURATE")
-		{
 			cfg.gs_method = greyscale_method::DESATURATE;
-			return true;
-		}
 		else
 			return false;
+		return true;
 	}
 
-    config parse_argss(int argc, char* argv[])
+	bool process_denoise_arg(std::string & arg, config & cfg)
+	{
+		std::transform(arg.begin(), arg.end(), arg.begin(), ::toupper);
+		if (arg == "GAUSSIAN")
+			cfg.noise_methods.push_back(denoise_method::GAUSSIAN);
+		else if (arg == "MEAN")
+			cfg.noise_methods.push_back(denoise_method::MEAN);
+		else if (arg == "MEDIAN")
+			cfg.noise_methods.push_back(denoise_method::MEDIAN);
+		else if (arg == "NONLOCAL")
+			cfg.noise_methods.push_back(denoise_method::NON_LOCAL);
+		else if (arg == "WIENER")
+			cfg.noise_methods.push_back(denoise_method::WIENER);
+		else
+			return false;
+		return true;
+	}
+
+    config parse_args(int argc, char* argv[])
     {
         config result;
         size_t i = 1;
         while ( i < argc && argv[i][0]=='-')
         {
             //parse processing args
-			if (argv[i] == "--scale" || argv[i] == "-sc")
+			std::string arg = argv[i];
+			if (arg == "--scale" || arg == "-sc")
 			{
-				while (i < argc && argv[i][0] != '-' && process_scale_arg(argv[i], result))
+				while (i < argc && arg[0] != '-' && process_scale_arg(arg, result))
 					i++;
 			}
-			else if (argv[i] == "--denoise" || argv[i] == "-n")
+			else if (arg == "--denoise" || arg == "-n")
 			{
 
 			}
-			else if (argv[i] == "--greyscale" || argv[i] == "-g")
+			else if (arg == "--greyscale" || arg == "-g")
 			{
-				while (i < argc && argv[i][0] != '-' && process_greyscale_arg(std::string(argv[i]), result))
+				i++;
+				arg = argv[i];
+				while (i < argc && arg[0] != '-' && process_greyscale_arg(std::string(arg), result))
+				{
 					i++;
+					arg = argv[i];
+				}
 			}
-			else if (argv[i] == "--binarize" || argv[i] == "-b")
+			else if (arg == "--binarize" || arg == "-b")
 			{
-
+				i++;
+				arg = argv[i];
+				while (i < argc && arg[0] != '-' && process_binar_arg(std::string(arg), result))
+				{
+					i++;
+					arg = argv[i];
+				}
 			}
-			else if (argv[i] == "--deskew" || argv[i] == "-sk")
+			else if (arg == "--deskew" || arg == "-sk")
 			{
 
 			}
@@ -127,6 +162,7 @@ namespace preprocessing
 		sc_dpi = 300;
 
 		gs_method = greyscale_method::LUMA;
+
 	}
 
 }

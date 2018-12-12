@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <vector>
 #include "opencv2/imgproc/imgproc.hpp"
+#include <opencv2/ximgproc.hpp>
 
 #include <opencv2/highgui/highgui.hpp>
 
@@ -24,7 +25,11 @@ namespace preprocessing
 
 	enum scale_method {};
 
-	enum greyscale_method { SIMPLE, LUMA, SINGLE_R, SINGLE_G, SINGLE_B, DESATURATE };
+	enum greyscale_method { AVG, LUMA, SINGLE_R, SINGLE_G, SINGLE_B, DESATURATE };
+
+	enum binarization_method { GLOBAL, OTSU, ADAP_MEAN, ADAP_GAUS, NIBLACK, SAUVOLA, BERNSEN };
+
+	enum denoise_method { GAUSSIAN, MEAN, WIENER, MEDIAN, NON_LOCAL };
 
 	class config
 	{
@@ -35,14 +40,13 @@ namespace preprocessing
 		int sc_dpi;
 		scale_method sc_method;
 
-		// denoise parameters
+		std::vector<denoise_method> noise_methods;
 
 		// deskew parameters
 
-		// greyscale parameters
 		greyscale_method gs_method;
 
-		// binarization parameters
+		binarization_method bin_method;
 
 		// processing argument vector
 
@@ -56,9 +60,12 @@ namespace preprocessing
 
 	bool process_scale_arg(const std::string & arg, config & cfg);
 
-	/*
-	parse the input arguments into a ocr::Process_info
-	*/
-    config parse_argss(int argc, char* argv[]);
+	bool process_binar_arg(std::string & arg, config & cfg);
+
+	bool process_greyscale_arg(std::string & arg, config & cfg);
+
+	bool process_denoise_arg(std::string & arg, config & cfg);
+
+    config parse_args(int argc, char* argv[]);
     
 }
