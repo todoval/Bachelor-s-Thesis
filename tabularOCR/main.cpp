@@ -10,22 +10,27 @@
 int main(int argc, char* argv[]) {
 
 	preprocessing::config cfg = preprocessing::parse_args(argc, argv);
-	for (size_t i = 0; i < cfg.files.size(); i++)
+	for (std::map<std::string, cv::Mat>::iterator iter = cfg.files.begin(); iter != cfg.files.end(); ++iter)
 	{
-		preprocessing::preprocess_img(cfg.files[i]);
-		//std::string filename = preparation::get_filename(cfg.files[i]);
-		cv::imwrite("E:/bachelor_thesis/tabularOCR/out7.jpg", cfg.files[i]);
+		std::string output_path = "E:/bachelor_thesis/tabularOCR/s" + iter->first + ".jpg";
+		preprocessing::config img_cfg = cfg;
+		cv::Mat img = iter->second;
+		std::cout << img.size().width;
+		preprocessing::preprocess_img(img, cfg);
+		cv::imwrite(output_path, img);
 	}
 	
-	
+
+
+
 
 	/*
-	char* imageName = argv[3];
-	cv::Mat image;
-	cv::Mat dst_img;
-	image = cv::imread(imageName, 1);
-	cv::resize(image, dst_img, );
-	//
+	TO DO
+	- scale the image - zistit ako, co, preco (??), ideal 300 dpi
+	- zistit ci je image scanned alebo nie
+	- ak je, spracovavat ho inak, ak nie je, vykaslat sa na skew, denoise etc
+
+
 	*/
     return 0;
 }

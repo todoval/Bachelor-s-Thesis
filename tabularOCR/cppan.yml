@@ -7,5 +7,6 @@ dependencies:
     pvt.cppan.demo.intel.opencv.imgcodecs: 3.4.2
     pvt.cppan.demo.intel.opencv.core: 3.4.2
     pvt.cppan.demo.intel.opencv.contrib.ximgproc: 3.4.2
+    pvt.cppan.demo.intel.opencv.photo: 3.4.2
 
 

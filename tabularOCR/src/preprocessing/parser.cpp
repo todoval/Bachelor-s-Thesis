@@ -80,8 +80,8 @@ namespace preprocessing
 			cfg.noise_methods.push_back(denoise_method::MEDIAN);
 		else if (arg == "NONLOCAL")
 			cfg.noise_methods.push_back(denoise_method::NON_LOCAL);
-		else if (arg == "WIENER")
-			cfg.noise_methods.push_back(denoise_method::WIENER);
+		else if (arg == "BILATERAL")
+			cfg.noise_methods.push_back(denoise_method::BILATERAL);
 		else
 			return false;
 		return true;
@@ -97,12 +97,20 @@ namespace preprocessing
 			std::string arg = argv[i];
 			if (arg == "--scale" || arg == "-sc")
 			{
+				i++;
+				arg = argv[i];
 				while (i < argc && arg[0] != '-' && process_scale_arg(arg, result))
 					i++;
 			}
 			else if (arg == "--denoise" || arg == "-n")
 			{
-
+				i++;
+				arg = argv[i];
+				while (i < argc && arg[0] != '-' && process_denoise_arg(std::string(arg), result))
+				{
+					i++;
+					arg = argv[i];
+				}
 			}
 			else if (arg == "--greyscale" || arg == "-g")
 			{
@@ -151,7 +159,8 @@ namespace preprocessing
 				continue;
 			}
 			cv::Mat image = cv::imread(argv[i], 1); // read a color image
-			result.files.push_back(image);
+			std::string filename = get_filename(argv[i]);
+			result.files.insert(std::pair<std::string, cv::Mat> (filename, image));
 			i++;
 		}
 		return result;
@@ -159,9 +168,14 @@ namespace preprocessing
 
 	config::config()
 	{
+
 		sc_dpi = 300;
 
-		gs_method = greyscale_method::LUMA;
+		gs_method = greyscale_method::AVG;
+
+		bin_method = binarization_method::DEF_B;
+
+		noise_methods = std::vector<denoise_method>{};
 
 	}
 

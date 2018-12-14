@@ -5,9 +5,10 @@
 #include <fstream>
 #include <ctype.h>
 #include <vector>
+#include <map>
+
 #include "opencv2/imgproc/imgproc.hpp"
 #include <opencv2/ximgproc.hpp>
-
 #include <opencv2/highgui/highgui.hpp>
 
 namespace preprocessing
@@ -27,9 +28,9 @@ namespace preprocessing
 
 	enum greyscale_method { AVG, LUMA, SINGLE_R, SINGLE_G, SINGLE_B, DESATURATE };
 
-	enum binarization_method { GLOBAL, OTSU, ADAP_MEAN, ADAP_GAUS, NIBLACK, SAUVOLA, BERNSEN };
+	enum binarization_method { GLOBAL, OTSU, ADAP_MEAN, ADAP_GAUS, NIBLACK, SAUVOLA, BERNSEN, DEF_B };
 
-	enum denoise_method { GAUSSIAN, MEAN, WIENER, MEDIAN, NON_LOCAL };
+	enum denoise_method { GAUSSIAN, MEAN, BILATERAL, MEDIAN, NON_LOCAL };
 
 	class config
 	{
@@ -42,6 +43,8 @@ namespace preprocessing
 
 		std::vector<denoise_method> noise_methods;
 
+		std::map<std::string, cv::Mat> files; // files to be processed with their names
+
 		// deskew parameters
 
 		greyscale_method gs_method;
@@ -49,8 +52,6 @@ namespace preprocessing
 		binarization_method bin_method;
 
 		// processing argument vector
-
-		std::vector<cv::Mat> files;// processing file vector`
 
 	};
 

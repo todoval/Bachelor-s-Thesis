@@ -41,6 +41,7 @@ if (MSVC)
         pvt.cppan.demo.intel.opencv.imgcodecs
         pvt.cppan.demo.intel.opencv.core
         pvt.cppan.demo.intel.opencv.contrib.ximgproc
+ 	  pvt.cppan.demo.intel.opencv.photo
     )
 else()
     target_link_libraries(tabularOCR opencv_ml opencv_imgproc lept tesseract)

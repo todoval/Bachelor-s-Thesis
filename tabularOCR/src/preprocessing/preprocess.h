@@ -1,6 +1,8 @@
 #pragma once
 
 #include "parser.h"
+#include "opencv2/core.hpp"
+#include "opencv2/photo/photo.hpp"
 
 namespace preprocessing
 {
@@ -14,7 +16,9 @@ namespace preprocessing
 
 	using resolution = std::pair<int,int>;
 
-	cv::Mat preprocess_img(cv::Mat &img);
+	void determine_cfg(cv::Mat &img, config & cfg);
+
+	cv::Mat preprocess_img(cv::Mat &img, config & cfg);
 
 	resolution get_new_resolution(cv::Mat &img, int old_dpi, int new_dpi);
 
@@ -24,7 +28,15 @@ namespace preprocessing
 
 	cv::Mat& binarize(cv::Mat &img, binarization_method method);
 
-	cv::Mat& denoise(cv::Mat &img, std::vector<denoise_method> & methods);
+	cv::Mat& denoise(cv::Mat &img, denoise_method & method);
+
+	void savuola(cv::Mat & img, int k);
+
+	void deskew(cv::Mat & img, double angle);
+
+	int get_skew(cv::Mat &img);
+
+	bool is_skewed(cv::Mat &img);
 
 	/*
 	to do:
