@@ -1,23 +1,22 @@
 #include <memory>
 
-#include <allheaders.h>
-
 #include <baseapi.h>
 #include <renderer.h>
 
 #include "src/preprocessing/preprocess.h"
+#include "src/ocr_process/process.h"
 
 int main(int argc, char* argv[]) {
-
 	preprocessing::config cfg = preprocessing::parse_args(argc, argv);
-	for (std::map<std::string, cv::Mat>::iterator iter = cfg.files.begin(); iter != cfg.files.end(); ++iter)
+	for (auto &iter : cfg.files)
 	{
-		std::string output_path = "E:/bachelor_thesis/tabularOCR/s" + iter->first + ".jpg";
+		//std::string output_path = "E:/bachelor_thesis/tabularOCR/preprocessed" + iter.first + ".jpg";
 		preprocessing::config img_cfg = cfg;
-		cv::Mat img = iter->second;
-		std::cout << img.size().width;
-		preprocessing::preprocess_img(img, cfg);
-		cv::imwrite(output_path, img);
+		cv::Mat img = iter.second;
+		//preprocessing::preprocess_img(img, cfg);
+		//cv::imwrite(output_path, img);
+		std::pair<std::string, cv::Mat> k = iter;
+		ocr::process_image(k);
 	}
 	
 

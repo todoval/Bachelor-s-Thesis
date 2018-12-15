@@ -228,13 +228,6 @@ namespace preprocessing
 	{
 		// take 10 points from height
 		// calculate histogram for each line of its point
-		int height = img.size().height;
-		int y = 0;
-		while (y < height)
-		{
-
-			y = y + (height / 100);
-		}
 		return true;
 	}
 

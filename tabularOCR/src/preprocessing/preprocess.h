@@ -3,6 +3,7 @@
 #include "parser.h"
 #include "opencv2/core.hpp"
 #include "opencv2/photo/photo.hpp"
+#include "allheaders.h"
 
 namespace preprocessing
 {
