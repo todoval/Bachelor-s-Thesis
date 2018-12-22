@@ -20,4 +20,9 @@ namespace ocr
 
 	void process_image(std::pair<std::string, cv::Mat> & image);
 
+	bool is_symbol_in_textline(BOX* symbol, BOX* textline);
+
+	int get_whitespace(std::vector<BOX*> & symbols);
+
+	std::vector<BOX*> merge_into_words(std::vector<BOX*> & symbols, int whitespace);
 }
