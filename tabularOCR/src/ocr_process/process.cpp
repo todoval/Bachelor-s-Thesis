@@ -35,20 +35,24 @@ namespace ocr
 			&& symbol->y <= textline->y + textline->h);
 	}
 
-	int get_whitespace(std::vector<BOX*> & symbols)
+	std::vector<int> get_spaces(const std::vector<BOX*> & symbols)
 	{
-		std::vector <int> all_spaces;
+		std::vector <int> result;
 		// iterate over all symbols and return the whitespaces between them
 		for (int i = 0; i < symbols.size() - 1; i++)
 		{
 			BOX* first = symbols[i];
 			BOX* second = symbols[i + 1];
 			int space = second->x - first->x - first->w;
-			all_spaces.push_back(space);
+			result.push_back(space);
 		}
+		return result;
+	}
+
+	int get_whitespace(std::vector<int> & all_spaces, double constant)
+	{
 		std::sort(all_spaces.begin(), all_spaces.end());
 		// heuristical estimation of the space
-		double constant = get_avg_char_width(symbols) / REF_FONT_SIZE;
 		int i = 0;
 		while (i < all_spaces.size() && all_spaces[i] < constant)
 			i++;
@@ -62,19 +66,6 @@ namespace ocr
 			}
 			i++;
 		}
-
-		/*
-		int i = all_spaces.size() - 1;
-		while (i > 0)
-		{
-			double comp = all_spaces[i] / 2;
-			if (all_spaces[i] % 2 == 1)
-				comp++;
-			if (all_spaces[i - 1] <= comp)
-				break;
-			i--;
-		}
-		*/
 		int ws = 0;
 		if (i < all_spaces.size())
 			ws = all_spaces[i];
@@ -84,6 +75,18 @@ namespace ocr
 		return ws;
 	}
 
+	void merge_boxes(BOX* & result, BOX* & to_add)
+	{
+		if (result == nullptr)
+			result = to_add;
+		else
+		{
+			result->w = to_add->w + to_add->x - result->x;
+			result->h = std::max(result->h, to_add->h);
+			result->y = std::min(result->y, to_add->y);
+		}
+	}
+
 	std::vector<BOX*> merge_into_words(std::vector<BOX*> & symbols, int whitespace)
 	{
 		std::vector<BOX*> result = {};
@@ -91,11 +94,7 @@ namespace ocr
 		for (size_t i = 0; i < symbols.size() - 1; i++)
 		{	
 			if (symbols[i]->x + symbols[i]->w + whitespace > symbols[i + 1]->x)
-			{
-				word->w = symbols[i + 1]->w + symbols[i + 1]->x - word->x;
-				word->h = std::max(word->h, symbols[i + 1]->h);
-				word->y = std::min(word->y, symbols[i + 1]->y);
-			}
+				merge_boxes(word, symbols[i + 1]);
 			else
 			{
 				result.push_back(word);
@@ -106,7 +105,7 @@ namespace ocr
  		return result;
 	}
 
-	int get_avg_char_width(std::vector<BOX*> & symbols)
+	int get_char_height(std::vector<BOX*> & symbols)
 	{
 		int sum = 0;
 		for (int i = 0; i < symbols.size(); i++)
@@ -128,11 +127,65 @@ namespace ocr
 		return 0;
 	}
 
+	std::vector<font_category> get_font_categories(std::vector<int> & fonts)
+	{
+		fonts.erase(std::unique(fonts.begin(), fonts.end()), fonts.end());
+		int difference = 4;
+		int k = 1;
+		std::vector<font_category> categories = {};
+		int first_val = fonts[0];
+		std::vector<int> one_cat = {first_val};
+		int i = 1;
+
+		while (i < fonts.size())
+		{
+			while (i < fonts.size() && fonts[i] < 10 * k && fonts[i - 1] + difference > fonts[i] && first_val+difference >= fonts[i])
+			{
+				one_cat.push_back(fonts[i]);
+				i++;
+			}
+			if (i == fonts.size())
+				break;
+			else if (fonts[i] >= 10 * k)
+			{
+				k++;
+				difference++;
+			}
+			else
+			{
+				int sum = 0;
+				for (size_t j = 0; j < one_cat.size(); j++) // mby median?
+					sum += one_cat[j];
+				font_category new_cat;
+				new_cat.font = sum / one_cat.size();
+				new_cat.lines = {};
+				new_cat.whitespace = 0;
+				new_cat.spaces = {};
+				categories.push_back(new_cat);
+				one_cat.clear();
+				first_val = fonts[i];
+				one_cat.push_back(first_val);
+				i++;
+			}
+		}
+		int sum = 0;
+		for (size_t j = 0; j < one_cat.size(); j++) //mby median?
+			sum += one_cat[j];
+		font_category new_cat;
+		new_cat.font = sum / one_cat.size();
+		new_cat.lines = {};
+		new_cat.whitespace = 0;
+		new_cat.spaces = {};
+		categories.push_back(new_cat);
+		return categories;
+	}
+
 	void process_image()
 	{
 		Pix *img = pixRead("E:/bachelor_thesis/tabularOCR/test_images/img/5.jpg");
 		if (img->d == 8)
 			img = pixConvert8To32(img);
+
 		// itialize tesseract api without the use of LSTM
 		tesseract::TessBaseAPI *api = new tesseract::TessBaseAPI();
 		if (api->Init(NULL, "eng", tesseract::OcrEngineMode::OEM_TESSERACT_ONLY))
@@ -152,13 +205,14 @@ namespace ocr
 		// array of textlines that exist in the image
 		Boxa * textline_arr = api->GetComponentImages(tesseract::RIL_TEXTLINE, false, NULL, NULL);
 
-		std::vector<BOX*> one_line = {};
-		std::vector <BOX*> all_words = {};
+		std::vector <std::vector<BOX*>> all_lines = {};
+		std::vector<int> fonts = {};
+		// mapping line -> font category
+		std::map <std::vector<BOX*>, int> line_map;
 		/*
 		iterate over textlines and symbols to find all symbols in current textline 
-		once found, getwhitespace separating different words in each textline
-		merge these words together and output save them to a vector
 		*/
+		std::vector<BOX*> one_line = {};
 		for (size_t i = 0; i < textline_arr->n; i++)
 		{
 			BOX* textline = boxaGetBox(textline_arr, i, L_CLONE);
@@ -170,24 +224,91 @@ namespace ocr
 				if (is_symbol_in_textline(symbol, textline))
 					one_line.push_back(symbol);
 			}
-			// get the whitespace of the current line
-			int whitespace = img->w;
-			if (one_line.size() > 1)
-				whitespace = get_whitespace(one_line);
-			// if line size and whitespace size is too low, it means that all symbols belong to one word)
-			if (one_line.size() < MAX_CHARS_IN_WORD && whitespace < one_line[0]->w)
-				whitespace = img->w;
+			int font = get_char_height(one_line);
+			fonts.push_back(font);
+			line_map.insert(std::pair<std::vector<BOX*>, int>(one_line, font));
+			all_lines.push_back(one_line);
+			one_line.clear();
+		}
+		std::sort(fonts.begin(), fonts.end());
+		
+		std::vector<font_category> font_cat = get_font_categories(fonts);
+
+		std::map<std::vector<BOX*>, int>::iterator it;
+
+		// determine font category and add all the necessary spaces
+		for (auto line : line_map)
+		{
+			std::vector<int> all_spaces = get_spaces(line.first);
+			int i = 0;
+			while (i < font_cat.size() && line.second > font_cat[i].font)
+				i++;
+			if (i == font_cat.size())
+			{
+				font_cat[i - 1].lines.push_back(line.first);
+				font_cat[i - 1].spaces.insert(font_cat[i - 1].spaces.end(), all_spaces.begin(), all_spaces.end());
+			}
+			else if (i == 0)
+			{
+				font_cat[0].lines.push_back(line.first);
+				font_cat[0].spaces.insert(font_cat[0].spaces.end(), all_spaces.begin(), all_spaces.end());
+			}
+			else if (font_cat[i].font - line.second > line.second - font_cat[i - 1].font)
+			{
+				font_cat[i - 1].lines.push_back(line.first);
+				font_cat[i - 1].spaces.insert(font_cat[i - 1].spaces.end(), all_spaces.begin(), all_spaces.end());
+			}
+			else
+			{
+				font_cat[i].lines.push_back(line.first);
+				font_cat[i].spaces.insert(font_cat[i].spaces.end(), all_spaces.begin(), all_spaces.end());
+			}	
+		}
+
+		// determine whitespace for each category
+		for (int i = 0; i < font_cat.size(); i++)
+		{
+			int ws = img->w;
+			double constant = font_cat[i].font / REF_FONT_SIZE;
+			font_cat[i].whitespace = img->w;
+			if (font_cat[i].spaces.size() != 0)
+				font_cat[i].whitespace = get_whitespace(font_cat[i].spaces, constant);
+		}
+
+		for (size_t i = 0; i < all_lines.size(); i++)
+		{
 			// merge into words and add them into the all_words vector
- 			std::vector<BOX*> curr_words = merge_into_words(one_line, whitespace);
+			std::vector<BOX*> curr_words = merge_into_words(all_lines[i], line_map.at(all_lines[i]));
 			for (size_t k = 0; k < curr_words.size(); k++)
 			{
 				set_border(img, curr_words[k], 255, 0, 0);
 			}
-			all_words.insert(all_words.end(),  curr_words.begin(), curr_words.end());
-			std::cout << "ALL:" << one_line.size() << ":" << whitespace << ":" << get_avg_char_width(one_line) << std::endl;
-			one_line = {};
-		}
 
+
+
+			// determine whether the current line has columns or not
+			/*
+			std::vector<int> word_gaps = get_spaces(curr_words);
+			std::vector<BOX*> columns = {};
+			BOX* column = curr_words[0];
+			for (size_t j = 0; j < word_gaps.size(); j++)
+			{
+				if (word_gaps[j] >= 3 * whitespace)
+				{
+					columns.push_back(column);
+					set_border(img, column, 0, 255, 0);
+					column = curr_words[j + 1];
+				}
+				else
+					merge_boxes(column, curr_words[j + 1]);
+			}
+			if (columns.size() > 0)
+			{
+				set_border(img, column, 0, 255, 0);
+				columns.push_back(column);
+			}*/
+			std::cout << "ALL:" << all_lines[i].size() << ":" << get_char_height(one_line) << std::endl;
+		}
 
 		std::string out = "E:/bachelor_thesis/tabularOCR/out5.jpg";
 		char* path = &out[0u];
@@ -198,10 +319,6 @@ namespace ocr
 
 		// Get OCR result
 		//char* outText = api->GetUTF8Text();
-		//printf("OCR output:\n%s", outText);
-
-		// Destroy used object and release memory
-
 		//delete[] outText;
 	}
 
