@@ -7,7 +7,7 @@
 #include "src/ocr_process/process.h"
 
 int main(int argc, char* argv[]) {
-	preprocessing::config cfg = preprocessing::parse_args(argc, argv);
+	/*preprocessing::config cfg = preprocessing::parse_args(argc, argv);
 	for (auto &iter : cfg.files)
 	{
 		//std::string output_path = "E:/bachelor_thesis/tabularOCR/preprocessed" + iter.first + ".jpg";
@@ -15,11 +15,11 @@ int main(int argc, char* argv[]) {
 		cv::Mat img = iter.second;
 		//preprocessing::preprocess_img(img, cfg);
 		//cv::imwrite(output_path, img);
-		std::pair<std::string, cv::Mat> k = iter;
-		ocr::process_image(k);
-	}
+		std::pair<std::string, cv::Mat> k = iter;*/
+		//ocr::process_image(k);
+	//}
 	
-
+	ocr::process_image();
 
 
 

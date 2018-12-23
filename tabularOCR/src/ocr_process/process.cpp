@@ -27,21 +27,6 @@ namespace ocr
 		return pixd;
 	}
 
-	bool add_box(Box & result, Box & to_add)
-	{
-		if (result.w == 0)
-		{
-			result = to_add;
-			return true;
-		}
-		if ( result.x >= to_add.x || abs(result.y - to_add.y) > 10
-			|| (to_add.x > result.x + result.w + THRESHOLD))
-			return false;
-		result.w = to_add.w + to_add.x - result.x ;
-		result.h = std::max(result.h, to_add.h); 
-		return true;
-	}
-
 	bool is_symbol_in_textline(BOX* symbol, BOX* textline)
 	{
 		return (symbol->x <= textline->x + textline->w
@@ -53,6 +38,7 @@ namespace ocr
 	int get_whitespace(std::vector<BOX*> & symbols)
 	{
 		std::vector <int> all_spaces;
+		// iterate over all symbols and return the whitespaces between them
 		for (int i = 0; i < symbols.size() - 1; i++)
 		{
 			BOX* first = symbols[i];
@@ -61,16 +47,41 @@ namespace ocr
 			all_spaces.push_back(space);
 		}
 		std::sort(all_spaces.begin(), all_spaces.end());
-		int max_ws = all_spaces[all_spaces.size() - 1] / 2;
-		size_t i = all_spaces.size() - 1;
-		while (all_spaces[i] > max_ws)
-			i--;
-		if (i < all_spaces.size() - 1)
+		// heuristical estimation of the space
+		double constant = get_avg_char_width(symbols) / REF_FONT_SIZE;
+		int i = 0;
+		while (i < all_spaces.size() && all_spaces[i] < constant)
 			i++;
+		while (i < all_spaces.size() - 1)
+		{
+			double multi_factor = get_multi_factor(all_spaces[i], constant);
+			if (all_spaces[i + 1] >= multi_factor * all_spaces[i])
+			{
+				i++;
+				break;
+			}
+			i++;
+		}
+
+		/*
+		int i = all_spaces.size() - 1;
+		while (i > 0)
+		{
+			double comp = all_spaces[i] / 2;
+			if (all_spaces[i] % 2 == 1)
+				comp++;
+			if (all_spaces[i - 1] <= comp)
+				break;
+			i--;
+		}
+		*/
+		int ws = 0;
+		if (i < all_spaces.size())
+			ws = all_spaces[i];
 		for (int i = 0; i < all_spaces.size(); i++)
 			std::cout << all_spaces[i] << ":";
-		std::cout << "RESULT:" << all_spaces[i] << std::endl;
-		return all_spaces[i];
+		std::cout << "RESULT:" << ws << std::endl;
+		return ws;
 	}
 
 	std::vector<BOX*> merge_into_words(std::vector<BOX*> & symbols, int whitespace)
@@ -83,6 +94,7 @@ namespace ocr
 			{
 				word->w = symbols[i + 1]->w + symbols[i + 1]->x - word->x;
 				word->h = std::max(word->h, symbols[i + 1]->h);
+				word->y = std::min(word->y, symbols[i + 1]->y);
 			}
 			else
 			{
@@ -90,10 +102,33 @@ namespace ocr
 				word = symbols[i + 1];
 			}
 		}
+		result.push_back(word);
  		return result;
 	}
 
-	void process_image(std::pair<std::string, cv::Mat> & image)
+	int get_avg_char_width(std::vector<BOX*> & symbols)
+	{
+		int sum = 0;
+		for (int i = 0; i < symbols.size(); i++)
+			sum = std::max(sum, symbols[i]->h);
+		return sum;
+	}
+
+	double get_multi_factor(int space_width, double constant)
+	{
+		double x = space_width / constant;
+		if (x >= 4)
+			return 1.5;
+		if (x < 4 && x >= 3)
+			return ((4 - x)* 0.1 + 1.5);
+		if (x < 3 && x >= 2)
+			return ((3 - x) * 0.4 + 1.6);
+		if (x < 2 && x >= 1)
+			return (4 - x);
+		return 0;
+	}
+
+	void process_image()
 	{
 		Pix *img = pixRead("E:/bachelor_thesis/tabularOCR/test_images/img/5.jpg");
 		if (img->d == 8)
@@ -136,9 +171,12 @@ namespace ocr
 					one_line.push_back(symbol);
 			}
 			// get the whitespace of the current line
-			int whitespace = 0;
+			int whitespace = img->w;
 			if (one_line.size() > 1)
 				whitespace = get_whitespace(one_line);
+			// if line size and whitespace size is too low, it means that all symbols belong to one word)
+			if (one_line.size() < MAX_CHARS_IN_WORD && whitespace < one_line[0]->w)
+				whitespace = img->w;
 			// merge into words and add them into the all_words vector
  			std::vector<BOX*> curr_words = merge_into_words(one_line, whitespace);
 			for (size_t k = 0; k < curr_words.size(); k++)
@@ -146,9 +184,10 @@ namespace ocr
 				set_border(img, curr_words[k], 255, 0, 0);
 			}
 			all_words.insert(all_words.end(),  curr_words.begin(), curr_words.end());
-			std::cout << one_line.size() << ":" << whitespace << std::endl;
+			std::cout << "ALL:" << one_line.size() << ":" << whitespace << ":" << get_avg_char_width(one_line) << std::endl;
 			one_line = {};
 		}
+
 
 		std::string out = "E:/bachelor_thesis/tabularOCR/out5.jpg";
 		char* path = &out[0u];
@@ -157,50 +196,6 @@ namespace ocr
 		pixDestroy(&img);
 
 
-		/**
-		BOX curr_box = { 0,0,0,0,0 };
-		for (size_t i = 0; i < comp_arr->n; i++)
-		{
-			
-			BOX* new_box = boxaGetBox(comp_arr, i, L_CLONE);
-			if (!add_box(curr_box, *new_box))
-			{
-				set_border(img, &curr_box, 255, 0, 255);
-				std::cout << curr_box.x << ":" << curr_box.y << std::endl;
-				curr_box = { 0,0,0,0,0 };
-				continue;
-			}
-			api->SetRectangle(new_box->x, new_box->y, new_box->w, new_box->h);
-			//char* ocrResult = api->GetUTF8Text();
-			set_border(img, new_box, 0, 0, 255);
-			std::cout << i << ":" << new_box->x << ":" << new_box->y << ":" << ":" << std::endl;
-		}
-
-		do {
-			const char* symbol = ri->GetUTF8Text(level);
-			float conf = ri->Confidence(level);
-			if (conf < 90)
-				continue;
-			int left, top, right, bottom;
-			ri->BoundingBox(level, &left, &top, &right, &bottom);
-			BOX new_box = { left, top, right - left, bottom - top };
-
-			if (!add_box(curr_box, new_box))
-			{
-				set_border(img, &curr_box, 255, 0, 255);
-				std::cout << curr_word << std::endl;
-				curr_box = { 0,0,0,0,0 };
-				curr_word = "";
-				continue;
-			}
-			curr_word += symbol;
-			//auto type = ri->BlockType();
-			//BOX box = { x1, y1, x2 - x1, y2 - y1 };
-			//set_border(img, &box, 255, 0, 255);
-			delete[] symbol;
-		}
-		while (ri->Next(level));
-		*/
 		// Get OCR result
 		//char* outText = api->GetUTF8Text();
 		//printf("OCR output:\n%s", outText);
