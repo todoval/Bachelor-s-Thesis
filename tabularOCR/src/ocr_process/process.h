@@ -9,6 +9,7 @@
 
 namespace ocr
 {
+	enum alignment { RIGHT, LEFT, MIDDLE };
 
 	const size_t MAX_CHARS_IN_WORD = 15;
 
@@ -21,6 +22,13 @@ namespace ocr
 		int whitespace;
 		std::vector<std::vector<BOX*>> lines;
 		std::vector<int> spaces;
+	};
+
+	struct table
+	{
+	public:
+		alignment align;
+
 	};
 
 
@@ -38,7 +46,7 @@ namespace ocr
 	// returns the whitespace between words in textline
 	int get_whitespace(std::vector<int> & all_spaces, double constant);
 
-	void merge_boxes(BOX* & result, BOX* & to_add);
+	void box_merge_horizontal(BOX* & result, BOX* & to_add);
 
 	std::vector<BOX*> merge_into_words(std::vector<BOX*> & symbols, int whitespace);
 
@@ -47,5 +55,11 @@ namespace ocr
 	std::vector<font_category> get_font_categories(std::vector<int> & fonts);
 
 	double get_multi_factor(int space_width, double constant);
+
+	int most_common_number(std::vector<int> & numbers);
+
+	void box_merge_vertical(BOX* & result, BOX* & to_add);
+
+	bool merge_cols(std::vector<BOX*> & first, std::vector<BOX*> & second);
 
 }

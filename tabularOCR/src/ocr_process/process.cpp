@@ -75,7 +75,20 @@ namespace ocr
 		return ws;
 	}
 
-	void merge_boxes(BOX* & result, BOX* & to_add)
+	void box_merge_vertical(BOX* & result, BOX* & to_add)
+	{
+		if (result == nullptr)
+			result = to_add;
+		else
+		{
+			result->w = std::max(result->w, to_add->w);
+			result->x = std::min(result->x, to_add->x);
+			result->y = std::min(result->y, to_add->y);
+			result->h = to_add->h + to_add->y - result->y;
+		}
+	}
+
+	void box_merge_horizontal(BOX* & result, BOX* & to_add)
 	{
 		if (result == nullptr)
 			result = to_add;
@@ -94,7 +107,7 @@ namespace ocr
 		for (size_t i = 0; i < symbols.size() - 1; i++)
 		{	
 			if (symbols[i]->x + symbols[i]->w + whitespace > symbols[i + 1]->x)
-				merge_boxes(word, symbols[i + 1]);
+				box_merge_horizontal(word, symbols[i + 1]);
 			else
 			{
 				result.push_back(word);
@@ -125,6 +138,32 @@ namespace ocr
 		if (x < 2 && x >= 1)
 			return (4 - x);
 		return 0;
+	}
+
+	int most_common_number(std::vector<int> & numbers)
+	{
+		int res_no = 0;
+		int curr_no = numbers[0];
+		int curr_count = 1;
+		int res_count = 0;
+		for (size_t i = 1; i < numbers.size(); i++)
+		{
+			if (numbers[i] == curr_no)
+				curr_count++;
+			else
+			{
+				if (res_count < curr_count)
+				{
+					res_count = curr_count;
+					res_no = curr_no;
+				}
+				curr_no = numbers[i];
+				curr_count = 1;				
+			}
+		}
+		if (res_count < curr_count)
+			res_no = curr_no;
+		return res_no;
 	}
 
 	std::vector<font_category> get_font_categories(std::vector<int> & fonts)
@@ -180,9 +219,21 @@ namespace ocr
 		return categories;
 	}
 
+	bool merge_cols(std::vector<BOX*> & first, std::vector<BOX*> & second)
+	{
+		if (first.size() == 1 && second.size() == 1)
+			return false;
+		if (first.size() == second.size())
+		{
+
+			return true;
+		}
+		return false;
+	}
+
 	void process_image()
 	{
-		Pix *img = pixRead("E:/bachelor_thesis/tabularOCR/test_images/img/5.jpg");
+		Pix *img = pixRead("E:/bachelor_thesis/tabularOCR/test_images/img/80-1.jpg");
 		if (img->d == 8)
 			img = pixConvert8To32(img);
 
@@ -210,7 +261,7 @@ namespace ocr
 		// mapping line -> font category
 		std::map <std::vector<BOX*>, int> line_map;
 		/*
-		iterate over textlines and symbols to find all symbols in current textline 
+		iterate over textlines and symbols to find all symbols in current textline
 		*/
 		std::vector<BOX*> one_line = {};
 		for (size_t i = 0; i < textline_arr->n; i++)
@@ -231,7 +282,7 @@ namespace ocr
 			one_line.clear();
 		}
 		std::sort(fonts.begin(), fonts.end());
-		
+
 		std::vector<font_category> font_cat = get_font_categories(fonts);
 
 		std::map<std::vector<BOX*>, int>::iterator it;
@@ -245,72 +296,128 @@ namespace ocr
 				i++;
 			if (i == font_cat.size())
 			{
+				double constant = font_cat[i - 1].font / REF_FONT_SIZE;
+				int ws = img->w;
+				if (all_spaces.size() != 0)
+					ws = get_whitespace(all_spaces, constant);
+
 				font_cat[i - 1].lines.push_back(line.first);
-				font_cat[i - 1].spaces.insert(font_cat[i - 1].spaces.end(), all_spaces.begin(), all_spaces.end());
+				font_cat[i - 1].spaces.push_back(ws);
 			}
 			else if (i == 0)
 			{
+				double constant = font_cat[0].font / REF_FONT_SIZE;
+				int ws = img->w;
+				if (all_spaces.size() != 0)
+					ws = get_whitespace(all_spaces, constant);
+
 				font_cat[0].lines.push_back(line.first);
-				font_cat[0].spaces.insert(font_cat[0].spaces.end(), all_spaces.begin(), all_spaces.end());
+				font_cat[0].spaces.push_back(ws);
 			}
 			else if (font_cat[i].font - line.second > line.second - font_cat[i - 1].font)
 			{
+				double constant = font_cat[i - 1].font / REF_FONT_SIZE;
+				int ws = img->w;
+				if (all_spaces.size() != 0)
+					ws = get_whitespace(all_spaces, constant);
+
 				font_cat[i - 1].lines.push_back(line.first);
-				font_cat[i - 1].spaces.insert(font_cat[i - 1].spaces.end(), all_spaces.begin(), all_spaces.end());
+				font_cat[i - 1].spaces.push_back(ws);
 			}
 			else
 			{
+				double constant = font_cat[i].font / REF_FONT_SIZE;
+				int ws = img->w;
+				if (all_spaces.size() != 0)
+					ws = get_whitespace(all_spaces, constant);
+
 				font_cat[i].lines.push_back(line.first);
-				font_cat[i].spaces.insert(font_cat[i].spaces.end(), all_spaces.begin(), all_spaces.end());
-			}	
+				font_cat[i].spaces.push_back(ws);
+			}
 		}
 
 		// determine whitespace for each category
 		for (int i = 0; i < font_cat.size(); i++)
+			font_cat[i].whitespace = most_common_number(font_cat[i].spaces);
+
+		// merge into words and columns
+		std::vector<std::vector<BOX*>> all_cols = {};
+		for (size_t i = 0; i < font_cat.size(); i++)
 		{
-			int ws = img->w;
-			double constant = font_cat[i].font / REF_FONT_SIZE;
-			font_cat[i].whitespace = img->w;
-			if (font_cat[i].spaces.size() != 0)
-				font_cat[i].whitespace = get_whitespace(font_cat[i].spaces, constant);
-		}
-
-		for (size_t i = 0; i < all_lines.size(); i++)
-		{
-			// merge into words and add them into the all_words vector
-			std::vector<BOX*> curr_words = merge_into_words(all_lines[i], line_map.at(all_lines[i]));
-			for (size_t k = 0; k < curr_words.size(); k++)
+			for (size_t j = 0; j < font_cat[i].lines.size(); j++)
 			{
-				set_border(img, curr_words[k], 255, 0, 0);
-			}
+				std::vector<BOX*> curr_words = merge_into_words(font_cat[i].lines[j], font_cat[i].whitespace);
+				//	for (size_t k = 0; k < curr_words.size(); k++)
+				{
+					//	set_border(img, curr_words[k], 255, 0, 0);
+				}
 
+				// determine whether the current line has columns or not
 
-
-			// determine whether the current line has columns or not
-			/*
-			std::vector<int> word_gaps = get_spaces(curr_words);
-			std::vector<BOX*> columns = {};
-			BOX* column = curr_words[0];
-			for (size_t j = 0; j < word_gaps.size(); j++)
-			{
-				if (word_gaps[j] >= 3 * whitespace)
+				std::vector<int> word_gaps = get_spaces(curr_words);
+				std::vector<BOX*> columns = {};
+				BOX* column = curr_words[0];
+				for (size_t j = 0; j < word_gaps.size(); j++)
+				{
+					if (word_gaps[j] >= 3 * font_cat[i].whitespace)
+					{
+						columns.push_back(column);
+						set_border(img, column, 0, 255, 0);
+						column = curr_words[j + 1];
+					}
+					else
+						box_merge_horizontal(column, curr_words[j + 1]);
+				}
+				//if (columns.size() > 0)
 				{
 					columns.push_back(column);
 					set_border(img, column, 0, 255, 0);
-					column = curr_words[j + 1];
 				}
-				else
-					merge_boxes(column, curr_words[j + 1]);
+				all_cols.push_back(columns);
 			}
-			if (columns.size() > 0)
-			{
-				set_border(img, column, 0, 255, 0);
-				columns.push_back(column);
-			}*/
-			std::cout << "ALL:" << all_lines[i].size() << ":" << get_char_height(one_line) << std::endl;
 		}
 
-		std::string out = "E:/bachelor_thesis/tabularOCR/out5.jpg";
+		// merge columns into tables
+
+		std::vector<std::vector<BOX*>> table = {};
+		std::vector<BOX*> curr_col = all_cols[0];
+		int i = 1;
+		std::cout << "NOW:";
+		while (i < all_cols.size())
+		{
+			std::cout << all_cols[i].size() << ":";
+			if (merge_cols(curr_col, all_cols[i]))
+			{
+				if (table.empty())
+					table.push_back(curr_col);
+				table.push_back(all_cols[i]);
+			}
+			else 
+			{
+				if (table.size() > 1)
+				{
+					BOX* whole_table = nullptr;
+					BOX* res_table = nullptr;
+					for (int j = 0; j < table.size(); j++)
+					{
+						for (int k = 0; k < table[j].size(); k++)
+							box_merge_horizontal(res_table, table[j][k]);
+						box_merge_vertical(whole_table, res_table);
+						res_table = nullptr;
+					}
+					set_border(img, whole_table, 0, 0, 255);
+				}
+				table.clear();
+			}
+			curr_col = all_cols[i];
+			i++;
+		}
+
+		for (int i = 0; i < font_cat.size(); i++)
+			std::cout << font_cat[i].whitespace << std::endl;
+
+
+		std::string out = "E:/bachelor_thesis/tabularOCR/out80.jpg";
 		char* path = &out[0u];
 		pixWrite(path, img, IFF_PNG);
 		api->End();
