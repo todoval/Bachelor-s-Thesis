@@ -15,7 +15,7 @@ namespace preprocessing
 		uchar red;
 	};
 
-	using resolution = std::pair<int,int>;
+	typedef std::pair<int, int> resolution;
 
 	void determine_cfg(cv::Mat &img, config & cfg);
 

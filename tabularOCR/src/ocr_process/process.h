@@ -9,9 +9,8 @@
 
 namespace ocr
 {
-	enum alignment { RIGHT, LEFT, MIDDLE };
 
-	const size_t MAX_CHARS_IN_WORD = 15;
+	const size_t COL_THRESHOLD = 10;
 
 	const double REF_FONT_SIZE = 19;
 
@@ -24,11 +23,20 @@ namespace ocr
 		std::vector<int> spaces;
 	};
 
+	struct cell
+	{
+	public:
+		BOX* box;
+		std::string text;
+	};
+
 	struct table
 	{
 	public:
-		alignment align;
-
+		// representation of the table by rows, each row represented by a vector of cells
+		std::vector<std::vector<cell>> table_mat;
+		size_t row_size;
+		size_t col_size;
 	};
 
 
@@ -60,6 +68,14 @@ namespace ocr
 
 	void box_merge_vertical(BOX* & result, BOX* & to_add);
 
-	bool merge_cols(std::vector<BOX*> & first, std::vector<BOX*> & second);
+	bool cols_to_tables(std::vector<BOX*> & first, std::vector<BOX*> & second);
+
+	void merge_cols(std::vector<std::vector<BOX*>> & page);
+
+	bool are_in_same_col(BOX* first, BOX* second);
+
+	void initialize_font_cat(font_category & font_cat, int & ws, std::vector<int> & all_spaces, const std::vector<BOX*> & line);
+
+	int centre(BOX* box);
 
 }

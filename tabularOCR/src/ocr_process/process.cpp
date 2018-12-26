@@ -4,7 +4,7 @@ namespace ocr
 {
 	void set_border(PIX* img, BOX *box, int r, int g, int b)
 	{
-		for (int i = 0; i < box->w; i++) 
+		for (int i = 0; i < box->w; i++)
 		{
 			pixSetRGBPixel(img, box->x + i, box->y, r, g, b);
 			pixSetRGBPixel(img, box->x + i, box->y + box->h, r, g, b);
@@ -29,9 +29,9 @@ namespace ocr
 
 	bool is_symbol_in_textline(BOX* symbol, BOX* textline)
 	{
-		return (symbol->x <= textline->x + textline->w
-			&& symbol->x >= textline->x
-			&& symbol->y >= textline->y
+		return (symbol->x <= textline->x + textline->w 
+			&& symbol->x >= textline->x 
+			&& symbol->y >= textline->y 
 			&& symbol->y <= textline->y + textline->h);
 	}
 
@@ -69,9 +69,9 @@ namespace ocr
 		int ws = 0;
 		if (i < all_spaces.size())
 			ws = all_spaces[i];
-		for (int i = 0; i < all_spaces.size(); i++)
-			std::cout << all_spaces[i] << ":";
-		std::cout << "RESULT:" << ws << std::endl;
+		//for (int i = 0; i < all_spaces.size(); i++)
+		//	std::cout << all_spaces[i] << ":";
+		//std::cout << "RESULT:" << ws << std::endl;
 		return ws;
 	}
 
@@ -103,9 +103,9 @@ namespace ocr
 	std::vector<BOX*> merge_into_words(std::vector<BOX*> & symbols, int whitespace)
 	{
 		std::vector<BOX*> result = {};
-		BOX* word = symbols[0]; 
+		BOX* word = symbols[0];
 		for (size_t i = 0; i < symbols.size() - 1; i++)
-		{	
+		{
 			if (symbols[i]->x + symbols[i]->w + whitespace > symbols[i + 1]->x)
 				box_merge_horizontal(word, symbols[i + 1]);
 			else
@@ -115,15 +115,15 @@ namespace ocr
 			}
 		}
 		result.push_back(word);
- 		return result;
+		return result;
 	}
 
 	int get_char_height(std::vector<BOX*> & symbols)
 	{
-		int sum = 0;
+		int height = 0;
 		for (int i = 0; i < symbols.size(); i++)
-			sum = std::max(sum, symbols[i]->h);
-		return sum;
+			height = std::max(height, symbols[i]->h);
+		return height;
 	}
 
 	double get_multi_factor(int space_width, double constant)
@@ -158,7 +158,7 @@ namespace ocr
 					res_no = curr_no;
 				}
 				curr_no = numbers[i];
-				curr_count = 1;				
+				curr_count = 1;
 			}
 		}
 		if (res_count < curr_count)
@@ -173,12 +173,12 @@ namespace ocr
 		int k = 1;
 		std::vector<font_category> categories = {};
 		int first_val = fonts[0];
-		std::vector<int> one_cat = {first_val};
+		std::vector<int> one_cat = { first_val };
 		int i = 1;
 
 		while (i < fonts.size())
 		{
-			while (i < fonts.size() && fonts[i] < 10 * k && fonts[i - 1] + difference > fonts[i] && first_val+difference >= fonts[i])
+			while (i < fonts.size() && fonts[i] < 10 * k && fonts[i - 1] + difference > fonts[i] && first_val + difference >= fonts[i])
 			{
 				one_cat.push_back(fonts[i]);
 				i++;
@@ -219,8 +219,94 @@ namespace ocr
 		return categories;
 	}
 
-	bool merge_cols(std::vector<BOX*> & first, std::vector<BOX*> & second)
+	int centre(BOX* box)
 	{
+		return (box->x + box->w / 2);
+	}
+
+	int get_y_axis(std::vector<BOX*> input)
+	{
+		int y = input[0]->y;
+		for (int i = 1; i < input.size(); i++)
+			y = std::min(y, input[i]->y);
+		return y;
+	}
+
+	bool are_in_same_col(BOX* first, BOX* second)
+	{
+		if (abs(first->x - second->x) <= COL_THRESHOLD
+			|| abs(first->x + first->w - (second->x + second->w)) <= COL_THRESHOLD
+			|| abs(centre(first) - centre(second)) <= COL_THRESHOLD)
+			return true;
+		else return false;
+	}
+
+	void merge_cols(std::vector<std::vector<BOX*>> & page)
+	{
+		int i = 0;
+		bool find_cols = false;
+		while (i < page.size() - 1)
+		{
+			if (!(page[i].size() == 1 && page[i+1].size() == 1 && !find_cols))
+			{
+				find_cols = true;
+				// first vector is the one that has the most elements
+				std::vector<BOX*> first = page[i + 1];
+				std::vector<BOX*> second = page[i];
+				if (page[i].size() > page[i + 1].size())
+				{
+					first = page[i];
+					second = page[i + 1];
+				}
+				// map for saving all the indexes of columns for further merging
+				std::map<int, int> no_of_cols;
+				int iter_one = 0;
+				int iter_two = 0;
+				while (iter_one < first.size() && iter_two < second.size())
+				{
+					while (iter_one < first.size() && iter_two < second.size() && !are_in_same_col(first[iter_one], second[iter_two]))
+						iter_one++;
+					//if (first.size() - iter_one < second.size())
+						//break;
+				
+					no_of_cols.insert(std::pair<int, int>(iter_one, iter_two));
+					iter_two++;
+				}
+				if (iter_one == first.size() && iter_two == second.size()) 
+				{
+					// merge these two lines into columns
+					int first_h = get_char_height(page[i]);
+					int sec_h = get_char_height(page[i+1]);
+					int first_y = get_y_axis(page[i]);
+					int sec_y = get_y_axis(page[i + 1]);
+
+					// calculate the y axis and height of all the boxes
+
+					int y = first_y;
+					int height = sec_h + sec_y - first_y; // first_h + sec_h + sec_y - first_y - first_h
+
+					for (int j = 0; j < page[i].size(); j++)
+					{
+						if (no_of_cols.find(j) != no_of_cols.end())
+						{
+							int sec_index = no_of_cols[j];
+							page[i][j]->x = std::min(page[i][j]->x, page[i + 1][sec_index]->x);
+							page[i][j]->w = std::max(page[i][j]->w, page[i + 1][sec_index]->w);
+						}
+						page[i][j]->h = height;
+						page[i][j]->y = y;
+					}
+					// erase the second vector
+					page.erase(page.begin() + i + 1);
+				}
+			}
+			i++;
+		}
+	}
+
+	bool cols_to_tables(std::vector<BOX*> & first, std::vector<BOX*> & second)
+	{
+ 
 		if (first.size() == 1 && second.size() == 1)
 			return false;
 		if (first.size() == second.size())
@@ -231,9 +317,18 @@ namespace ocr
 		return false;
 	}
 
+	void initialize_font_cat(font_category & font_cat, int & ws, std::vector<int> & all_spaces, const std::vector<BOX*> & line)
+	{
+		double constant = font_cat.font / REF_FONT_SIZE;
+		if (all_spaces.size() != 0)
+			ws = get_whitespace(all_spaces, constant);
+		font_cat.lines.push_back(line);
+		font_cat.spaces.push_back(ws);
+	}
+
 	void process_image()
 	{
-		Pix *img = pixRead("E:/bachelor_thesis/tabularOCR/test_images/img/80-1.jpg");
+		Pix *img = pixRead("E:/bachelor_thesis/tabularOCR/test_images/img/5.jpg");
 		if (img->d == 8)
 			img = pixConvert8To32(img);
 
@@ -290,50 +385,19 @@ namespace ocr
 		// determine font category and add all the necessary spaces
 		for (auto line : line_map)
 		{
+			int ws = img->w;
 			std::vector<int> all_spaces = get_spaces(line.first);
 			int i = 0;
 			while (i < font_cat.size() && line.second > font_cat[i].font)
 				i++;
 			if (i == font_cat.size())
-			{
-				double constant = font_cat[i - 1].font / REF_FONT_SIZE;
-				int ws = img->w;
-				if (all_spaces.size() != 0)
-					ws = get_whitespace(all_spaces, constant);
-
-				font_cat[i - 1].lines.push_back(line.first);
-				font_cat[i - 1].spaces.push_back(ws);
-			}
+				initialize_font_cat(font_cat[i-1], ws, all_spaces, line.first);
 			else if (i == 0)
-			{
-				double constant = font_cat[0].font / REF_FONT_SIZE;
-				int ws = img->w;
-				if (all_spaces.size() != 0)
-					ws = get_whitespace(all_spaces, constant);
-
-				font_cat[0].lines.push_back(line.first);
-				font_cat[0].spaces.push_back(ws);
-			}
+				initialize_font_cat(font_cat[0], ws, all_spaces, line.first);
 			else if (font_cat[i].font - line.second > line.second - font_cat[i - 1].font)
-			{
-				double constant = font_cat[i - 1].font / REF_FONT_SIZE;
-				int ws = img->w;
-				if (all_spaces.size() != 0)
-					ws = get_whitespace(all_spaces, constant);
-
-				font_cat[i - 1].lines.push_back(line.first);
-				font_cat[i - 1].spaces.push_back(ws);
-			}
+				initialize_font_cat(font_cat[i - 1], ws, all_spaces, line.first);
 			else
-			{
-				double constant = font_cat[i].font / REF_FONT_SIZE;
-				int ws = img->w;
-				if (all_spaces.size() != 0)
-					ws = get_whitespace(all_spaces, constant);
-
-				font_cat[i].lines.push_back(line.first);
-				font_cat[i].spaces.push_back(ws);
-			}
+				initialize_font_cat(font_cat[i], ws, all_spaces, line.first);
 		}
 
 		// determine whitespace for each category
@@ -377,8 +441,21 @@ namespace ocr
 			}
 		}
 
+		std::sort(all_cols.begin(), all_cols.end(),
+			[](std::vector<BOX*> & a, std::vector<BOX*> & b) { return a[0]->y < b[0]->y; });
+
 		// merge columns into tables
 
+		merge_cols(all_cols);
+		for (int i = 0; i < all_cols.size(); i++)
+		{
+			for (int j = 0; j < all_cols[i].size(); j++)
+			{
+				set_border(img, all_cols[i][j], 0, 0, 255);
+			}
+		}
+
+		/*
 		std::vector<std::vector<BOX*>> table = {};
 		std::vector<BOX*> curr_col = all_cols[0];
 		int i = 1;
@@ -386,7 +463,7 @@ namespace ocr
 		while (i < all_cols.size())
 		{
 			std::cout << all_cols[i].size() << ":";
-			if (merge_cols(curr_col, all_cols[i]))
+			if (cols_to_tables(curr_col, all_cols[i]))
 			{
 				if (table.empty())
 					table.push_back(curr_col);
@@ -412,12 +489,10 @@ namespace ocr
 			curr_col = all_cols[i];
 			i++;
 		}
-
-		for (int i = 0; i < font_cat.size(); i++)
-			std::cout << font_cat[i].whitespace << std::endl;
+		*/
 
 
-		std::string out = "E:/bachelor_thesis/tabularOCR/out80.jpg";
+		std::string out = "E:/bachelor_thesis/tabularOCR/out5.jpg";
 		char* path = &out[0u];
 		pixWrite(path, img, IFF_PNG);
 		api->End();
