@@ -234,11 +234,15 @@ namespace ocr
 
 	bool are_in_same_col(BOX* first, BOX* second)
 	{
-		if (abs(first->x - second->x) <= COL_THRESHOLD
+		bool diff_h;
+		if (first->y < second->y)
+			diff_h = second->y - first->y - first->h < std::min(first->h, second->h);
+		else
+			diff_h = first->y - second->y - second->h < std::min(first->h, second->h);
+		return ((abs(first->x - second->x) <= COL_THRESHOLD
 			|| abs(first->x + first->w - (second->x + second->w)) <= COL_THRESHOLD
 			|| abs(centre(first) - centre(second)) <= COL_THRESHOLD)
-			return true;
-		else return false;
+			&& diff_h);
 	}
 
 	void merge_cols(std::vector<std::vector<BOX*>> & page)
@@ -247,7 +251,7 @@ namespace ocr
 		bool find_cols = false;
 		while (i < page.size() - 1)
 		{
-			if (!(page[i].size() == 1 && page[i+1].size() == 1 && !find_cols))
+			//if (!(page[i].size() == 1 && page[i+1].size() == 1 && !find_cols))
 			{
 				find_cols = true;
 				// first vector is the one that has the most elements
@@ -266,17 +270,19 @@ namespace ocr
 				{
 					while (iter_one < first.size() && iter_two < second.size() && !are_in_same_col(first[iter_one], second[iter_two]))
 						iter_one++;
-					//if (first.size() - iter_one < second.size())
-						//break;
+					if (first.size() == iter_one)
+						break;
 				
 					no_of_cols.insert(std::pair<int, int>(iter_one, iter_two));
 					iter_two++;
+					iter_one++;
 				}
-				if (iter_one == first.size() && iter_two == second.size()) 
+				//if (iter_two == second.size() && iter_one == first.size())
+				if (no_of_cols.size() > 0)
 				{
 					// merge these two lines into columns
 					int first_h = get_char_height(page[i]);
-					int sec_h = get_char_height(page[i+1]);
+					int sec_h = get_char_height(page[i + 1]);
 					int first_y = get_y_axis(page[i]);
 					int sec_y = get_y_axis(page[i + 1]);
 
@@ -299,8 +305,9 @@ namespace ocr
 					// erase the second vector
 					page.erase(page.begin() + i + 1);
 				}
+				else
+					i++;
 			}
-			i++;
 		}
 	}
 
@@ -362,7 +369,6 @@ namespace ocr
 		for (size_t i = 0; i < textline_arr->n; i++)
 		{
 			BOX* textline = boxaGetBox(textline_arr, i, L_CLONE);
-			pixSetRGBPixel(img, textline->x, textline->y, 0, 255, 0);
 			// iterate over all symbols and add into vector those that are in the current textline
 			for (size_t j = 0; j < symbol_arr->n; j++)
 			{
@@ -403,6 +409,13 @@ namespace ocr
 		// determine whitespace for each category
 		for (int i = 0; i < font_cat.size(); i++)
 			font_cat[i].whitespace = most_common_number(font_cat[i].spaces);
+		for (int i = 0; i < font_cat.size(); i++)
+			if (font_cat[i].whitespace == img->w)
+			{
+				font_cat.erase(font_cat.begin() + i);
+				i--;
+			}
+				
 
 		// merge into words and columns
 		std::vector<std::vector<BOX*>> all_cols = {};
@@ -411,9 +424,11 @@ namespace ocr
 			for (size_t j = 0; j < font_cat[i].lines.size(); j++)
 			{
 				std::vector<BOX*> curr_words = merge_into_words(font_cat[i].lines[j], font_cat[i].whitespace);
-				//	for (size_t k = 0; k < curr_words.size(); k++)
+				//for (size_t k = 0; k < curr_words.size(); k++)
 				{
-					//	set_border(img, curr_words[k], 255, 0, 0);
+					// border around words
+					//set_border(img, curr_words[k], 255, 0, 0);
+					//std::cout << curr_words[k]->h << ":";
 				}
 
 				// determine whether the current line has columns or not
@@ -426,18 +441,16 @@ namespace ocr
 					if (word_gaps[j] >= 3 * font_cat[i].whitespace)
 					{
 						columns.push_back(column);
-						set_border(img, column, 0, 255, 0);
+						//set_border(img, column, 0, 255, 0);
 						column = curr_words[j + 1];
 					}
 					else
 						box_merge_horizontal(column, curr_words[j + 1]);
 				}
-				//if (columns.size() > 0)
-				{
-					columns.push_back(column);
-					set_border(img, column, 0, 255, 0);
-				}
-				all_cols.push_back(columns);
+				columns.push_back(column);
+				//set_border(img, column, 0, 255, 0);
+				if (columns.size() > 0)
+					all_cols.push_back(columns);
 			}
 		}
 
@@ -451,6 +464,7 @@ namespace ocr
 		{
 			for (int j = 0; j < all_cols[i].size(); j++)
 			{
+				std::cout << all_cols[i][j]->h << ":";
 				set_border(img, all_cols[i][j], 0, 0, 255);
 			}
 		}
@@ -492,7 +506,7 @@ namespace ocr
 		*/
 
 
-		std::string out = "E:/bachelor_thesis/tabularOCR/out5.jpg";
+		std::string out = "E:/bachelor_thesis/tabularOCR/out5.jpg"; // 37 lines
 		char* path = &out[0u];
 		pixWrite(path, img, IFF_PNG);
 		api->End();
