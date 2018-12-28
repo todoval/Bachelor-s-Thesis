@@ -23,6 +23,7 @@ namespace ocr
 		std::vector<int> spaces;
 	};
 
+	/*
 	struct cell
 	{
 	public:
@@ -37,7 +38,7 @@ namespace ocr
 		std::vector<std::vector<cell>> table_mat;
 		size_t row_size;
 		size_t col_size;
-	};
+	};*/
 
 
 	// sets border around the box to a given color
