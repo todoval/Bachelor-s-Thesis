@@ -76,6 +76,8 @@ namespace ocr
 
 	void initialize_font_cat(font_category & font_cat, int & ws, std::vector<int> & all_spaces, const std::vector<BOX*> & line);
 
+	bool overlap(BOX* first, BOX* second);
+
 	int centre(BOX* box);
 
 }
