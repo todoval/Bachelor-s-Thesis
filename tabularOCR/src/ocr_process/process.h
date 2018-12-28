@@ -55,7 +55,7 @@ namespace ocr
 	// returns the whitespace between words in textline
 	int get_whitespace(std::vector<int> & all_spaces, double constant);
 
-	void box_merge_horizontal(BOX* & result, BOX* & to_add);
+	void box_merge_horizontal(BOX* result, BOX* to_add);
 
 	std::vector<BOX*> merge_into_words(std::vector<BOX*> & symbols, int whitespace);
 
@@ -67,9 +67,7 @@ namespace ocr
 
 	int most_common_number(std::vector<int> & numbers);
 
-	void box_merge_vertical(BOX* & result, BOX* & to_add);
-
-	bool cols_to_tables(std::vector<BOX*> & first, std::vector<BOX*> & second);
+	void box_merge_vertical(BOX* result, BOX* to_add);
 
 	void merge_cols(std::vector<std::vector<BOX*>> & page);
 
@@ -80,5 +78,7 @@ namespace ocr
 	bool overlap(BOX* first, BOX* second);
 
 	int centre(BOX* box);
+
+	int get_y_axis(std::vector<BOX*>  & input);
 
 }
