@@ -368,7 +368,8 @@ namespace ocr
 
 	void process_image()
 	{
-		Pix *img = pixRead("E:/bachelor_thesis/tabularOCR/test_images/img/15-1.jpg");
+
+		Pix *img = pixRead("E:/bachelor_thesis/tabularOCR/test_images/img/5.jpg");
 		if (img->d == 8)
 			img = pixConvert8To32(img);
 
@@ -409,9 +410,12 @@ namespace ocr
 			}
 			int font = get_char_height(one_line);
 			fonts.push_back(font);
-			line_map.insert(std::pair<std::vector<BOX*>, int>(one_line, font));
-			all_lines.push_back(one_line);
-			one_line.clear();
+			if (one_line.size() > 0)
+			{
+				line_map.insert(std::pair<std::vector<BOX*>, int>(one_line, font));
+				all_lines.push_back(one_line);
+				one_line.clear();
+			}
 		}
 		std::sort(fonts.begin(), fonts.end());
 
@@ -497,12 +501,11 @@ namespace ocr
 			}
 		}
 
-		std::string out = "E:/bachelor_thesis/tabularOCR/out15.jpg"; 
+		std::string out = "E:/bachelor_thesis/tabularOCR/out5.jpg";
 		char* path = &out[0u];
 		pixWrite(path, img, IFF_PNG);
 		api->End();
 		pixDestroy(&img);
-
 	}
 
 }
