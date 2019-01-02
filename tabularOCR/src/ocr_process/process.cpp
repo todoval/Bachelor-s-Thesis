@@ -366,10 +366,39 @@ namespace ocr
 		font_cat.spaces.push_back(ws);
 	}
 
+	void delete_footer(std::vector<font_category> & font_cat)
+	{
+		// sort all line vectors
+		for (int i = 0; i < font_cat.size(); i++)
+			std::sort(font_cat[i].lines.begin(), font_cat[i].lines.end(),
+				[](std::vector<BOX*> & a, std::vector<BOX*> & b) { return a[0]->y < b[0]->y; });
+
+		std::sort(font_cat.begin(), font_cat.end(),
+			[](font_category & a, font_category & b) { return a.lines[a.lines.size() - 1][0]->y > b.lines[b.lines.size() - 1][0]->y; });
+
+		// the font category with the lines at the end of the page is the first category in font_cat vector
+
+		auto lines = font_cat.back().lines;
+
+		// TO-DO - calculate footer threshold by something different than a constant
+
+		int i = lines.size() - 1;
+		while (i > 0)
+		{
+			// deal with multi-line footers
+			int line_diff = get_y_axis(lines[i]) - get_y_axis(lines[i - 1]) - get_char_height(lines[i - 1]);
+			if (line_diff > FOOTER_THRESHOLD)
+				break;
+			i--;
+		}
+		if ((get_y_axis(lines[i]) - get_y_axis(lines[i - 1]) - get_char_height(lines[i - 1])) > FOOTER_THRESHOLD)
+			font_cat.back().lines.erase(font_cat.back().lines.begin()+i);
+	}
+
 	void process_image()
 	{
 
-		Pix *img = pixRead("E:/bachelor_thesis/tabularOCR/test_images/img/5.jpg");
+		Pix *img = pixRead("D:/bachelor_thesis/tabularOCR/test_images/img/5.jpg");
 		if (img->d == 8)
 			img = pixConvert8To32(img);
 
@@ -450,6 +479,8 @@ namespace ocr
 			}
 		}
 
+		delete_footer(font_cat);
+
 		// merge into words and columns
 		std::vector<std::vector<BOX*>> all_cols = {};
 		for (size_t i = 0; i < font_cat.size(); i++)
@@ -501,7 +532,7 @@ namespace ocr
 			}
 		}
 
-		std::string out = "E:/bachelor_thesis/tabularOCR/out5.jpg";
+		std::string out = "D:/bachelor_thesis/tabularOCR/out5.jpg";
 		char* path = &out[0u];
 		pixWrite(path, img, IFF_PNG);
 		api->End();
@@ -509,3 +540,13 @@ namespace ocr
 	}
 
 }
+
+/*
+TO DO:
+- determine footer threshold differently than by a constant
+- single row tables -> delete
+- preprocess multiple dots ... in an image -> delete
+- allow minor mistakes in alingments
+- full-page tables - whitespace problem, determine whitespace differently? 
+
+*/

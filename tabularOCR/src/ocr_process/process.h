@@ -12,6 +12,8 @@ namespace ocr
 
 	const size_t COL_THRESHOLD = 10;
 
+	const size_t FOOTER_THRESHOLD = 15;
+
 	const double REF_FONT_SIZE = 19;
 
 	struct font_category
@@ -70,6 +72,8 @@ namespace ocr
 	void box_merge_vertical(BOX* result, BOX* to_add);
 
 	void merge_cols(std::vector<std::vector<BOX*>> & page);
+
+	void delete_footer(std::vector<font_category> & font_cat);
 
 	bool are_in_same_col(BOX* first, BOX* second);
 
