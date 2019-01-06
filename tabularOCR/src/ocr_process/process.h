@@ -8,13 +8,11 @@
 
 #include <baseapi.h>
 #include <renderer.h>
-#include <tablefind.h>
 
 #else
 
 #include <tesseract/baseapi.h>
-#include <leptonica/renderer.h>
-#include <tesseract/tablefind.h>
+#include <tesseract/renderer.h>
 
 #endif // _WIN32
 

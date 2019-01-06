@@ -129,7 +129,7 @@ namespace preprocessing
 		case (binarization_method::NIBLACK):
 		{
 			cv::Mat dest; // has to be created because of niblack method assertions
-			cv::ximgproc::niBlackThreshold(img, dest, 255, cv::ThresholdTypes::THRESH_BINARY_INV, 11, 0);
+			//cv::ximgproc::niBlackThreshold(img, dest, 255, cv::ThresholdTypes::THRESH_BINARY_INV, 11, 0);
 			img = dest;
 			break;
 		}

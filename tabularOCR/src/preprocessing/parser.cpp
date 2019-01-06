@@ -106,7 +106,7 @@ namespace preprocessing
 			{
 				i++;
 				arg = argv[i];
-				while (i < argc && arg[0] != '-' && process_denoise_arg(std::string(arg), result))
+				while (i < argc && arg[0] != '-' && process_denoise_arg(arg, result))
 				{
 					i++;
 					arg = argv[i];
@@ -116,7 +116,7 @@ namespace preprocessing
 			{
 				i++;
 				arg = argv[i];
-				while (i < argc && arg[0] != '-' && process_greyscale_arg(std::string(arg), result))
+				while (i < argc && arg[0] != '-' && process_greyscale_arg(arg, result))
 				{
 					i++;
 					arg = argv[i];
@@ -126,7 +126,7 @@ namespace preprocessing
 			{
 				i++;
 				arg = argv[i];
-				while (i < argc && arg[0] != '-' && process_binar_arg(std::string(arg), result))
+				while (i < argc && arg[0] != '-' && process_binar_arg(arg, result))
 				{
 					i++;
 					arg = argv[i];

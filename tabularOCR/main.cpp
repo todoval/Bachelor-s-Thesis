@@ -1,15 +1,15 @@
 #include <memory>
-#include <filesystem>
+#include <experimental/filesystem>
 
 #include "src/preprocessing/preprocess.h"
 #include "src/ocr_process/process.h"
 
-std::vector<std::string> getFilenamesRecursive(const std::string& directory) {
+std::vector<std::string> get_filenames(const std::string& directory) {
 	std::vector<std::string> retVal;
-	std::tr2::sys::path path(directory);
-	for (auto it = std::tr2::sys::recursive_directory_iterator(path);
-		it != std::tr2::sys::recursive_directory_iterator(); ++it) {
-		retVal.push_back(it->path().generic_string());
+	std::experimental::filesystem::path path(directory);
+	for (auto it : std::experimental::filesystem::directory_iterator(path))
+	{
+		retVal.push_back(it.path().generic_string());
 	}
 	return retVal;
 }
@@ -27,14 +27,14 @@ int main(int argc, char* argv[]) {
 		std::pair<std::string, cv::Mat> k = iter;*/
 		//ocr::process_image(k);
 	//}
-	
+
 	std::experimental::filesystem::create_directory("results");
 
 	// check for directory
 	std::vector<std::string> inputs;
 	if (argc == 2 && std::experimental::filesystem::is_directory(argv[1]))
 	{
-		inputs = getFilenamesRecursive(argv[1]);
+		inputs = get_filenames(argv[1]);
 		int i = 0;
 		while (i < inputs.size())
 		{

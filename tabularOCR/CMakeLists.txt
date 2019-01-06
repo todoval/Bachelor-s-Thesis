@@ -16,7 +16,7 @@ if (MSVC)
 else()
     #on unix, install the following libraries:
     #libleptonica-dev libtesseract-dev libopencv-dev
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
     find_package(PkgConfig)
     pkg_check_modules(lept REQUIRED lept)
     pkg_check_modules(opencv REQUIRED opencv)
@@ -44,5 +44,5 @@ if (MSVC)
  	  pvt.cppan.demo.intel.opencv.photo
     )
 else()
-    target_link_libraries(tabularOCR opencv_ml opencv_imgproc lept tesseract)
+    target_link_libraries(tabularOCR opencv_ml opencv_imgproc lept tesseract opencv_photo opencv_core opencv_imgcodecs opencv_highgui stdc++fs)
 endif()
