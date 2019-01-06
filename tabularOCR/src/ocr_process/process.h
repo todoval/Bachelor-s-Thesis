@@ -2,10 +2,23 @@
 #include "opencv2/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "../preprocessing/preprocess.h"
+#include <algorithm> 
+
+#ifdef _WIN32
+
 #include <baseapi.h>
 #include <renderer.h>
 #include <tablefind.h>
-#include <algorithm> 
+
+#else
+
+#include <tesseract/baseapi.h>
+#include <leptonica/renderer.h>
+#include <tesseract/tablefind.h>
+
+#endif // _WIN32
+
+
 
 namespace ocr
 {

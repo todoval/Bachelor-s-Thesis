@@ -1,7 +1,4 @@
 #include <memory>
-
-#include <baseapi.h>
-#include <renderer.h>
 #include <direct.h>
 #include <filesystem>
 
