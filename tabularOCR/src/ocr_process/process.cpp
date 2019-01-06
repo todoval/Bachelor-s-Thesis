@@ -2,6 +2,14 @@
 
 namespace ocr
 {
+
+	std::string get_filename(const std::string & input_path)
+	{
+		int start = input_path.find_last_of("/\\");
+		int end = input_path.find_last_of(".");
+		return input_path.substr(start + 1, end - start - 1);
+	}
+
 	void set_border(PIX* img, BOX *box, int r, int g, int b)
 	{
 		for (int i = 0; i < box->w; i++)
@@ -253,6 +261,13 @@ namespace ocr
 			/*&& diff_h*/);
 	}
 
+	int get_width_of_col(BOX* first, BOX* second)
+	{
+		int first_part = abs(first->x - second->x);
+		int sec_part = std::max(first->x + first->w, second->x + second->w) - std::max(first->x, second->x);
+		return first_part + sec_part;
+	}
+
 	void merge_cols(std::vector<std::vector<BOX*>> & page)
 	{
 		int i = 0;
@@ -323,7 +338,7 @@ namespace ocr
 						{
 							int sec_index = no_of_cols[j];
 							page[i][j]->x = std::min(page[i][j]->x, page[i + 1][sec_index]->x);
-							page[i][j]->w = std::max(page[i][j]->w, page[i + 1][sec_index]->w);
+							page[i][j]->w = get_width_of_col(page[i][j], page[i + 1][sec_index]);
 						}
 						page[i][j]->h = height;
 						page[i][j]->y = y;
@@ -340,7 +355,7 @@ namespace ocr
 						{
 							int sec_index = no_of_cols[j];
 							page[i+1][j]->x = std::min(page[i][sec_index]->x, page[i + 1][j]->x);
-							page[i+1][j]->w = std::max(page[i][sec_index]->w, page[i + 1][j]->w);
+							page[i+1][j]->w = get_width_of_col(page[i+1][j], page[i][sec_index]);
 						}
 						page[i+1][j]->h = height;
 						page[i+1][j]->y = y;
@@ -368,15 +383,15 @@ namespace ocr
 
 	void delete_footer(std::vector<font_category> & font_cat)
 	{
-		// sort all line vectors
+		// sort all line vectors by their y coordinate
 		for (int i = 0; i < font_cat.size(); i++)
 			std::sort(font_cat[i].lines.begin(), font_cat[i].lines.end(),
 				[](std::vector<BOX*> & a, std::vector<BOX*> & b) { return a[0]->y < b[0]->y; });
 
 		std::sort(font_cat.begin(), font_cat.end(),
-			[](font_category & a, font_category & b) { return a.lines[a.lines.size() - 1][0]->y > b.lines[b.lines.size() - 1][0]->y; });
+			[](font_category & a, font_category & b) { return a.lines[a.lines.size() - 1][0]->y < b.lines[b.lines.size() - 1][0]->y; });
 
-		// the font category with the lines at the end of the page is the first category in font_cat vector
+		// the font category with the lines at the end of the page is the last category in font_cat vector
 
 		auto lines = font_cat.back().lines;
 
@@ -391,14 +406,28 @@ namespace ocr
 				break;
 			i--;
 		}
-		if ((get_y_axis(lines[i]) - get_y_axis(lines[i - 1]) - get_char_height(lines[i - 1])) > FOOTER_THRESHOLD)
+
+		// get the last line before the footer, as it does not have to be in the same font category
+		
+		auto last_line = font_cat[0].lines.back();
+		if (i > 0)
+			last_line = lines[i-1];
+		for (int j = 1; j < font_cat.size()-1; j++)
+		{
+			if (font_cat[j].lines.back()[0]->y > last_line[0]->y)
+				last_line = font_cat[j].lines.back();
+		}
+
+		if ((get_y_axis(lines[i]) - get_y_axis(last_line) - get_char_height(last_line)) > FOOTER_THRESHOLD)
 			font_cat.back().lines.erase(font_cat.back().lines.begin()+i);
 	}
 
-	void process_image()
+	void process_image(char* filename)
 	{
 
-		Pix *img = pixRead("D:/bachelor_thesis/tabularOCR/test_images/img/5.jpg");
+		//Pix *img = pixRead("D:/bachelor_thesis/tabularOCR/test_images/img/23-1.jpg");
+
+		Pix *img = pixRead(filename);
 		if (img->d == 8)
 			img = pixConvert8To32(img);
 
@@ -471,14 +500,33 @@ namespace ocr
 			
 		for (int i = 0; i < font_cat.size(); i++)
 		{
+			if (font_cat[i].lines.size() == 0 || font_cat[i].spaces.size() == 0)
+			{
+				font_cat.erase(font_cat.begin() + i);
+				i--;
+				continue;
+			}
 			font_cat[i].whitespace = most_common_number(font_cat[i].spaces);
-			if (font_cat[i].whitespace == img->w)
+			if (font_cat[i].whitespace == img->w || font_cat[i].whitespace == 0)
 			{
 				font_cat.erase(font_cat.begin() + i);
 				i--;
 			}
 		}
 
+		// happens with image 147 - TO DO - probably a weird determination of tesseract symbols
+		if (font_cat.size() == 0)
+		{
+			std::cout << "An unknown error has occured. Sorry.";
+			return;
+		}
+
+
+		/* 
+		delete footer could probably be implemented before determination of font categories
+		pros - simpler, less time consuming function, only one iteration
+		cons - multiline footers
+		*/
 		delete_footer(font_cat);
 
 		// merge into words and columns
@@ -518,7 +566,13 @@ namespace ocr
 		}
 
 		std::sort(all_cols.begin(), all_cols.end(),
-			[](std::vector<BOX*> & a, std::vector<BOX*> & b) { return a[0]->y < b[0]->y; });
+			[](std::vector<BOX*> & a, std::vector<BOX*> & b) { 
+			if (a[0]->y == b[0]->y && a.size() == b.size())
+				return a[0]->x < b[0]->x;
+			if (a[0]->y == b[0]->y)
+				return a.size() < b.size();
+			return a[0]->y < b[0]->y; 
+		});
 
 		// merge columns into tables
 
@@ -532,7 +586,8 @@ namespace ocr
 			}
 		}
 
-		std::string out = "D:/bachelor_thesis/tabularOCR/out5.jpg";
+		std::string out = "results/" + get_filename(filename)+ "bin.jpg";
+
 		char* path = &out[0u];
 		pixWrite(path, img, IFF_PNG);
 		api->End();

@@ -12,7 +12,7 @@ namespace ocr
 
 	const size_t COL_THRESHOLD = 10;
 
-	const size_t FOOTER_THRESHOLD = 15;
+	const int FOOTER_THRESHOLD = 15;
 
 	const double REF_FONT_SIZE = 19;
 
@@ -46,9 +46,11 @@ namespace ocr
 	// sets border around the box to a given color
 	void set_border(PIX* img, BOX *box, int r, int g, int b);
 
+	std::string get_filename(const std::string & input_path);
+
 	Pix *matToPix(cv::Mat *mat);
 
-	void process_image();
+	void process_image(char* filename);
 
 	bool is_symbol_in_textline(BOX* symbol, BOX* textline);
 	
@@ -68,6 +70,8 @@ namespace ocr
 	double get_multi_factor(int space_width, double constant);
 
 	int most_common_number(std::vector<int> & numbers);
+
+	int get_width_of_col(BOX* first, BOX* second);
 
 	void box_merge_vertical(BOX* result, BOX* to_add);
 
