@@ -1,5 +1,4 @@
 #include <memory>
-#include <direct.h>
 #include <filesystem>
 
 #include "src/preprocessing/preprocess.h"
@@ -29,7 +28,7 @@ int main(int argc, char* argv[]) {
 		//ocr::process_image(k);
 	//}
 	
-	mkdir("results");
+	std::experimental::filesystem::create_directory("results");
 
 	// check for directory
 	std::vector<std::string> inputs;
