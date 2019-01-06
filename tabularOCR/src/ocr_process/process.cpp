@@ -586,7 +586,7 @@ namespace ocr
 			}
 		}
 
-		std::string out = "results/" + get_filename(filename)+ ".jpg";
+		std::string out = "results/" + get_filename(filename)+ ".png";
 
 		char* path = &out[0u];
 		pixWrite(path, img, IFF_PNG);
