@@ -2,15 +2,25 @@
 
 namespace ocr
 {
-
-	std::string get_filename(const std::string & input_path)
+	page::page()
 	{
-		int start = input_path.find_last_of("/\\");
-		int end = input_path.find_last_of(".");
-		return input_path.substr(start + 1, end - start - 1);
+		img = pixRead("D:/bachelor_thesis/tabularOCR/test_images/img/5-1.jpg");
+		page(img);
 	}
 
-	void set_border(PIX* img, BOX *box, int r, int g, int b)
+	page::page(const std::string & filename)
+	{
+		img = pixRead(filename.c_str());
+		// itialize tesseract api without the use of LSTM
+		api = new tesseract::TessBaseAPI();
+		if (img->d == 8)
+			img = pixConvert8To32(img);
+		init_api(img);
+		textlines = {};
+		all_tables = {};
+	}
+
+	void page::set_border(BOX *box, int r, int g, int b)
 	{
 		for (int i = 0; i < box->w; i++)
 		{
@@ -24,30 +34,20 @@ namespace ocr
 		}
 	}
 
-	Pix *matToPix(cv::Mat *mat)
+	bool page::is_symbol_in_textline(BOX* symbol, BOX* textline)
 	{
-		Pix *pixd = pixCreate(mat->size().width, mat->size().height, 32);
-		for (int y = 0; y < mat->rows; y++) {
-			for (int x = 0; x < mat->cols; x++) {
-				pixSetPixel(pixd, x, y, (l_uint32)mat->at<uchar>(y, x));
-			}
-		}
-		return pixd;
-	}
-
-	bool is_symbol_in_textline(BOX* symbol, BOX* textline)
-	{
-		return (symbol->x <= textline->x + textline->w 
-			&& symbol->x >= textline->x 
-			&& symbol->y >= textline->y 
+		return (symbol->x <= textline->x + textline->w
+			&& symbol->x >= textline->x
+			&& symbol->y >= textline->y
 			&& symbol->y <= textline->y + textline->h);
 	}
 
-	std::vector<int> get_spaces(const std::vector<BOX*> & symbols)
+	std::vector<int> page::get_spaces(const line & symbols)
 	{
 		std::vector <int> result;
 		// iterate over all symbols and return the whitespaces between them
-		for (int i = 0; i < symbols.size() - 1; i++)
+		auto size = static_cast<int> (symbols.size() - 1);
+		for (int i = 0; i < size; i++)
 		{
 			BOX* first = symbols[i];
 			BOX* second = symbols[i + 1];
@@ -57,30 +57,77 @@ namespace ocr
 		return result;
 	}
 
-	int get_whitespace(std::vector<int> & all_spaces, double constant)
+	int page::get_whitespace(std::vector<int> & all_spaces, double constant)
 	{
 		std::sort(all_spaces.begin(), all_spaces.end());
 		// heuristical estimation of the space
-		int i = 0;
-		while (i < all_spaces.size() && all_spaces[i] < constant)
-			i++;
-		while (i < all_spaces.size() - 1)
+
+		// find greatest element that is smaller than constant
+		auto it = all_spaces.begin();
+		for (it = all_spaces.begin(); it != all_spaces.end(); it++)
 		{
-			double multi_factor = get_multi_factor(all_spaces[i], constant);
-			if (all_spaces[i + 1] >= multi_factor * all_spaces[i])
-			{
-				i++;
+			if (*it > constant)
 				break;
-			}
-			i++;
 		}
-		int ws = 0;
-		if (i < all_spaces.size())
-			ws = all_spaces[i];
-		return ws;
+
+		if (it == all_spaces.end())
+		{
+			if (all_spaces.empty())
+				return 0;
+			return all_spaces.back();
+		}
+
+		for (it; it != all_spaces.end()-1; it++)
+		{
+			double multi_factor = get_multi_factor(*it, constant);
+			auto k = *std::next(it);
+			if (*std::next(it) >= multi_factor * *it)
+				break;
+		}
+		if (it != all_spaces.end())
+			return *it;
+		return 0;
 	}
 
-	void box_merge_vertical(BOX* result, BOX* to_add)
+	line page::merge_lines(line & first, line & second, std::map<int, int>& no_of_cols)
+	{
+		line result;
+
+		// get resulting heights and y-axis of the resulting line
+
+		int first_h = get_char_height(first, img->w);
+		int sec_h = get_char_height(second, img->w);
+		int first_y = get_y_axis(first);
+		int sec_y = get_y_axis(second);
+
+		// calculate the y axis and height of all the boxes
+
+		int y = first_y;
+		int height = sec_h + sec_y - first_y;
+
+		// go over the first vector and either add from map or at only this box into the new vector
+		for (size_t i = 0; i < first.size(); i++)
+		{
+			BOX* new_col = first[i];
+			new_col->h = height;
+			new_col->y = y;
+			if (no_of_cols.find(i) != no_of_cols.end())
+			{
+				int sec_index = no_of_cols[i];
+				new_col->x = std::min(first[i]->x, second[sec_index]->x);
+				new_col->w = get_width_of_col(first[i], second[sec_index]);
+			}
+			else
+			{
+				new_col->x = first[i]->x;
+				new_col->w = first[i]->w;
+			}
+			result.push_back(new_col);
+		}
+		return result;
+	}
+
+	void page::box_merge_vertical(BOX* result, BOX* to_add)
 	{
 		if (result == nullptr)
 			result = to_add;
@@ -93,7 +140,7 @@ namespace ocr
 		}
 	}
 
-	void box_merge_horizontal(BOX* result, BOX* to_add)
+	void page::box_merge_horizontal(BOX* result, BOX* to_add)
 	{
 		if (result == nullptr)
 			result = to_add;
@@ -105,206 +152,210 @@ namespace ocr
 		}
 	}
 
-	std::vector<BOX*> merge_into_words(std::vector<BOX*> & symbols, int whitespace)
+	std::vector<BOX*> page::merge_into_words(std::vector<BOX*> & symbols, int whitespace)
 	{
 		std::sort(symbols.begin(), symbols.end(),
 			[](BOX* & a, BOX* & b) { return a->x < b->x; });
 
 		std::vector<BOX*> result = {};
-		BOX* word = symbols[0];
+		auto word = boxCopy(symbols[0]);
 		for (size_t i = 0; i < symbols.size() - 1; i++)
 		{
-			if (symbols[i]->x + symbols[i]->w + whitespace > symbols[i + 1]->x)
+			if (symbols[i]->x + symbols[i]->w + whitespace >= symbols[i + 1]->x)
 				box_merge_horizontal(word, symbols[i + 1]);
 			else
 			{
 				result.push_back(word);
-				word = symbols[i + 1];
+				word = boxCopy(symbols[i + 1]);
 			}
 		}
 		result.push_back(word);
 		return result;
 	}
 
-	int get_char_height(std::vector<BOX*> & symbols)
+	std::vector<BOX*> page::merge_into_columns(std::vector<BOX*> & words, int whitespace)
 	{
-		int height = 0;
-		for (int i = 0; i < symbols.size(); i++)
-			height = std::max(height, symbols[i]->h);
-		return height;
-	}
-
-	double get_multi_factor(int space_width, double constant)
-	{
-		double x = space_width / constant;
-		if (x >= 4)
-			return 1.5;
-		if (x < 4 && x >= 3)
-			return ((4 - x)* 0.1 + 1.5);
-		if (x < 3 && x >= 2)
-			return ((3 - x) * 0.4 + 1.6);
-		if (x < 2 && x >= 1)
-			return (4 - x);
-		return 0;
-	}
-
-	int most_common_number(std::vector<int> & numbers)
-	{
-		std::sort(numbers.begin(), numbers.end());
-
-		int res_no = 0;
-		int curr_no = numbers[0];
-		int curr_count = 1;
-		int res_count = 0;
-		for (size_t i = 1; i < numbers.size(); i++)
+		std::vector<int> word_gaps = get_spaces(words);
+		std::vector<BOX*> columns = {};
+		BOX* column = words[0];
+		for (size_t j = 0; j < word_gaps.size(); j++)
 		{
-			if (numbers[i] == curr_no)
-				curr_count++;
+			if (word_gaps[j] >= 4.1 * whitespace)
+			{
+				columns.push_back(column);
+				column = words[j + 1];
+			}
+			else
+				box_merge_horizontal(column, words[j + 1]);
+		}
+		columns.push_back(column);
+		return columns;
+	}
+
+	void page::process_cat_and_init(int & cat_font, std::vector<textline *> & cat_lines, int & first_val,
+		std::multimap<int, textline * >::iterator it)
+	{
+		process_category(cat_font, cat_lines, first_val);
+
+		// next category initialization
+
+		first_val = it->first;
+		cat_font = first_val;
+		cat_lines = { it->second };
+	}
+
+	void page::process_category(int & cat_font, std::vector<textline *> & cat_lines, int & first_val)
+	{
+		// calculate the font for current category
+		cat_font /= cat_lines.size();
+
+		//determine whitespace
+
+		double constant = cat_font / REF_FONT_SIZE;
+		std::vector<int> cat_spaces;
+		for (auto line : cat_lines)
+		{
+			auto spaces = get_spaces(line->symbols);
+			int whitespace = get_whitespace(spaces, constant);
+			if (whitespace != img->w && whitespace != 0)
+				cat_spaces.push_back(whitespace);
+
+		}
+		int cat_ws = most_common_number(cat_spaces); // category whitespace
+		for (auto line : cat_lines)
+		{
+			if (line->symbols.size() <= 1)
+				line->whitespace = 0;
 			else
 			{
-				if (res_count < curr_count)
-				{
-					res_count = curr_count;
-					res_no = curr_no;
-				}
-				curr_no = numbers[i];
-				curr_count = 1;
+				line->whitespace = cat_ws;
+				std::vector<BOX*> words = merge_into_words(line->symbols, line->whitespace);
+				line->columns = merge_into_columns(words, line->whitespace);
+				for (int i = 0; i < line->columns.size(); i++)
+					if (line->symbols.size() != 307);
+				//	set_border(line->columns[i], 0,0,255);
 			}
 		}
-		if (res_count < curr_count)
-			res_no = curr_no;
-		return res_no;
 	}
 
-	std::vector<font_category> get_font_categories(std::vector<int> & fonts)
+	void page::determine_columns(std::multimap<int, textline * > & fonts)
 	{
-		fonts.erase(std::unique(fonts.begin(), fonts.end()), fonts.end());
+		// constants that will be used to determine whitespaces
 		int difference = 4;
 		int k = 1;
-		std::vector<font_category> categories = {};
-		int first_val = fonts[0];
-		std::vector<int> one_cat = { first_val };
-		int i = 1;
 
-		while (i < fonts.size())
+		// iterate over all the lines and create font categories - categories of lines with the same font
+		int first_val = fonts.begin()->first;
+
+		// initialize first category
+		int cat_font = first_val; // the font if the current category
+		std::vector<textline *> cat_lines =  { fonts.begin()->second }; // all the lines that are in the current category
+		auto it = std::next(fonts.begin());
+		for (it; it != fonts.end(); ++it)
 		{
-			while (i < fonts.size() && fonts[i] < 10 * k && fonts[i - 1] + difference > fonts[i] && first_val + difference >= fonts[i])
-			{
-				one_cat.push_back(fonts[i]);
-				i++;
-			}
-			if (i == fonts.size())
-				break;
-			else if (fonts[i] >= 10 * k)
+			while (it->first >= 10 * k)
 			{
 				k++;
 				difference++;
 			}
-			else
+			// add an element to the current category
+			if (first_val + difference >= it->first)
 			{
-				int sum = 0;
-				for (size_t j = 0; j < one_cat.size(); j++) // mby median?
-					sum += one_cat[j];
-				font_category new_cat;
-				new_cat.font = sum / one_cat.size();
-				new_cat.lines = {};
-				new_cat.whitespace = 0;
-				new_cat.spaces = {};
-				categories.push_back(new_cat);
-				one_cat.clear();
-				first_val = fonts[i];
-				one_cat.push_back(first_val);
-				i++;
+				cat_font += it->first;
+				cat_lines.push_back(it->second);
+			}
+			else // process current category
+			{
+				process_cat_and_init(cat_font, cat_lines, first_val, it);
 			}
 		}
-		int sum = 0;
-		for (size_t j = 0; j < one_cat.size(); j++) //mby median?
-			sum += one_cat[j];
-		font_category new_cat;
-		new_cat.font = sum / one_cat.size();
-		new_cat.lines = {};
-		new_cat.whitespace = 0;
-		new_cat.spaces = {};
-		categories.push_back(new_cat);
-		return categories;
+		process_category(cat_font, cat_lines, first_val);
 	}
 
-	int centre(BOX* box)
+	void page::create_table(table & curr_table, std::vector<BOX*> & merged_cols)
 	{
-		return (box->x + box->w / 2);
-	}
-
-	int get_y_axis(std::vector<BOX*>  & input)
-	{
-		int y = input[0]->y;
-		for (int i = 1; i < input.size(); i++)
-			y = std::min(y, input[i]->y);
-		return y;
-	}
-
-	bool overlap(BOX* first, BOX* second)
-	{
-		return ((second->x < first->x + first->w && second->x > first->x)
-				|| (first->x < second->x + second->w && first->x > second->x));
-	}
-
-	bool are_in_same_col(BOX* first, BOX* second)
-	{
-		bool diff_h; 
-		if (first->y < second->y)
-			diff_h = second->y - first->y - first->h < std::min(first->h, second->h);
-		else
-			diff_h = first->y - second->y - second->h < std::min(first->h, second->h);
-		return ((abs(first->x - second->x) <= COL_THRESHOLD
-			|| abs(first->x + first->w - (second->x + second->w)) <= COL_THRESHOLD
-			|| abs(centre(first) - centre(second)) <= COL_THRESHOLD * 5)
-			/*&& diff_h*/);
-	}
-
-	int get_width_of_col(BOX* first, BOX* second)
-	{
-		int first_part = abs(first->x - second->x);
-		int sec_part = std::max(first->x + first->w, second->x + second->w) - std::max(first->x, second->x);
-		return first_part + sec_part;
-	}
-
-	void merge_cols(std::vector<std::vector<BOX*>> & page)
-	{
-		int i = 0;
-		bool find_cols = false;
-		while (i < page.size() - 1)
+		if (!curr_table.textlines.empty())
 		{
-			find_cols = true;
-			// first vector is the one that has the most elements
-			std::vector<BOX*> first = page[i + 1];
-			std::vector<BOX*> second = page[i];
-			if (page[i].size() > page[i + 1].size())
-			{
-				first = page[i];
-				second = page[i + 1];
-			}
+			// TO DO - create a real table
+			curr_table.rows = curr_table.textlines.size();
+			curr_table.cols = merged_cols.size();
+			curr_table.column_repres = merged_cols;
+			curr_table.table_repres = merge_to_table(merged_cols);
+
+			all_tables.push_back(curr_table);
+
+			curr_table = {};
+			merged_cols = {};
+		}
+	}
+
+	std::vector<table> page::merge_cols(std::vector<textline> & page)
+	{
+		// the resulting vector of all tables in adequate structure
+		// vector of textlines that represent one table merged only by columns
+		std::vector<BOX*> merged_cols;
+		table curr_table;
+		for (size_t i = 0; i < page.size() - 1; i++)
+		{
+			// check two lines that are under each other whether they are in the same table
+			std::vector<BOX*> first = page[i].columns;
+			if (!merged_cols.empty())
+				first = merged_cols;
+			std::vector<BOX*> second = page[i + 1].columns;
 			// map for saving all the indexes of columns for further merging
 			std::map<int, int> no_of_cols;
-			int iter_one = 0;
-			int iter_two = 0;
-			while (iter_one < first.size() && iter_two < second.size())
+			// iterators used for iterating over first and second line
+			size_t iter_one = 0;
+			size_t iter_two = 0;
+
+			// cycle that iterates over columns of the two lines
+			while (true)
 			{
-				while (iter_one < first.size() && iter_two < second.size() && !are_in_same_col(first[iter_one], second[iter_two]))
-					iter_one++;
-				if (first.size() == iter_one)
+				// end of cycle
+				if (iter_one >= first.size() || iter_two >= second.size())
+				{
+					// if at least one pair is found, merge
+					if (no_of_cols.size() > 0)
+					{
+						if (curr_table.textlines.empty())
+							curr_table.textlines.push_back(&page[i]);
+						curr_table.textlines.push_back(&page[i + 1]);
+						if (merged_cols.empty())
+							merged_cols = merge_lines(page[i].columns, page[i + 1].columns, no_of_cols);
+						else merged_cols = merge_lines(merged_cols, page[i + 1].columns, no_of_cols);
+					}
+					// if there was no match but a table already exists
+					else
+						create_table(curr_table, merged_cols);
 					break;
+				}
+
+				// get to the same column in both lines
+				if (is_most_left(first[iter_one], second[iter_two])
+					&& !are_in_same_col(first[iter_one], second[iter_two]))
+				{
+					iter_one++;
+					continue;
+				}
+				if (is_most_left(second[iter_two], first[iter_one])
+					&& !are_in_same_col(first[iter_one], second[iter_two]))
+				{
+					iter_two++;
+					continue;
+				}
+
+				// both are in the same column
 
 				// check whether the chosen columns don't overlap with anything else
-
 				bool to_merge = true;
-				for (int k = 0; k < first.size(); k++)
+				for (size_t k = 0; k < first.size(); k++)
 				{
 					if (k == iter_one)
 						continue;
 					if (overlap(first[k], second[iter_two]))
 						to_merge = false;
 				}
-				for (int k = 0; k < second.size(); k++)
+				for (size_t k = 0; k < second.size(); k++)
 				{
 					if (k == iter_two)
 						continue;
@@ -312,127 +363,47 @@ namespace ocr
 						to_merge = false;
 				}
 
+				// if they don't, merge these two columns
 				if (to_merge)
 					no_of_cols.insert(std::pair<int, int>(iter_one, iter_two));
+				else
+				{
+					// not going to merge but table may already exist
+					create_table(curr_table, merged_cols);
+					no_of_cols.clear();
+					break;
+				}
 				iter_two++;
 				iter_one++;
 			}
-			if (no_of_cols.size() > 0)
-			{
-				// merge these two lines into columns
-				int first_h = get_char_height(page[i]);
-				int sec_h = get_char_height(page[i + 1]);
-				int first_y = get_y_axis(page[i]);
-				int sec_y = get_y_axis(page[i + 1]);
 
-				// calculate the y axis and height of all the boxes
-
-				int y = first_y;
-				int height = sec_h + sec_y - first_y;
-
-				if (first == page[i])
-				{
-					for (int j = 0; j < page[i].size(); j++)
-					{
-						if (no_of_cols.find(j) != no_of_cols.end())
-						{
-							int sec_index = no_of_cols[j];
-							page[i][j]->x = std::min(page[i][j]->x, page[i + 1][sec_index]->x);
-							page[i][j]->w = get_width_of_col(page[i][j], page[i + 1][sec_index]);
-						}
-						page[i][j]->h = height;
-						page[i][j]->y = y;
-					}
-
-					// erase the second vector
-					page.erase(page.begin() + i + 1);
-				}
-				else
-				{
-					for (int j = 0; j < page[i+1].size(); j++)
-					{
-						if (no_of_cols.find(j) != no_of_cols.end())
-						{
-							int sec_index = no_of_cols[j];
-							page[i+1][j]->x = std::min(page[i][sec_index]->x, page[i + 1][j]->x);
-							page[i+1][j]->w = get_width_of_col(page[i+1][j], page[i][sec_index]);
-						}
-						page[i+1][j]->h = height;
-						page[i+1][j]->y = y;
-					}
-
-					// erase the first vector
-					page.erase(page.begin() + i);
-				}
-
-
-			}
-			else
-				i++;
 		}
+		return all_tables;
 	}
 
-	void initialize_font_cat(font_category & font_cat, int & ws, std::vector<int> & all_spaces, const std::vector<BOX*> & line)
+	table::table()
 	{
-		double constant = font_cat.font / REF_FONT_SIZE;
-		if (all_spaces.size() != 0)
-			ws = get_whitespace(all_spaces, constant);
-		font_cat.lines.push_back(line);
-		font_cat.spaces.push_back(ws);
 	}
 
-	void delete_footer(std::vector<font_category> & font_cat)
+	void page::delete_footer()
 	{
-		// sort all line vectors by their y coordinate
-		for (int i = 0; i < font_cat.size(); i++)
-			std::sort(font_cat[i].lines.begin(), font_cat[i].lines.end(),
-				[](std::vector<BOX*> & a, std::vector<BOX*> & b) { return a[0]->y < b[0]->y; });
-
-		std::sort(font_cat.begin(), font_cat.end(),
-			[](font_category & a, font_category & b) { return a.lines[a.lines.size() - 1][0]->y < b.lines[b.lines.size() - 1][0]->y; });
-
-		// the font category with the lines at the end of the page is the last category in font_cat vector
-
-		auto lines = font_cat.back().lines;
-
 		// TO-DO - calculate footer threshold by something different than a constant
+		
+		// the last element in the textline vector will be the one that is in the footer
 
-		int i = lines.size() - 1;
-		while (i > 0)
+		// deal with multi-line footers
+		std::vector<textline>::reverse_iterator it;
+		for (it = textlines.rbegin(); it != textlines.rend()-1; it++)
 		{
-			// deal with multi-line footers
-			int line_diff = get_y_axis(lines[i]) - get_y_axis(lines[i - 1]) - get_char_height(lines[i - 1]);
+			int line_diff = get_y_axis(it->columns) - get_y_axis(std::next(it)->columns) - get_char_height(std::next(it)->columns, img->w);
 			if (line_diff > FOOTER_THRESHOLD)
 				break;
-			i--;
 		}
-
-		// get the last line before the footer, as it does not have to be in the same font category
-		
-		auto last_line = font_cat[0].lines.back();
-		if (i > 0)
-			last_line = lines[i-1];
-		for (int j = 1; j < font_cat.size()-1; j++)
-		{
-			if (font_cat[j].lines.back()[0]->y > last_line[0]->y)
-				last_line = font_cat[j].lines.back();
-		}
-
-		if ((get_y_axis(lines[i]) - get_y_axis(last_line) - get_char_height(last_line)) > FOOTER_THRESHOLD)
-			font_cat.back().lines.erase(font_cat.back().lines.begin()+i);
+		textlines.erase(it.base(), textlines.end());
 	}
 
-	void process_image(char* filename)
+	void page::init_api(Pix *img)
 	{
-
-		//Pix *img = pixRead("D:/bachelor_thesis/tabularOCR/test_images/img/23-1.jpg");
-
-		Pix *img = pixRead(filename);
-		if (img->d == 8)
-			img = pixConvert8To32(img);
-
-		// itialize tesseract api without the use of LSTM
-		tesseract::TessBaseAPI *api = new tesseract::TessBaseAPI();
 		if (api->Init(NULL, "eng", tesseract::OcrEngineMode::OEM_TESSERACT_ONLY))
 		{
 			fprintf(stderr, "Could not initialize tesseract.\n");
@@ -444,154 +415,120 @@ namespace ocr
 		api->SetVariable("textord_tabfind_find_tables", "true");
 		api->SetVariable("textord_tablefind_recognize_tables", "true");
 		api->Recognize(0);
+	}
 
+	textline::textline()
+	{
+		symbols = {};
+		columns = {};
+	}
+
+	std::multimap<int, textline *> page::init_textlines()
+	{
 		// array of symbols that exist in the image
 		Boxa * symbol_arr = api->GetComponentImages(tesseract::RIL_SYMBOL, false, NULL, NULL);
 		// array of textlines that exist in the image
 		Boxa * textline_arr = api->GetComponentImages(tesseract::RIL_TEXTLINE, false, NULL, NULL);
 
-		std::vector <std::vector<BOX*>> all_lines = {};
-		std::vector<int> fonts = {};
-		// mapping line -> font category
-		std::map <std::vector<BOX*>, int> line_map;
-		// iterate over textlines and symbols to find all symbols in current textline
-		std::vector<BOX*> one_line = {};
+		// sort textline array 
+		std::sort(textline_arr->box, textline_arr->box,
+			[](BOX* & a, BOX* & b) { return a->y < b->y; });
+
+		BOX* curr_line;
+		BOX* curr_symbol;
+		textline line;
+		textlines = std::vector<textline> (textline_arr->n);
+
+		std::multimap<int, textline*> fonts;
+
+		// iterate over textlines and symbols and initialize all textlines with symbols that belong to them
+
 		for (size_t i = 0; i < textline_arr->n; i++)
 		{
-			BOX* textline = boxaGetBox(textline_arr, i, L_CLONE);
-			// iterate over all symbols and add into vector those that are in the current textline
+			curr_line = textline_arr->box[i];
 			for (size_t j = 0; j < symbol_arr->n; j++)
 			{
-				BOX* symbol = boxaGetBox(symbol_arr, j, L_CLONE);
-				if (is_symbol_in_textline(symbol, textline))
-					one_line.push_back(symbol);
+				curr_symbol = symbol_arr->box[j];
+				if (is_symbol_in_textline(curr_symbol, curr_line)/* && curr_symbol->w < (img->w / 2) && curr_symbol->w > 5*/ )
+					line.symbols.push_back(curr_symbol);
 			}
-			int font = get_char_height(one_line);
-			fonts.push_back(font);
-			if (one_line.size() > 0)
-			{
-				line_map.insert(std::pair<std::vector<BOX*>, int>(one_line, font));
-				all_lines.push_back(one_line);
-				one_line.clear();
-			}
+			textlines[i] = line;
+			int height = get_char_height(line.symbols, img->w);
+			textlines[i].font = height;
+			fonts.insert({ height, &textlines[i] });
+			line = textline();
 		}
-		std::sort(fonts.begin(), fonts.end());
+		return fonts;
+	}
 
-		std::vector<font_category> font_cat = get_font_categories(fonts);
-
-		// determine font category and add all the necessary spaces
-		for (auto line : line_map)
+	void page::delete_unusual_lines()
+	{
+		while (true)
 		{
-			int ws = img->w;
-			std::vector<int> all_spaces = get_spaces(line.first);
-			int i = 0;
-			while (i < font_cat.size() && line.second > font_cat[i].font)
-				i++;
-			if (i == 0)
-				initialize_font_cat(font_cat[0], ws, all_spaces, line.first);
-			else if (i == font_cat.size()
-				|| font_cat[i].font - line.second > line.second - font_cat[i - 1].font)
-				initialize_font_cat(font_cat[i-1], ws, all_spaces, line.first);
+			auto it = std::find_if(textlines.begin(), textlines.end(), [this](textline & line)
+			{ return line.whitespace == 0 || line.symbols.empty() /*|| is_textline_table(line)*/;
+		});
+			if (it != textlines.end())
+				textlines.erase(it);
 			else
-				initialize_font_cat(font_cat[i], ws, all_spaces, line.first);
+				break;
 		}
+	}
 
-		// determine whitespace for each category
-			
-		for (int i = 0; i < font_cat.size(); i++)
-		{
-			if (font_cat[i].lines.size() == 0 || font_cat[i].spaces.size() == 0)
-			{
-				font_cat.erase(font_cat.begin() + i);
-				i--;
-				continue;
-			}
-			font_cat[i].whitespace = most_common_number(font_cat[i].spaces);
-			if (font_cat[i].whitespace == img->w || font_cat[i].whitespace == 0)
-			{
-				font_cat.erase(font_cat.begin() + i);
-				i--;
-			}
-		}
+	BOX * page::merge_to_table(std::vector<BOX*> & cols)
+	{
+		BOX * result = boxCopy(cols[0]);
+		result->w = cols[cols.size() - 1]->x - cols[0]->x + cols[cols.size() - 1]->w;
+		return result;
+	}
 
-		// happens with image 147 - TO DO - probably a weird determination of tesseract symbols
-		if (font_cat.size() == 0)
-		{
-			std::cout << "An unknown error has occured. Sorry.";
-			return;
-		}
+	bool page::is_textline_table(textline & line)
+	{
+		std::sort(line.symbols.begin(), line.symbols.end(), [](BOX* a, BOX * b) { return a->y < b->y; });
+		std::cout << line.symbols.size() << "::" << line.font << "::" << line.symbols.back()->y << "::" << line.symbols[0]->y << std::endl;
+		if (line.symbols.back()->y - line.symbols[0]->y > line.font)
+			return true;
+		return false;
+	}
 
+	void page::process_image()
+	{
+		// initializes the textlines vector - adds symbols and current font to the textlines
+		auto fonts = init_textlines();
 
-		/* 
+		// save information about columns into the textline vector
+		determine_columns(fonts);
+
+		delete_unusual_lines();
+
+		/*
 		delete footer could probably be implemented before determination of font categories
 		pros - simpler, less time consuming function, only one iteration
 		cons - multiline footers
 		*/
-		delete_footer(font_cat);
-
-		// merge into words and columns
-		std::vector<std::vector<BOX*>> all_cols = {};
-		for (size_t i = 0; i < font_cat.size(); i++)
-		{
-			for (size_t j = 0; j < font_cat[i].lines.size(); j++)
-			{
-				std::vector<BOX*> curr_words = merge_into_words(font_cat[i].lines[j], font_cat[i].whitespace);
-				for (size_t k = 0; k < curr_words.size(); k++)
-				{
-					// border around words
-					//set_border(img, curr_words[k], 255, 0, 0);
-				}
-
-				// determine whether the current line has columns or not
-
-				std::vector<int> word_gaps = get_spaces(curr_words);
-				std::vector<BOX*> columns = {};
-				BOX* column = curr_words[0];
-				for (size_t j = 0; j < word_gaps.size(); j++)
-				{
-					if (word_gaps[j] >= 3 * font_cat[i].whitespace)
-					{
-						columns.push_back(column);
-						//set_border(img, column, 0, 255, 0);
-						column = curr_words[j + 1];
-					}
-					else
-						box_merge_horizontal(column, curr_words[j + 1]);
-				}
-				columns.push_back(column);
-				//set_border(img, column, 0, 255, 0);
-				if (columns.size() > 0)
-					all_cols.push_back(columns);
-			}
-		}
-
-		std::sort(all_cols.begin(), all_cols.end(),
-			[](std::vector<BOX*> & a, std::vector<BOX*> & b) { 
-			if (a[0]->y == b[0]->y && a.size() == b.size())
-				return a[0]->x < b[0]->x;
-			if (a[0]->y == b[0]->y)
-				return a.size() < b.size();
-			return a[0]->y < b[0]->y; 
-		});
+		delete_footer();
 
 		// merge columns into tables
 
-		merge_cols(all_cols);
-		for (int i = 0; i < all_cols.size(); i++)
+		all_tables = merge_cols(textlines);
+		
+		for (int i = 0; i < all_tables.size(); i++)
 		{
-			for (int j = 0; j < all_cols[i].size(); j++)
+			for (int j = 0; j < all_tables[i].column_repres.size(); j++)
 			{
-				if (all_cols[i].size() > 1)
-					set_border(img, all_cols[i][j], 0, 0, 255);
+				set_border(all_tables[i].column_repres[j], 255, 0, 0);
 			}
+			
 		}
-
-		std::string out = "results/" + get_filename(filename)+ ".png";
+		
+		//std::string out = "results/" + get_filename(filename)+ ".png";
+		std::string out = "results/5.png";
 
 		char* path = &out[0u];
 		pixWrite(path, img, IFF_PNG);
 		api->End();
 		pixDestroy(&img);
+
 	}
 
 }

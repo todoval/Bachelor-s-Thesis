@@ -1,103 +1,100 @@
 #include <vector>
-#include "opencv2/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "../preprocessing/preprocess.h"
 #include <algorithm> 
-
-#ifdef _WIN32
-
-#include <baseapi.h>
-#include <renderer.h>
-
-#else
-
-#include <tesseract/baseapi.h>
-#include <tesseract/renderer.h>
-
-#endif // _WIN32
-
-
+#include "utils.h"
+#include <unordered_map>
 
 namespace ocr
 {
-
-	const size_t COL_THRESHOLD = 10;
 
 	const int FOOTER_THRESHOLD = 15;
 
 	const double REF_FONT_SIZE = 19;
 
-	struct font_category
+	class textline
 	{
 	public:
-		int font;
-		int whitespace;
-		std::vector<std::vector<BOX*>> lines;
-		std::vector<int> spaces;
+		size_t font;
+		size_t whitespace;
+		std::vector<BOX*> symbols;
+		std::vector<BOX*> columns;
+
+		textline();
+
+		bool operator==(const textline & other) const
+		{
+			return (other.whitespace == whitespace
+				&& symbols.size() == other.symbols.size() && columns.size() == other.columns.size());
+		}
 	};
 
-	/*
-	struct cell
+	class table
 	{
 	public:
-		BOX* box;
-		std::string text;
+		size_t rows;
+		size_t cols;
+		
+		std::vector<BOX*> row_repres;
+		std::vector<BOX*> column_repres;
+		BOX * table_repres;
+		
+		std::vector<textline*> textlines;
+
+		table();
+		
 	};
 
-	struct table
+	class page
 	{
 	public:
-		// representation of the table by rows, each row represented by a vector of cells
-		std::vector<std::vector<cell>> table_mat;
-		size_t row_size;
-		size_t col_size;
-	};*/
+		Pix *img;
+		std::vector<table> all_tables;
+		std::vector<textline> textlines;
 
+		page();
+		page(const std::string & filename);
+		void set_border(BOX *box, int r, int g, int b);
+		void process_image();
 
-	// sets border around the box to a given color
-	void set_border(PIX* img, BOX *box, int r, int g, int b);
+	private:
+		tesseract::TessBaseAPI *api;
 
-	std::string get_filename(const std::string & input_path);
+		void determine_columns(std::multimap<int, textline*> & fonts);
 
-	Pix *matToPix(cv::Mat *mat);
+		void init_api(Pix *img);
+		std::multimap<int, textline*> init_textlines();
 
-	void process_image(char* filename);
+		// returns true if a symbol (defined by a box) is in textline (defined by another box)
+		bool is_symbol_in_textline(BOX* symbol, BOX* textline);
+		void delete_footer();
+		void box_merge_horizontal(BOX* result, BOX* to_add);
+		void box_merge_vertical(BOX* result, BOX* to_add);
+		std::vector<table> merge_cols(std::vector<textline> & page);
+		std::vector<BOX*> merge_into_words(std::vector<BOX*> & symbols, int whitespace);
+		/*
+		returns a vector of whitespaces that exist between the symbols given
+		the vector of symbols should represent one line or a part of line
+		*/
+		std::vector<int> get_spaces(const line & symbols);
 
-	bool is_symbol_in_textline(BOX* symbol, BOX* textline);
-	
-	std::vector<int> get_spaces(const std::vector<BOX*> & symbols);
+		std::vector<BOX*> page::merge_into_columns(std::vector<BOX*> & words, int whitespace);
 
-	// returns the whitespace between words in textline
-	int get_whitespace(std::vector<int> & all_spaces, double constant);
+		// returns the whitespace between words in textline
+		int get_whitespace(std::vector<int> & all_spaces, double constant);
 
-	void box_merge_horizontal(BOX* result, BOX* to_add);
+		line merge_lines(line & first, line & second, std::map<int,int> & no_of_cols);
 
-	std::vector<BOX*> merge_into_words(std::vector<BOX*> & symbols, int whitespace);
+		void process_category(int & cat_font, std::vector<textline *> & cat_lines, int & first_val);
 
-	int get_char_height(std::vector<BOX*> & symbols);
+		void page::process_cat_and_init(int & cat_font, std::vector<textline *> & cat_lines, int & first_val,
+			std::multimap<int, textline * >::iterator it);
 
-	std::vector<font_category> get_font_categories(std::vector<int> & fonts);
+		void delete_unusual_lines();
 
-	double get_multi_factor(int space_width, double constant);
+		BOX* merge_to_table(std::vector<BOX*> & cols);
 
-	int most_common_number(std::vector<int> & numbers);
+		void create_table(table & curr_table, std::vector<BOX*> & merged_cols);
 
-	int get_width_of_col(BOX* first, BOX* second);
-
-	void box_merge_vertical(BOX* result, BOX* to_add);
-
-	void merge_cols(std::vector<std::vector<BOX*>> & page);
-
-	void delete_footer(std::vector<font_category> & font_cat);
-
-	bool are_in_same_col(BOX* first, BOX* second);
-
-	void initialize_font_cat(font_category & font_cat, int & ws, std::vector<int> & all_spaces, const std::vector<BOX*> & line);
-
-	bool overlap(BOX* first, BOX* second);
-
-	int centre(BOX* box);
-
-	int get_y_axis(std::vector<BOX*>  & input);
+		bool is_textline_table(textline & line);
+	};
 
 }

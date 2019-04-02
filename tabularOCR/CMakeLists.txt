@@ -26,6 +26,7 @@ endif()
 set(SOURCES
     ${PROJECT_SOURCE_DIR}/main.cpp 
     ${PROJECT_SOURCE_DIR}/src/preprocessing/parser.cpp 
+	${PROJECT_SOURCE_DIR}/src/ocr_process/utils.cpp
     ${PROJECT_SOURCE_DIR}/src/ocr_process/process.cpp
 	${PROJECT_SOURCE_DIR}/src/preprocessing/preprocess.cpp)
 

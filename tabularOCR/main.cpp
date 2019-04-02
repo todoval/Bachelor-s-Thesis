@@ -16,6 +16,8 @@ std::vector<std::string> get_filenames(const std::string& directory) {
 
 int main(int argc, char* argv[]) {
 	
+
+
 	/*preprocessing::config cfg = preprocessing::parse_args(argc, argv);
 	for (auto &iter : cfg.files)
 	{
@@ -31,6 +33,11 @@ int main(int argc, char* argv[]) {
 	std::experimental::filesystem::create_directory("results");
 
 	// check for directory
+
+	auto page = new ocr::page("D:/bachelor_thesis/tabularOCR/test_images/img/5-1.jpg");
+	page->process_image();
+
+	/*
 	std::vector<std::string> inputs;
 	if (argc == 2 && std::experimental::filesystem::is_directory(argv[1]))
 	{
@@ -53,7 +60,7 @@ int main(int argc, char* argv[]) {
 			std::cout << i << ":";
 			i++;
 		}
-	}
+	}*/
 
 	/*
 	TO DO
