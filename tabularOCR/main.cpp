@@ -17,8 +17,8 @@ std::vector<std::string> get_filenames(const std::string& directory) {
 int main(int argc, char* argv[]) {
 	
 
-
-	/*preprocessing::config cfg = preprocessing::parse_args(argc, argv);
+	/*
+	preprocessing::config cfg = preprocessing::parse_args(argc, argv);
 	for (auto &iter : cfg.files)
 	{
 		//std::string output_path = "E:/bachelor_thesis/tabularOCR/preprocessed" + iter.first + ".jpg";
@@ -26,19 +26,18 @@ int main(int argc, char* argv[]) {
 		cv::Mat img = iter.second;
 		//preprocessing::preprocess_img(img, cfg);
 		//cv::imwrite(output_path, img);
-		std::pair<std::string, cv::Mat> k = iter;*/
+		//std::pair<std::string, cv::Mat> k = iter;
 		//ocr::process_image(k);
-	//}
-
+	}
+	*/
 	std::experimental::filesystem::create_directory("results");
 
 	// check for directory
 
-	auto page = new ocr::page("D:/bachelor_thesis/tabularOCR/test_images/img/5-1.jpg");
-	page->process_image();
+	ocr::page page ("D:/bachelor_thesis/tabularOCR/test_images/img/109-1.jpg");
+	page.process_image();
 
-	/*
-	std::vector<std::string> inputs;
+		std::vector<std::string> inputs;
 	if (argc == 2 && std::experimental::filesystem::is_directory(argv[1]))
 	{
 		inputs = get_filenames(argv[1]);
@@ -46,8 +45,11 @@ int main(int argc, char* argv[]) {
 		while (i < inputs.size())
 		{
 			char *cstr = &inputs[i][0u];
-			ocr::process_image(cstr);
+			ocr::page page(cstr);
 			std::cout << i << ":";
+			std::cout << cstr << std::endl;
+			page.process_image();
+
 			i++;
 		}
 	}
@@ -56,11 +58,12 @@ int main(int argc, char* argv[]) {
 		int i = 1;
 		while (i < argc)
 		{
-			ocr::process_image(argv[i]);
+			ocr::page page (argv[i]);
+			page.process_image();
 			std::cout << i << ":";
 			i++;
 		}
-	}*/
+	}
 
 	/*
 	TO DO

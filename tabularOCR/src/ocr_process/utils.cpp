@@ -1,14 +1,14 @@
 #include "utils.h"
 
 
-int centre(BOX* box)
+int centre(std::unique_ptr<BOX> & box)
 {
 	return box->x + box->w / 2;
 }
 
-int get_y_axis(std::vector<BOX*> & input)
+int get_y_axis(std::vector<std::unique_ptr<BOX>> & input)
 {
-	auto min_y = std::min_element(input.begin(), input.end(), [](BOX* a, BOX* b) {return a->y < b->y;  });
+	auto min_y = std::min_element(input.begin(), input.end(), [](std::unique_ptr<BOX> & a, std::unique_ptr<BOX> & b) {return a->y < b->y;  });
 	return (*min_y)->y;
 }
 
@@ -71,7 +71,7 @@ double get_multi_factor(int space_width, double constant)
 	return 0;
 }
 
-bool overlap(BOX* first, BOX* second)
+bool overlap(std::unique_ptr<BOX> & first, std::unique_ptr<BOX> & second)
 {
 	return ((second->x < first->x + first->w && second->x > first->x)
 		|| (first->x < second->x + second->w && first->x > second->x));
@@ -80,26 +80,26 @@ bool overlap(BOX* first, BOX* second)
 int get_char_height(line & symbols, int img_width)
 {
 	line filtered;
-	for (auto elem : symbols)
+	for (const auto & elem : symbols)
 	{
 		if (elem->w > 5 && elem->w < img_width / 2)
-			filtered.push_back(elem);
+			filtered.push_back(std::unique_ptr<BOX>(new BOX(*elem.get())));
 	}
 	if (filtered.empty())
 		return 0;
-	auto highest_box = std::max_element(filtered.begin(), filtered.end(), [&img_width](BOX* a, BOX* b)
+	auto highest_box = std::max_element(filtered.begin(), filtered.end(), [&img_width](std::unique_ptr<BOX> & a, std::unique_ptr<BOX> & b)
 		{return a->h < b->h; });
 	return (*highest_box)->h;
 }
 
-int get_width_of_col(BOX* first, BOX* second)
+int get_width_of_col(std::unique_ptr<BOX> & first, std::unique_ptr<BOX> & second)
 {
 	int first_part = abs(first->x - second->x);
 	int sec_part = std::max(first->x + first->w, second->x + second->w) - std::max(first->x, second->x);
 	return first_part + sec_part;
 }
 
-bool are_in_same_col(BOX* first, BOX* second)
+bool are_in_same_col(std::unique_ptr<BOX> & first, std::unique_ptr<BOX> & second)
 {
 	bool diff_h;
 	if (first->y < second->y)
@@ -112,7 +112,7 @@ bool are_in_same_col(BOX* first, BOX* second)
 		/*&& diff_h*/);
 }
 
-bool is_most_left(BOX * first, BOX * second)
+bool is_most_left(std::unique_ptr<BOX> & first, std::unique_ptr<BOX> & second)
 {
 	return first->x < second->x;
 }

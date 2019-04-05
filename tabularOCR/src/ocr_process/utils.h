@@ -14,14 +14,14 @@
 
 #endif // _WIN32
 
-typedef std::vector<BOX*> line;
-typedef std::vector<BOX*> column;
+typedef std::vector<std::unique_ptr<BOX>> line;
+typedef std::vector<std::unique_ptr<BOX>> column;
 
 const size_t COL_THRESHOLD = 10;
 
-int centre(BOX* box);
+int centre(std::unique_ptr<BOX> & box);
 
-int get_y_axis(std::vector<BOX*> & input);
+int get_y_axis(std::vector<std::unique_ptr<BOX>> & input);
 
 std::string get_filename(const std::string & input_path);
 
@@ -31,12 +31,12 @@ int most_common_number(std::vector<int> & numbers);
 
 double get_multi_factor(int space_width, double constant);
 
-bool overlap(BOX* first, BOX* second);
+bool overlap(std::unique_ptr<BOX> & first, std::unique_ptr<BOX> & second);
 
 int get_char_height(line & symbols, int img_width);
 
-int get_width_of_col(BOX* first, BOX* second);
+int get_width_of_col(std::unique_ptr<BOX> & first, std::unique_ptr<BOX> & second);
 
-bool are_in_same_col(BOX* first, BOX* second);
+bool are_in_same_col(std::unique_ptr<BOX> & first, std::unique_ptr<BOX> & second);
 
-bool is_most_left (BOX * first, BOX * second);
+bool is_most_left (std::unique_ptr<BOX> & first, std::unique_ptr<BOX> & second);
