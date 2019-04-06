@@ -29,7 +29,7 @@ Pix *matToPix(cv::Mat *mat);
 
 int most_common_number(std::vector<int> & numbers);
 
-double get_multi_factor(int space_width, double constant);
+double get_multi_factor_words(int space_width, double constant);
 
 bool overlap(std::unique_ptr<BOX> & first, std::unique_ptr<BOX> & second);
 

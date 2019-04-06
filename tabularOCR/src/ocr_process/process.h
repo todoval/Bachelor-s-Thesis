@@ -15,7 +15,8 @@ namespace ocr
 	{
 	public:
 		size_t font;
-		size_t whitespace;
+		size_t word_ws;
+		size_t col_ws;
 		std::vector<std::unique_ptr<BOX>> symbols;
 		std::vector<std::unique_ptr<BOX>> columns;
 
@@ -24,7 +25,8 @@ namespace ocr
 		textline& operator=(textline&& other)
 		{
 			font = std::move(other.font);
-			whitespace = std::move(other.whitespace);
+			word_ws = std::move(other.word_ws);
+			col_ws = std::move(other.col_ws);
 			symbols = std::move(other.symbols);
 			columns = std::move(other.columns);
 			return *this;
@@ -34,7 +36,7 @@ namespace ocr
 
 		bool operator==(const textline & other) const
 		{
-			return (other.whitespace == whitespace
+			return (other.col_ws == col_ws && other.word_ws == word_ws
 				&& symbols.size() == other.symbols.size() && columns.size() == other.columns.size());
 		}
 	};
@@ -121,7 +123,7 @@ namespace ocr
 		std::vector<std::unique_ptr<BOX>> page::merge_into_columns(std::vector<std::unique_ptr<BOX>> & words, int whitespace);
 
 		// returns the whitespace between words in textline
-		int get_whitespace(std::vector<int> & all_spaces, double constant);
+		std::pair<int, int> get_whitespace(std::vector<int> & all_spaces, double constant);
 
 		line merge_lines(line & first, line & second, std::map<int,int> & no_of_cols);
 
@@ -131,6 +133,8 @@ namespace ocr
 			std::multimap<int, std::shared_ptr<textline> >::iterator it);
 
 		void delete_unusual_lines();
+
+		int get_column_whitespace(std::vector<int> & word_gaps);
 
 		std::unique_ptr<BOX> merge_to_table(std::vector<std::unique_ptr<BOX>> & cols);
 

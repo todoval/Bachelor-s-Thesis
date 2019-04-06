@@ -57,7 +57,7 @@ int most_common_number(std::vector<int> & numbers)
 	return result.first;
 }
 
-double get_multi_factor(int space_width, double constant)
+double get_multi_factor_words(int space_width, double constant)
 {
 	double x = space_width / constant;
 	if (x >= 4)

@@ -56,9 +56,13 @@ namespace ocr
 		return result;
 	}
 
-	int page::get_whitespace(std::vector<int> & all_spaces, double constant)
+	std::pair<int, int> page::get_whitespace(std::vector<int> & all_spaces, double constant)
 	{
 		std::sort(all_spaces.begin(), all_spaces.end());
+		for (auto a : all_spaces)
+			std::cout << a << "::";
+		std::cout << std::endl;
+
 		// heuristical estimation of the space
 
 		// find greatest element that is smaller than constant
@@ -72,20 +76,38 @@ namespace ocr
 		if (it == all_spaces.end())
 		{
 			if (all_spaces.empty())
-				return 0;
-			return all_spaces.back();
+				return std::make_pair<int, int>(0,0);
+			return { all_spaces.back(), img->w };
 		}
 
 		for (it; it != all_spaces.end() - 1; it++)
 		{
-			double multi_factor = get_multi_factor(*it, constant);
-			auto k = *std::next(it);
+			double multi_factor = get_multi_factor_words(*it, constant);
 			if (*std::next(it) >= multi_factor * *it)
 				break;
 		}
-		if (it != all_spaces.end())
-			return *it;
-		return 0;
+
+		// first result is the word gap and it's in it
+
+		std::pair<int, int> result = {*it,0};
+
+		if (it == all_spaces.end() - 1)
+			return { *it, img->w };
+
+		for (it; it != all_spaces.end() - 1; it++)
+		{
+			if (*std::next(it) >= 4 * *it && *std::next(it) >= 10 * result.first)
+			{
+				result.second = *std::next(it);
+				return result;
+			}
+		}
+		
+		// second result is the column gap 
+
+		result.second = img->w;
+		return result;
+
 	}
 
 	line page::merge_lines(line & first, line & second, std::map<int, int>& no_of_cols)
@@ -158,10 +180,6 @@ namespace ocr
 			result.push_back(std::move(new_col));
 		}
 		std::sort(result.begin(), result.end(), [](auto & a, auto & b) {return a->x < b->x; });
-		for (size_t i = 0; i < result.size(); i++)
-		{
-		//	set_border(result[i], 255,0,0);
-		}
 		return std::move(result);
 	}
 
@@ -211,15 +229,27 @@ namespace ocr
 		return std::move(result);
 	}
 
+	int page::get_column_whitespace(std::vector<int>& word_gaps)
+	{
+		// get column whitespace
+		int column_gap = 0;
+		for (auto gap : word_gaps)
+			column_gap += gap;
+		column_gap /= word_gaps.size();
+		
+		return 0;
+	}
+
 	std::vector<std::unique_ptr<BOX>> page::merge_into_columns(std::vector<std::unique_ptr<BOX>> & words, int whitespace)
 	{
 		std::vector<int> word_gaps = get_spaces(words);
 		std::vector<std::unique_ptr<BOX>> columns = {};
 		auto column = std::unique_ptr<BOX>(boxCopy(words[0].get()));
 
+
 		for (size_t j = 0; j < word_gaps.size(); j++)
 		{
-			if (word_gaps[j] >= 4.1 * whitespace)
+			if (word_gaps[j] >= whitespace)
 			{
 				columns.push_back(std::move(column));
 				column = std::unique_ptr<BOX>(boxCopy(words[j+1].get()));
@@ -255,24 +285,28 @@ namespace ocr
 		for (auto line : cat_lines)
 		{
 			auto spaces = get_spaces(line->symbols);
-			int whitespace = get_whitespace(spaces, constant);
-			if (whitespace != img->w && whitespace != 0)
-				cat_spaces.push_back(whitespace);
+			auto whitespaces = get_whitespace(spaces, constant);
+			std::cout << line->symbols.size() << "::" << whitespaces.first << "::" << whitespaces.second << std::endl;
+			int word_ws = whitespaces.first;
+			line->col_ws = whitespaces.second;
+			int column_ws = whitespaces.second;
+			if (word_ws != img->w && word_ws != 0)
+				cat_spaces.push_back(word_ws);
 
 		}
 		int cat_ws = most_common_number(cat_spaces); // category whitespace
 		for (auto line : cat_lines)
 		{
 			if (line->symbols.size() <= 1)
-				line->whitespace = 0;
+				line->word_ws = 0;
 			else
 			{
-				line->whitespace = cat_ws;
-				auto words = merge_into_words(line->symbols, line->whitespace);
-				//	for (auto e : words)
+				line->word_ws = cat_ws;
+				auto words = merge_into_words(line->symbols, line->word_ws);
+				for (auto&e : words);
 					//	set_border(e, 255, 0, 255);
-				line->columns = merge_into_columns(words, line->whitespace);
-				//for (auto e : line->columns)
+				line->columns = merge_into_columns(words, line->col_ws);
+				for (auto & e : line->columns);
 				//	set_border(e, 255, 0, 255);
 			}
 		}
@@ -437,6 +471,10 @@ namespace ocr
 		// the last element in the textline vector will be the one that is in the footer
 
 		// deal with multi-line footers
+
+		// sort textlines by y coordinate
+		std::sort(textlines.begin(), textlines.end(), [](auto & a, auto & b) { return a->symbols[0]->y < b->symbols[0]->y;  });
+
 		std::vector<std::shared_ptr<textline>>::reverse_iterator it = textlines.rbegin();
 		for (it = textlines.rbegin(); it != textlines.rend() - 1 ; it++)
 		{
@@ -513,7 +551,7 @@ namespace ocr
 		while (true)
 		{
 			auto it = std::find_if(textlines.begin(), textlines.end(), [this](auto line)
-			{ return line->whitespace == 0 || line->symbols.empty() || is_textline_table(line);
+			{ return line->word_ws == 0 || line->symbols.empty() || is_textline_table(line);
 			});
 			if (it != textlines.end())
 				textlines.erase(it);
@@ -565,11 +603,14 @@ namespace ocr
 
 		all_tables = merge_cols(textlines);
 
+
+
 		for (int i = 0; i < all_tables.size(); i++)
 		{
 			for (int j = 0; j < all_tables[i].column_repres.size(); j++)
 			{
-				if (all_tables[i].column_repres.size() > 1);
+				//if (all_tables[i].column_repres.size() > 1)
+				
 					set_border(all_tables[i].column_repres[j], 255, 0, 0);
 				//	set_border(all_tables[i].table_repres, 0, 0, 255);
 			}
