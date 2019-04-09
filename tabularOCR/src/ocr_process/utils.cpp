@@ -6,10 +6,10 @@ int centre(std::unique_ptr<BOX> & box)
 	return box->x + box->w / 2;
 }
 
-int get_y_axis(std::vector<std::unique_ptr<BOX>> & input)
+int get_y_axis(std::vector<std::pair<std::unique_ptr<BOX>, char>> & input)
 {
-	auto min_y = std::min_element(input.begin(), input.end(), [](std::unique_ptr<BOX> & a, std::unique_ptr<BOX> & b) {return a->y < b->y;  });
-	return (*min_y)->y;
+	auto min_y = std::min_element(input.begin(), input.end(), [](auto & a, auto & b) {return a.first->y < b.first->y;  });
+	return (*min_y).first->y;
 }
 
 std::string get_filename(const std::string & input_path)
@@ -71,23 +71,43 @@ double get_multi_factor_words(int space_width, double constant)
 	return 0;
 }
 
-bool overlap(std::unique_ptr<BOX> & first, std::unique_ptr<BOX> & second)
+double get_multi_factor_columns(int space_width)
 {
-	return ((second->x < first->x + first->w && second->x > first->x)
-		|| (first->x < second->x + second->w && first->x > second->x));
+	if (space_width > 5)
+		return 3.5;
+	else if (space_width <= 5 && space_width >= 3)
+		return ((5 - space_width) / 2 + 4);
+	else if (space_width < 3 && space_width >= 2)
+		return ( 7 - space_width );
+	else if (space_width < 2)
+		return 10;
+	return 0.0;
 }
 
-int get_char_height(line & symbols, int img_width)
+bool overlap(std::unique_ptr<BOX> & first, std::unique_ptr<BOX> & second)
+{
+	return ((second->x <= first->x + first->w && second->x >= first->x)
+		|| (first->x <= second->x + second->w && first->x >= second->x));
+}
+
+int get_greatest_font(std::vector<std::pair<std::unique_ptr<BOX>, char>>  & symbols)
+{
+	auto highest_box = std::max_element(symbols.begin(), symbols.end(), [](std::pair<std::unique_ptr<BOX>, char> & a, std::pair<std::unique_ptr<BOX>, char> & b)
+	{return a.first->h < b.first->h; });
+	return (*highest_box).first->h;
+}
+
+int get_char_height(std::vector<std::pair<std::unique_ptr<BOX>, char>>  & symbols, int img_width)
 {
 	line filtered;
 	for (const auto & elem : symbols)
 	{
-		if (elem->w > 5 && elem->w < img_width / 2)
-			filtered.push_back(std::unique_ptr<BOX>(new BOX(*elem.get())));
+		if (elem.first->w > 5 && elem.first->w < img_width / 2)
+			filtered.push_back(std::unique_ptr<BOX>(new BOX(*elem.first.get())));
 	}
 	if (filtered.empty())
 		return 0;
-	auto highest_box = std::max_element(filtered.begin(), filtered.end(), [&img_width](std::unique_ptr<BOX> & a, std::unique_ptr<BOX> & b)
+	auto highest_box = std::max_element(filtered.begin(), filtered.end(), [](std::unique_ptr<BOX> & a, std::unique_ptr<BOX> & b)
 		{return a->h < b->h; });
 	return (*highest_box)->h;
 }

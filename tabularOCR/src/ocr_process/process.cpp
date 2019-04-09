@@ -4,8 +4,7 @@ namespace ocr
 {
 	page::page()
 	{
-		img = pixRead("D:/bachelor_thesis/tabularOCR/test_images/img/5-1.jpg");
-		page(img);
+	//	page(img);
 	}
 
 	page::page(const std::string & file_name)
@@ -41,7 +40,7 @@ namespace ocr
 			&& symbol->y <= textline->y + textline->h);
 	}
 
-	std::vector<int> page::get_spaces(const std::vector<std::unique_ptr<BOX>> & symbols)
+	std::vector<int> page::get_spaces(const std::vector<std::pair<std::unique_ptr<BOX>, char>>  & symbols)
 	{
 		std::vector <int> result;
 		// iterate over all symbols and return the whitespaces between them
@@ -50,7 +49,7 @@ namespace ocr
 		{
 			auto first = &symbols[i];
 			auto second = &symbols[i + 1];
-			int space = second->get()->x - first->get()->x - first->get()->w;
+			int space = second->first->x - first->first->x - first->first->w;
 			result.push_back(space);
 		}
 		return result;
@@ -59,9 +58,12 @@ namespace ocr
 	std::pair<int, int> page::get_whitespace(std::vector<int> & all_spaces, double constant)
 	{
 		std::sort(all_spaces.begin(), all_spaces.end());
+
+		std::pair<int, int> result;
+
 		for (auto a : all_spaces)
-			std::cout << a << "::";
-		std::cout << std::endl;
+			std::cout << a << ":";
+			std::cout << std::endl;
 
 		// heuristical estimation of the space
 
@@ -80,23 +82,36 @@ namespace ocr
 			return { all_spaces.back(), img->w };
 		}
 
+		// get the word gap
+
+		double multi_cols;
+
 		for (it; it != all_spaces.end() - 1; it++)
 		{
 			double multi_factor = get_multi_factor_words(*it, constant);
 			if (*std::next(it) >= multi_factor * *it)
+			{
+				// check whether the difference is not already between words and columns
+				result.first = *(std::next(it));
+				multi_cols = get_multi_factor_columns(*it);
+				if (*std::next(it) >= multi_cols * *it)
+					return { *(it), *(std::next(it)) };
+				it++;
 				break;
+			}
 		}
+
+		if (it == all_spaces.end() - 1)
+			return { *(it), *(it) };
 
 		// first result is the word gap and it's in it
 
-		std::pair<int, int> result = {*it,0};
+		multi_cols = get_multi_factor_columns(result.first);
 
-		if (it == all_spaces.end() - 1)
-			return { *it, img->w };
 
 		for (it; it != all_spaces.end() - 1; it++)
 		{
-			if (*std::next(it) >= 4 * *it && *std::next(it) >= 10 * result.first)
+			if (*std::next(it) >= multi_cols * result.first /*3 * *it && *std::next(it) >= 4 * result.first*/)
 			{
 				result.second = *std::next(it);
 				return result;
@@ -110,9 +125,9 @@ namespace ocr
 
 	}
 
-	line page::merge_lines(line & first, line & second, std::map<int, int>& no_of_cols)
+	std::vector<std::pair<std::unique_ptr<BOX>, char>> page::merge_lines(std::vector<std::pair<std::unique_ptr<BOX>, char>> & first, std::vector<std::pair<std::unique_ptr<BOX>, char>> & second, std::map<int, int>& no_of_cols)
 	{
-		line result;
+		std::vector<std::pair<std::unique_ptr<BOX>, char>> result;
 
 		// get resulting heights and y-axis of the resulting line
 
@@ -134,20 +149,21 @@ namespace ocr
 		// go over the first vector and either add from map or at only this box into the new vector
 		for (size_t i = 0; i < first.size(); i++)
 		{
-			auto bbox = boxCopy(first[i].get());
+			auto bbox = boxCopy(first[i].first.get());
 			if (bbox == nullptr)
 				return {};
-			auto new_col = std::unique_ptr<BOX>(bbox);
-			new_col->h = height;
-			new_col->y = y;
+			auto new_col = std::pair<std::unique_ptr<BOX>, char >{};
+			new_col.first = std::unique_ptr<BOX>(bbox);
+			new_col.first->h = height;
+			new_col.first->y = y;
 			// if these columns overlap, add them to the resulting vector
 			if (no_of_cols.find(i) != no_of_cols.end())
 			{
 				int sec_index = no_of_cols[i];
 				second_line_indices.erase(std::find(second_line_indices.begin(), second_line_indices.end(), sec_index));
 
-				new_col->x = std::min(first[i]->x, second[sec_index]->x);
-				new_col->w = get_width_of_col(first[i], second[sec_index]);
+				new_col.first->x = std::min(first[i].first->x, second[sec_index].first->x);
+				new_col.first->w = get_width_of_col(first[i].first, second[sec_index].first);
 			}
 			// if they don't overlap, try to find a suitable column from the second line to merge it with
 			else
@@ -155,74 +171,80 @@ namespace ocr
 				bool is_set = false;
 				for (auto j : second_line_indices)
 				{
-					if (overlap(first[i], second[j]))
+					if (overlap(first[i].first, second[j].first))
 					{
 						// merge these two together
 						is_set = true;
-						new_col->x = std::min(first[i]->x, second[j]->x);
-						new_col->w = get_width_of_col(first[i], second[j]);
+						new_col.first->x = std::min(first[i].first->x, second[j].first->x);
+						new_col.first->w = get_width_of_col(first[i].first, second[j].first);
 						second_line_indices.erase(std::find(second_line_indices.begin(), second_line_indices.end(), j));
 						break;
 					}
 				}
 				if (!is_set)
 				{
-					new_col->x = first[i]->x;
-					new_col->w = first[i]->w;
+					new_col.first->x = first[i].first->x;
+					new_col.first->w = first[i].first->w;
 				}
 			}
-			result.push_back(std::move(new_col));
+			result.push_back( std::move(new_col));
 		}
 		// push back second line columns that weren't merged
 		for (auto i : second_line_indices)
 		{
-			auto new_col = std::unique_ptr<BOX>(boxCopy(second[i].get()));
+			auto new_col = std::pair<std::unique_ptr<BOX>, char >{};
+			new_col.first = std::unique_ptr<BOX>(boxCopy(second[i].first.get()));
 			result.push_back(std::move(new_col));
 		}
-		std::sort(result.begin(), result.end(), [](auto & a, auto & b) {return a->x < b->x; });
+		std::sort(result.begin(), result.end(), [](auto & a, auto & b) {return a.first->x < b.first->x; });
 		return std::move(result);
 	}
 
-	void page::box_merge_vertical(std::unique_ptr<BOX> & result, std::unique_ptr<BOX> & to_add)
+	void page::box_merge_vertical(std::pair<std::unique_ptr<BOX>, char> & result, std::pair<std::unique_ptr<BOX>, char> & to_add)
 	{
-		if (result == nullptr)
+		if (result.first == nullptr)
 			result = std::move(to_add);
 		else
 		{
-			result->w = std::max(result->w, to_add->w);
-			result->x = std::min(result->x, to_add->x);
-			result->y = std::min(result->y, to_add->y);
-			result->h = to_add->h + to_add->y - result->y;
+			result.first->w = std::max(result.first->w, to_add.first->w);
+			result.first->x = std::min(result.first->x, to_add.first->x);
+			result.first->y = std::min(result.first->y, to_add.first->y);
+			result.first->h = to_add.first->h + to_add.first->y - result.first->y;
+			result.second = result.second + to_add.second;
 		}
 	}
 
-	void page::box_merge_horizontal(std::unique_ptr<BOX> & result, std::unique_ptr<BOX> &to_add)
+	void page::box_merge_horizontal(std::pair<std::unique_ptr<BOX>, char> & result, std::pair<std::unique_ptr<BOX>, char> &to_add)
 	{
-		if (result == nullptr)
+		if (result.first == nullptr)
 			result = std::move(to_add);
 		else
 		{
-			result->w = to_add->w + to_add->x - result->x;
-			result->h = std::max(result->h, to_add->h);
-			result->y = std::min(result->y, to_add->y);
+			result.first->w = to_add.first->w + to_add.first->x - result.first->x;
+			result.first->h = std::max(result.first->h, to_add.first->h);
+			result.first->y = std::min(result.first->y, to_add.first->y);
+			result.second = result.second + to_add.second;
 		}
 	}
 
-	std::vector<std::unique_ptr<BOX>> page::merge_into_words(std::vector<std::unique_ptr<BOX>> & symbols, int whitespace)
+	std::vector<std::pair<std::unique_ptr<BOX>, char>> page::merge_into_words(std::vector<std::pair<std::unique_ptr<BOX>, char>> & symbols, int whitespace)
 	{
 		std::sort(symbols.begin(), symbols.end(),
-			[](auto & a, auto & b) { return a->x < b->x; });
+			[](auto & a, auto & b) { return a.first->x < b.first->x; });
 
-		std::vector<std::unique_ptr<BOX>> result = {};
-		auto word = std::unique_ptr<BOX>(boxCopy(symbols[0].get()));
+		std::vector<std::pair<std::unique_ptr<BOX>, char>> result = {};
+		auto word = std::pair<std::unique_ptr<BOX>, char >{};
+		word.first = std::unique_ptr<BOX>(boxCopy(symbols[0].first.get()));
+
+
 		for (size_t i = 0; i < symbols.size() - 1; i++)
 		{
-			if (symbols[i]->x + symbols[i]->w + whitespace >= symbols[i + 1]->x)
+			if (symbols[i].first->x + symbols[i].first->w + whitespace >= symbols[i + 1].first->x)
 				box_merge_horizontal(word, symbols[i + 1]);
 			else
 			{
 				result.push_back(std::move(word));
-				word = std::unique_ptr<BOX>(boxCopy(symbols[i + 1].get()));
+				word.first = std::unique_ptr<BOX>(boxCopy(symbols[i + 1].first.get()));
 			}
 		}
 		result.push_back(std::move(word));
@@ -240,19 +262,21 @@ namespace ocr
 		return 0;
 	}
 
-	std::vector<std::unique_ptr<BOX>> page::merge_into_columns(std::vector<std::unique_ptr<BOX>> & words, int whitespace)
+	std::vector<std::pair<std::unique_ptr<BOX>, char>> page::merge_into_columns(std::vector<std::pair<std::unique_ptr<BOX>, char>> & words, int whitespace)
 	{
 		std::vector<int> word_gaps = get_spaces(words);
-		std::vector<std::unique_ptr<BOX>> columns = {};
-		auto column = std::unique_ptr<BOX>(boxCopy(words[0].get()));
-
+		std::vector<std::pair<std::unique_ptr<BOX>, char>> columns = {};
+		auto column = std::pair<std::unique_ptr<BOX>, char > {};
+		column.first = std::unique_ptr<BOX>(boxCopy(words[0].first.get()));
+		column.second = words[0].second;
 
 		for (size_t j = 0; j < word_gaps.size(); j++)
 		{
 			if (word_gaps[j] >= whitespace)
 			{
 				columns.push_back(std::move(column));
-				column = std::unique_ptr<BOX>(boxCopy(words[j+1].get()));
+				column.first = std::unique_ptr<BOX>(boxCopy(words[j+1].first.get()));
+				column.second = words[j + 1].second;
 			}
 			else
 				box_merge_horizontal(column, words[j + 1]);
@@ -282,32 +306,54 @@ namespace ocr
 
 		double constant = cat_font / REF_FONT_SIZE;
 		std::vector<int> cat_spaces;
+
+		std::cout << "NEW";
+
 		for (auto line : cat_lines)
 		{
 			auto spaces = get_spaces(line->symbols);
+			
 			auto whitespaces = get_whitespace(spaces, constant);
-			std::cout << line->symbols.size() << "::" << whitespaces.first << "::" << whitespaces.second << std::endl;
-			int word_ws = whitespaces.first;
+			std::cout << "LINE:" << line->symbols.size() << "::" << whitespaces.first << "::" << whitespaces.second << std::endl;
+			
+			line->word_ws = whitespaces.first;
 			line->col_ws = whitespaces.second;
-			int column_ws = whitespaces.second;
-			if (word_ws != img->w && word_ws != 0)
-				cat_spaces.push_back(word_ws);
-
+			if (whitespaces.first == whitespaces.second)
+				line->word_ws = whitespaces.first;
+			else
+			{
+				int word_ws = whitespaces.first;
+				if (word_ws != img->w && word_ws != 0)
+					cat_spaces.push_back(word_ws);
+			}
 		}
-		int cat_ws = most_common_number(cat_spaces); // category whitespace
+
+		std::cout << std::endl << "CAT_SPACES:";
+		std::sort(cat_spaces.begin(), cat_spaces.end());
+		for (auto space : cat_spaces)
+			std::cout << space << ":";
+		std::cout << std::endl;
+
+		int cat_ws = 0;
+		if (!cat_spaces.empty())
+			cat_ws = cat_spaces.back();
+
+		//int cat_ws = most_common_number(cat_spaces); // category whitespace
 		for (auto line : cat_lines)
 		{
+		//	std::cout << line->symbols.size() << "::" << cat_ws << "::" << line->col_ws << std::endl;
 			if (line->symbols.size() <= 1)
 				line->word_ws = 0;
 			else
 			{
-				line->word_ws = cat_ws;
+				if (line->word_ws == 0)
+					line->word_ws = cat_ws;
+			//	for (auto&e : line->symbols)
+				//	set_border(e.first, 0, 0, 255);
 				auto words = merge_into_words(line->symbols, line->word_ws);
-				for (auto&e : words);
-					//	set_border(e, 255, 0, 255);
+			//	for (auto&e : words)
+			//			set_border(e.first, 255, 0, 255);
 				line->columns = merge_into_columns(words, line->col_ws);
-				for (auto & e : line->columns);
-				//	set_border(e, 255, 0, 255);
 			}
 		}
 	}
@@ -346,7 +392,7 @@ namespace ocr
 		process_category(cat_font, cat_lines, first_val);
 	}
 
-	void page::create_table(table & curr_table, std::vector<std::unique_ptr<BOX>> & merged_cols)
+	void page::create_table(table & curr_table, std::vector<std::pair<std::unique_ptr<BOX>, char>> & merged_cols)
 	{
 		if (!curr_table.textlines.empty())
 		{
@@ -362,30 +408,82 @@ namespace ocr
 		}
 	}
 
+	std::vector<cell> page::create_cells(std::vector<std::shared_ptr<textline>> & row, std::vector<std::pair<std::unique_ptr<BOX>, char>> & merged_cols)
+	{
+		std::vector<cell> result;
+		for (size_t j = 0; j < merged_cols.size(); j++)
+		{
+			cell curr_cell;
+			curr_cell.bbox = std::unique_ptr<BOX>(boxCopy(merged_cols[j].first.get()));
+			if (curr_cell.bbox == nullptr)
+			{
+				merged_cols.clear();
+				continue;
+			}
+			curr_cell.bbox->h = get_merged_lines_height(row);
+			curr_cell.bbox->y = get_y_axis(row[0]->symbols);
+			curr_cell.cols_no = 1;
+			curr_cell.rows_no = row.size();
+			//curr_cell.text = 
+			
+			result.push_back(std::move(curr_cell));
+		}
+		row.clear();
+		return std::move(result);
+	}
+
+	void page:: move_append(std::vector<cell>& source, std::vector<cell>& dest)
+	{
+		if (dest.empty())
+			dest = std::move(source);
+		else
+		{
+			dest.reserve(dest.size() + source.size());
+			std::move(std::begin(source), std::end(source), std::back_inserter(dest));
+			source.clear();
+		}
+	}
+
 	std::vector<table> page::merge_cols(std::vector<std::shared_ptr<textline>> & page)
 	{
 		// the resulting vector of all tables in adequate structure
-		// vector of textlines that represent one table merged only by columns
-		std::vector<std::unique_ptr<BOX>> merged_cols;
+		// vector of textlines that represent one table merged by columns
+		std::vector<std::pair<std::unique_ptr<BOX>, char>> merged_cols;
+		// vector of textlines that represent one table merged by rows
+		std::vector<std::shared_ptr<textline>> curr_row;
 		table curr_table;
 		for (size_t i = 0; i < page.size() - 1; i++)
 		{
+			// don't merge lines that are too far away from each other
+
+			if (get_y_axis(page[i + 1]->symbols) - get_y_axis(page[i]->symbols) > 4*std::max(get_greatest_font(page[i + 1]->symbols), get_greatest_font(page[i]->symbols)))
+			{
+				if (merged_cols.size() > 0)
+				{
+					if (!curr_row.empty())
+					{
+						auto cells = create_cells(curr_row, merged_cols);
+						move_append(cells, curr_table.cells);
+					}
+					create_table(curr_table, merged_cols);
+				}
+				continue;
+			}
+
 			// check two lines that are under each other whether they are in the same table
 			auto first = &page[i]->columns;
 			if (!merged_cols.empty())
 				first = &merged_cols;
 			auto second = &page[i + 1]->columns;
+
+			if (curr_row.empty())
+				curr_row = { page[i] };
+
 			// map for saving all the indexes of columns for further merging
 			std::map<int, int> no_of_cols;
 			// iterators used for iterating over first and second line
 			size_t iter_one = 0;
 			size_t iter_two = 0;
-
-			if (second->size() == 4)
-			{
-				for (int k = 0; k < 4; k++);
-				//	set_border((*second)[k], 0, 255, 0);
-			}
 
 			// cycle that iterates over columns of the two lines
 			while (true)
@@ -402,22 +500,42 @@ namespace ocr
 						if (merged_cols.empty())
 							merged_cols = merge_lines(page[i]->columns, page[i + 1]->columns, no_of_cols);
 						else merged_cols = merge_lines(merged_cols, page[i + 1]->columns, no_of_cols);
+
+						// check whether these textlines are in the same row
+						// if not, create cells from already existing columns and create new row starting with page[i+1]
+						// if yes, just add page[i+1] to the existing row
+						if (are_in_same_row(page[i], page[i + 1]))
+							curr_row.push_back(page[i + 1]);
+						else
+						{
+							// create cells from already existing columns and these textlines
+							auto cells = create_cells(curr_row, merged_cols);
+							move_append(cells, curr_table.cells);
+							curr_row.push_back ( page[i + 1] );
+						}
 					}
 					// if there was no match but a table already exists
 					else
+					{
+						if (!curr_row.empty())
+						{
+							auto cells = create_cells(curr_row, merged_cols);
+							move_append(cells, curr_table.cells);
+						}
 						create_table(curr_table, merged_cols);
+					}
 					break;
 				}
 
 				// get to the same column in both lines
-				if (is_most_left(first->at(iter_one), second->at(iter_two))
-					&& !are_in_same_col(first->at(iter_one), second->at(iter_two)))
+				if (is_most_left(first->at(iter_one).first, second->at(iter_two).first)
+					&& !are_in_same_col(first->at(iter_one).first, second->at(iter_two).first))
 				{
 					iter_one++;
 					continue;
 				}
-				if (is_most_left(second->at(iter_two), first->at(iter_one))
-					&& !are_in_same_col(first->at(iter_one), second->at(iter_two)))
+				if (is_most_left(second->at(iter_two).first, first->at(iter_one).first)
+					&& !are_in_same_col(first->at(iter_one).first, second->at(iter_two).first))
 				{
 					iter_two++;
 					continue;
@@ -431,14 +549,14 @@ namespace ocr
 				{
 					if (k == iter_one)
 						continue;
-					if (overlap(first->at(k), second->at(iter_two)))
+					if (overlap(first->at(k).first, second->at(iter_two).first))
 						to_merge = false;
 				}
 				for (size_t k = 0; k < second->size(); k++)
 				{
 					if (k == iter_two)
 						continue;
-					if (overlap(second->at(k), first->at(iter_one)))
+					if (overlap(second->at(k).first, first->at(iter_one).first))
 						to_merge = false;
 				}
 
@@ -449,12 +567,18 @@ namespace ocr
 				{
 					// not going to merge but table may already exist
 					create_table(curr_table, merged_cols);
+					curr_row.clear();
 					no_of_cols.clear();
 					break;
 				}
 				iter_two++;
 				iter_one++;
 			}
+		}
+		if (!curr_row.empty())
+		{
+			auto cells = create_cells(curr_row, merged_cols);
+			move_append(cells, curr_table.cells);
 		}
 		create_table(curr_table, merged_cols);
 		return std::move(all_tables);
@@ -473,14 +597,23 @@ namespace ocr
 		// deal with multi-line footers
 
 		// sort textlines by y coordinate
-		std::sort(textlines.begin(), textlines.end(), [](auto & a, auto & b) { return a->symbols[0]->y < b->symbols[0]->y;  });
+		std::sort(textlines.begin(), textlines.end(), [](auto & a, auto & b) { return a->symbols[0].first->y < b->symbols[0].first->y;  });
+
+		// check whether footer even exists
+		if (textlines.back()->symbols[0].first->y + textlines.back()->symbols[0].first->h < img->h - img->h / 10)
+			return;
 
 		std::vector<std::shared_ptr<textline>>::reverse_iterator it = textlines.rbegin();
+		int no_of_lines = 0;
 		for (it = textlines.rbegin(); it != textlines.rend() - 1 ; it++)
 		{
 			int line_diff = get_y_axis(it->get()->columns) - get_y_axis(std::next(it)->get()->columns) - get_char_height(std::next(it)->get()->columns, img->w);
 			if (line_diff > FOOTER_THRESHOLD)
 				break;
+			no_of_lines++;
+			// footer isn't greater than 10 textlines
+			if (no_of_lines == 10)
+				return;
 		}
 		auto forward_it = (it + 1).base();
 		textlines.erase(forward_it, textlines.end());
@@ -517,7 +650,6 @@ namespace ocr
 			[](BOX* & a, BOX* & b) { return a->y < b->y; });
 
 		std::unique_ptr<BOX> curr_line;
-		std::unique_ptr<BOX> curr_symbol;
 		std::shared_ptr<textline> line = std::make_shared<textline>();
 		textlines = std::vector<std::shared_ptr<textline>>(textline_arr->n);
 
@@ -528,11 +660,37 @@ namespace ocr
 		for (size_t i = 0; i < textline_arr->n; i++)
 		{
 			curr_line = std::unique_ptr<BOX>(boxCopy(textline_arr->box[i]));
-			for (size_t j = 0; j < symbol_arr->n; j++)
+
+			tesseract::ResultIterator* ri = api->GetIterator();
+			tesseract::PageIteratorLevel level = tesseract::RIL_SYMBOL;
+			if (ri != 0)
 			{
-				curr_symbol = std::unique_ptr<BOX>(boxCopy(symbol_arr->box[j]));
-				if (is_symbol_in_textline(curr_symbol, curr_line))
-					line->symbols.push_back(std::move(curr_symbol));
+				do
+				{
+					const char* word = ri->GetUTF8Text(level);
+					bool del = false;
+					for (size_t i = 0; word[i] != 0; i++)
+					{
+						if ((unsigned char)word[i] == ' ')
+							del = true;
+					//	std::cout << (uint)((unsigned char)word[i]) << ":" << (unsigned char)word[i] << ";";
+					}
+					if (del)
+					{
+						delete[] word;
+						continue;
+					}
+
+					//std::cout << std::endl;
+
+					float conf = ri->Confidence(level);
+					int x1, y1, x2, y2;
+					ri->BoundingBox(level, &x1, &y1, &x2, &y2);
+					auto new_box = std::unique_ptr<BOX>(boxCreate(x1, y1, x2 - x1, y2 - y1));
+					if (is_symbol_in_textline(new_box, curr_line))
+						line->symbols.push_back({ std::move(new_box) , word[0] });
+					delete[] word;
+				} while (ri->Next(level));
 			}
 			int height = get_char_height(line->symbols, img->w);
 			textlines[i] = line;
@@ -540,7 +698,6 @@ namespace ocr
 			fonts.insert({ height, textlines[i] });
 			line = std::make_shared<textline>();
 		}
-		delete[] symbol_arr;
 		delete[] textline_arr;
 
 		return fonts;
@@ -560,26 +717,55 @@ namespace ocr
 		}
 	}
 
-	std::unique_ptr<BOX> page::merge_to_table(std::vector<std::unique_ptr<BOX>> & cols)
+	std::unique_ptr<BOX> page::merge_to_table(std::vector<std::pair<std::unique_ptr<BOX>, char>> & cols)
 	{
 		if (cols.empty())
 			return nullptr;
-		auto result = std::unique_ptr<BOX>(boxCopy(cols[0].get()));
+		auto result = std::unique_ptr<BOX>(boxCopy(cols[0].first.get()));
 		if (result == nullptr)
 			return nullptr;
 		if (cols.size() > 1)
-			result->w = cols[cols.size() - 1]->x - cols[0]->x + cols[cols.size() - 1]->w;
+			result->w = cols[cols.size() - 1].first->x - cols[0].first->x + cols[cols.size() - 1].first->w;
 		return std::move(result);
 	}
 
 	bool page::is_textline_table(std::shared_ptr<textline> line)
 	{
+		int y_lowest = get_y_axis(line->symbols) + line->font*2;
 		for (auto & symbol : line->symbols)
 		{
-			if (symbol->h > line->font * 5)
+			if (symbol.first->y > y_lowest)
 				return true;
 		}
 		return false;
+	}
+
+	bool page::are_in_same_row(std::shared_ptr<textline>& first, std::shared_ptr<textline>& second)
+	{
+		int max = std::max(first->columns.size(), second->columns.size());
+
+
+		for (auto & first_col : first->columns)
+		{
+			for (auto & second_col : second->columns)
+			{
+				if (overlap(first_col.first, second_col.first))
+					return true;
+			}
+		}
+		return false;
+	}
+
+	int page::get_merged_lines_height(std::vector<std::shared_ptr<textline>>& lines)
+	{
+		int heighest = 0;
+		for (auto & symbol : lines.back()->symbols)
+		{
+			if (symbol.first->y + symbol.first->h > heighest)
+				heighest = symbol.first->y + symbol.first->h;
+		}
+		int lowest = get_y_axis(lines.front()->symbols);
+		return heighest - lowest;
 	}
 
 	void page::process_image()
@@ -601,6 +787,12 @@ namespace ocr
 
 		// merge columns into tables
 
+		for (auto k : textlines)
+		{
+			for (auto & i : k->columns);
+		//	set_border(i.first, 0, 0, 255);
+		}
+
 		all_tables = merge_cols(textlines);
 
 
@@ -609,22 +801,26 @@ namespace ocr
 		{
 			for (int j = 0; j < all_tables[i].column_repres.size(); j++)
 			{
-				//if (all_tables[i].column_repres.size() > 1)
-				
-					set_border(all_tables[i].column_repres[j], 255, 0, 0);
+				if (all_tables[i].column_repres.size() > 1)
+					set_border(all_tables[i].column_repres[j].first, 0, 0, 255);
+
+				//	set_border(all_tables[i].cells[j].bbox, 120, 0, 255);
 				//	set_border(all_tables[i].table_repres, 0, 0, 255);
 			}
 
 		}
 
-		std::string out = "results/" + get_filename(filename) + ".png";
-		//std::string out = "results/5.png";
+		std::string out = "results/" + get_filename(filename) + "-bin.png"; 
 
 		char* path = &out[0u];
 		pixWrite(path, img, IFF_PNG);
 		api->End();
 		pixDestroy(&img);
 
+	}
+
+	cell::cell()
+	{
 	}
 
 }
