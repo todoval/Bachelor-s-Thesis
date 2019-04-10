@@ -6,7 +6,7 @@ int centre(std::unique_ptr<BOX> & box)
 	return box->x + box->w / 2;
 }
 
-int get_y_axis(std::vector<std::pair<std::unique_ptr<BOX>, char>> & input)
+int get_y_axis(std::vector<std::pair<std::unique_ptr<BOX>, std::string>> & input)
 {
 	auto min_y = std::min_element(input.begin(), input.end(), [](auto & a, auto & b) {return a.first->y < b.first->y;  });
 	return (*min_y).first->y;
@@ -90,14 +90,14 @@ bool overlap(std::unique_ptr<BOX> & first, std::unique_ptr<BOX> & second)
 		|| (first->x <= second->x + second->w && first->x >= second->x));
 }
 
-int get_greatest_font(std::vector<std::pair<std::unique_ptr<BOX>, char>>  & symbols)
+int get_greatest_font(std::vector<std::pair<std::unique_ptr<BOX>, std::string>>  & symbols)
 {
-	auto highest_box = std::max_element(symbols.begin(), symbols.end(), [](std::pair<std::unique_ptr<BOX>, char> & a, std::pair<std::unique_ptr<BOX>, char> & b)
+	auto highest_box = std::max_element(symbols.begin(), symbols.end(), [](std::pair<std::unique_ptr<BOX>, std::string> & a, std::pair<std::unique_ptr<BOX>, std::string> & b)
 	{return a.first->h < b.first->h; });
 	return (*highest_box).first->h;
 }
 
-int get_char_height(std::vector<std::pair<std::unique_ptr<BOX>, char>>  & symbols, int img_width)
+int get_char_height(std::vector<std::pair<std::unique_ptr<BOX>, std::string>>  & symbols, int img_width)
 {
 	line filtered;
 	for (const auto & elem : symbols)

@@ -17,8 +17,9 @@ namespace ocr
 		size_t font;
 		size_t word_ws;
 		size_t col_ws;
-		std::vector<std::pair<std::unique_ptr<BOX>, char>> symbols;
-		std::vector<std::pair<std::unique_ptr<BOX>, char>> columns;
+		std::unique_ptr<BOX> bbox;
+		std::vector<std::pair<std::unique_ptr<BOX>, std::string>> symbols;
+		std::vector<std::pair<std::unique_ptr<BOX>, std::string>> columns;
 
 		textline(const textline &) = delete;
 		textline & operator=(const textline&) = delete;
@@ -29,6 +30,7 @@ namespace ocr
 			col_ws = std::move(other.col_ws);
 			symbols = std::move(other.symbols);
 			columns = std::move(other.columns);
+			bbox = std::move(other.bbox);
 			return *this;
 		}
 
@@ -50,7 +52,7 @@ namespace ocr
 	class cell
 	{
 	public:
-		char * text;
+		std::string text;
 		std::unique_ptr<BOX> bbox;
 		position start;
 		int rows_no;
@@ -87,7 +89,7 @@ namespace ocr
 		size_t cols;
 
 		std::vector<std::unique_ptr<BOX>> row_repres;
-		std::vector<std::pair<std::unique_ptr<BOX>, char>> column_repres;
+		std::vector<std::pair<std::unique_ptr<BOX>, std::string>> column_repres;
 		std::unique_ptr<BOX> table_repres;
 		std::vector<cell> cells;
 
@@ -152,22 +154,22 @@ namespace ocr
 		// returns true if a symbol (defined by a box) is in textline (defined by another box)
 		bool is_symbol_in_textline(std::unique_ptr<BOX> & symbol, std::unique_ptr<BOX> & textline);
 		void delete_footer();
-		void box_merge_horizontal(std::pair<std::unique_ptr<BOX>, char> & result, std::pair<std::unique_ptr<BOX>, char> & to_add);
-		void box_merge_vertical(std::pair<std::unique_ptr<BOX>, char> & result, std::pair<std::unique_ptr<BOX>, char> & to_add);
+		void box_merge_horizontal(std::pair<std::unique_ptr<BOX>, std::string> & result, std::pair<std::unique_ptr<BOX>, std::string> & to_add);
+		void box_merge_vertical(std::pair<std::unique_ptr<BOX>, std::string> & result, std::pair<std::unique_ptr<BOX>, std::string> & to_add);
 		std::vector<table> merge_cols(std::vector<std::shared_ptr <textline>> & page);
-		std::vector<std::pair<std::unique_ptr<BOX>, char>> merge_into_words(std::vector<std::pair<std::unique_ptr<BOX>, char>> & symbols, int whitespace);
+		std::vector<std::pair<std::unique_ptr<BOX>, std::string>> merge_into_words(std::vector<std::pair<std::unique_ptr<BOX>, std::string>> & symbols, int whitespace);
 		/*
 		returns a vector of whitespaces that exist between the symbols given
 		the vector of symbols should represent one line or a part of line
 		*/
-		std::vector<int> get_spaces(const std::vector<std::pair<std::unique_ptr<BOX>, char>>  & symbols);
+		std::vector<int> get_spaces(const std::vector<std::pair<std::unique_ptr<BOX>, std::string>>  & symbols);
 
-		std::vector<std::pair<std::unique_ptr<BOX>, char>> page::merge_into_columns(std::vector<std::pair<std::unique_ptr<BOX>, char>> & words, int whitespace);
+		std::vector<std::pair<std::unique_ptr<BOX>, std::string>> page::merge_into_columns(std::vector<std::pair<std::unique_ptr<BOX>, std::string>> & words, int whitespace);
 
 		// returns the whitespace between words in textline
 		std::pair<int, int> get_whitespace(std::vector<int> & all_spaces, double constant);
 
-		std::vector<std::pair<std::unique_ptr<BOX>, char>> merge_lines(std::vector<std::pair<std::unique_ptr<BOX>, char>> & first, std::vector<std::pair<std::unique_ptr<BOX>, char>> & second, std::map<int,int> & no_of_cols);
+		std::vector<std::pair<std::unique_ptr<BOX>, std::string>> merge_lines(std::vector<std::pair<std::unique_ptr<BOX>, std::string>> & first, std::vector<std::pair<std::unique_ptr<BOX>, std::string>> & second, std::map<int,int> & no_of_cols);
 
 		void process_category(int & cat_font, std::vector<std::shared_ptr<textline>> & cat_lines, int & first_val);
 
@@ -178,15 +180,15 @@ namespace ocr
 
 		int get_column_whitespace(std::vector<int> & word_gaps);
 
-		std::unique_ptr<BOX> merge_to_table(std::vector<std::pair<std::unique_ptr<BOX>, char>> & cols);
+		std::unique_ptr<BOX> merge_to_table(std::vector<std::pair<std::unique_ptr<BOX>, std::string>> & cols);
 
-		void create_table(table & curr_table, std::vector < std::pair<std::unique_ptr<BOX>, char>> & merged_cols);
+		void create_table(table & curr_table, std::vector < std::pair<std::unique_ptr<BOX>, std::string>> & merged_cols);
 
 		bool is_textline_table(std::shared_ptr<textline> line);
 
 		bool are_in_same_row(std::shared_ptr<textline> & first, std::shared_ptr<textline> & second);
 
-		std::vector<cell> create_cells(std::vector<std::shared_ptr<textline>> & row, std::vector<std::pair<std::unique_ptr<BOX>, char>> & merged_cols);
+		std::vector<cell> create_cells(std::vector<std::shared_ptr<textline>> & row, std::vector<std::pair<std::unique_ptr<BOX>, std::string>> & merged_cols);
 
 		void move_append(std::vector<cell>& source, std::vector<cell>& dest);
 

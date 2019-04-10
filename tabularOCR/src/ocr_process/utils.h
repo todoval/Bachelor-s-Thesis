@@ -21,13 +21,13 @@ const size_t COL_THRESHOLD = 10;
 
 int centre(std::unique_ptr<BOX> & box);
 
-int get_y_axis(std::vector<std::pair<std::unique_ptr<BOX>, char>> & input);
+int get_y_axis(std::vector<std::pair<std::unique_ptr<BOX>, std::string>> & input);
 
 std::string get_filename(const std::string & input_path);
 
 Pix *matToPix(cv::Mat *mat);
 
-int get_greatest_font(std::vector<std::pair<std::unique_ptr<BOX>, char>>  & symbols);
+int get_greatest_font(std::vector<std::pair<std::unique_ptr<BOX>, std::string>>  & symbols);
 
 int most_common_number(std::vector<int> & numbers);
 
@@ -37,7 +37,7 @@ double get_multi_factor_columns(int space_width);
 
 bool overlap(std::unique_ptr<BOX> & first, std::unique_ptr<BOX> & second);
 
-int get_char_height(std::vector<std::pair<std::unique_ptr<BOX>, char>> & symbols, int img_width);
+int get_char_height(std::vector<std::pair<std::unique_ptr<BOX>, std::string>> & symbols, int img_width);
 
 int get_width_of_col(std::unique_ptr<BOX> & first, std::unique_ptr<BOX> & second);
 

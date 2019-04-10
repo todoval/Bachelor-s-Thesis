@@ -34,10 +34,10 @@ int main(int argc, char* argv[]) {
 
 	// check for directory
 
-	//ocr::page page ("D:/bachelor_thesis/tabularOCR/test_images/img/1-1.jpg");
-	//page.process_image();
+	ocr::page page ("D:/bachelor_thesis/tabularOCR/test_images/img/5-1.jpg");
+	page.process_image();
 
-		std::vector<std::string> inputs;
+	std::vector<std::string> inputs;
 	if (argc == 2 && std::experimental::filesystem::is_directory(argv[1]))
 	{
 		inputs = get_filenames(argv[1]);
