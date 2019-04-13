@@ -19,44 +19,6 @@ std::string get_filename(const std::string & input_path)
 	return input_path.substr(start + 1, end - start - 1);
 }
 
-Pix *matToPix(cv::Mat *mat)
-{
-	Pix *pixd = pixCreate(mat->size().width, mat->size().height, 32);
-	for (int y = 0; y < mat->rows; y++) {
-		for (int x = 0; x < mat->cols; x++) {
-			pixSetPixel(pixd, x, y, (l_uint32)mat->at<uchar>(y, x));
-		}
-	}
-	return pixd;
-}
-
-int most_common_number(std::vector<int> & numbers)
-{
-	if (numbers.empty())
-		return 0;
-	std::pair <int, int> result = std::pair<int, int>(0,0);
-	std::pair <int, int> current = std::pair<int, int>(numbers[0], 1);
-
-	for (size_t i = 1; i < numbers.size(); i++)
-	{
-		if (numbers[i] == current.first)
-			current.second++;
-		else
-		{
-			if (result.second < current.second)
-			{
-				result.second = current.second;
-				result.first = current.first;
-			}
-			current.first = numbers[i];
-			current.second = 1;
-		}
-	}
-	if (result.second < current.second)
-		result.first = current.first;
-	return result.first;
-}
-
 double get_multi_factor_words(int space_width, double constant)
 {
 	double x = space_width / constant;
@@ -90,26 +52,13 @@ bool overlap(std::unique_ptr<BOX> & first, std::unique_ptr<BOX> & second)
 		|| (first->x <= second->x + second->w && first->x >= second->x));
 }
 
-int get_greatest_font(std::vector<std::pair<std::unique_ptr<BOX>, std::string>>  & symbols)
-{
-	auto highest_box = std::max_element(symbols.begin(), symbols.end(), [](std::pair<std::unique_ptr<BOX>, std::string> & a, std::pair<std::unique_ptr<BOX>, std::string> & b)
-	{return a.first->h < b.first->h; });
-	return (*highest_box).first->h;
-}
-
 int get_char_height(std::vector<std::pair<std::unique_ptr<BOX>, std::string>>  & symbols, int img_width)
 {
-	line filtered;
-	for (const auto & elem : symbols)
-	{
-		if (elem.first->w > 5 && elem.first->w < img_width / 2)
-			filtered.push_back(std::unique_ptr<BOX>(new BOX(*elem.first.get())));
-	}
-	if (filtered.empty())
+	if (symbols.empty())
 		return 0;
-	auto highest_box = std::max_element(filtered.begin(), filtered.end(), [](std::unique_ptr<BOX> & a, std::unique_ptr<BOX> & b)
-		{return a->h < b->h; });
-	return (*highest_box)->h;
+	auto highest_box = std::max_element(symbols.begin(), symbols.end(), [](std::pair<std::unique_ptr<BOX>, std::string> & a, std::pair<std::unique_ptr<BOX>, std::string> & b)
+		{return a.first->h < b.first->h; });
+	return (*highest_box).first->h;
 }
 
 int get_width_of_col(std::unique_ptr<BOX> & first, std::unique_ptr<BOX> & second)
@@ -128,11 +77,16 @@ bool are_in_same_col(std::unique_ptr<BOX> & first, std::unique_ptr<BOX> & second
 		diff_h = first->y - second->y - second->h < std::min(first->h, second->h);
 	return ((abs(first->x - second->x) <= COL_THRESHOLD
 		|| abs(first->x + first->w - (second->x + second->w)) <= COL_THRESHOLD
-		|| abs(centre(first) - centre(second)) <= COL_THRESHOLD * 5)
-		/*&& diff_h*/);
+		|| abs(centre(first) - centre(second)) <= COL_THRESHOLD * 5) );
 }
 
 bool is_most_left(std::unique_ptr<BOX> & first, std::unique_ptr<BOX> & second)
 {
 	return first->x < second->x;
+}
+
+void sort_by_xcoord(std::vector<std::pair<std::unique_ptr<BOX>, std::string>>& input)
+{
+	std::sort(input.begin(), input.end(),
+		[](auto & a, auto & b) { return a.first->x < b.first->x; });
 }
