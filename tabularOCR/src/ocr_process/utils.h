@@ -1,5 +1,3 @@
-#include "opencv2/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
 #include "../preprocessing/preprocess.h"
 
 #ifdef _WIN32
@@ -24,9 +22,6 @@ int centre(std::unique_ptr<BOX> & box);
 
 // returns the minimal y value that exists in the given line
 int get_y_axis(std::vector<std::pair<std::unique_ptr<BOX>, std::string>> & input);
-
-// returns the filename from a given full input path
-std::string get_filename(const std::string & input_path);
 
 // given symbol spacing of a line and a constant for normalization of space, determine the multiplication factor between words using a pseudo logarithmic curve
 double get_multi_factor_words(int space_width, double constant);

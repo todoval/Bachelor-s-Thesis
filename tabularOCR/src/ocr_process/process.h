@@ -61,7 +61,6 @@ namespace ocr
 		{
 			text = std::move(other.text);
 			bbox = std::move(other.bbox);
-			start = std::move(other.start);
 			rows_no = std::move(other.rows_no);
 			cols_no = std::move(other.cols_no);
 			return *this;
@@ -70,7 +69,6 @@ namespace ocr
 		{
 			text = std::move(other.text);
 			bbox = std::move(other.bbox);
-			start = std::move(other.start);
 			rows_no = std::move(other.rows_no);
 			cols_no = std::move(other.cols_no);
 		}
@@ -89,7 +87,6 @@ namespace ocr
 		std::vector<cell> cells;
 
 		std::vector<std::shared_ptr<textline>> textlines;
-
 		
 		table(const table &) = delete;
 		table(table && other)
@@ -115,20 +112,20 @@ namespace ocr
 		}
 
 		table();
-		
 	};
 
 	class page
 	{
 	public:
-		Pix *img;
+		Pix *img_old;
+		Pix *img_preprocessed;
 		std::vector<table> all_tables;
 		std::vector<std::shared_ptr<textline>> textlines;
 
 		page(const page &) = delete;
 		page & operator=(const page&) = delete;
 		page();
-		page(const std::string & filename);
+		page(preprocessing::file_info file);
 		~page()
 		{
 			

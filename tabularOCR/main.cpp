@@ -16,27 +16,26 @@ std::vector<std::string> get_filenames(const std::string& directory) {
 
 int main(int argc, char* argv[]) {
 	
+	preprocessing::config cfg;
+	auto files = cfg.parse_args(argc, argv);
 
-	/*
-	preprocessing::config cfg = preprocessing::parse_args(argc, argv);
-	for (auto &iter : cfg.files)
-	{
-		//std::string output_path = "E:/bachelor_thesis/tabularOCR/preprocessed" + iter.first + ".jpg";
-		preprocessing::config img_cfg = cfg;
-		cv::Mat img = iter.second;
-		//preprocessing::preprocess_img(img, cfg);
-		//cv::imwrite(output_path, img);
-		//std::pair<std::string, cv::Mat> k = iter;
-		//ocr::process_image(k);
-	}
-	*/
+	preprocessing::preprocess_files(files, cfg);
+
 	std::experimental::filesystem::create_directory("results");
+
+	for (auto file : files)
+	{
+		ocr::page page(file);
+		page.process_image();
+
+	}
 
 	// check for directory
 
-	ocr::page page ("D:/bachelor_thesis/tabularOCR/test_images/to_test/2-1.jpg");
-	page.process_image();
+//	ocr::page page ("D:/bachelor_thesis/tabularOCR/test_images/to_test/2-1.jpg");
+	//page.process_image();
 
+	/*
 	std::vector<std::string> inputs;
 	if (argc == 2 && std::experimental::filesystem::is_directory(argv[1]))
 	{
@@ -63,15 +62,7 @@ int main(int argc, char* argv[]) {
 			std::cout << i << ":";
 			i++;
 		}
-	}
+	}*/
 
-	/*
-	TO DO
-	- scale the image - zistit ako, co, preco (??), ideal 300 dpi
-	- zistit ci je image scanned alebo nie
-	- ak je, spracovavat ho inak, ak nie je, vykaslat sa na skew, denoise etc
-
-
-	*/
     return 0;
 }

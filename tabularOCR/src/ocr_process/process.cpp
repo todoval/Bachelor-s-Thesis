@@ -6,28 +6,29 @@ namespace ocr
 	{
 	}
 
-	page::page(const std::string & file_name)
+	page::page(preprocessing::file_info file)
 	{
-		filename = file_name;
-		img = pixRead(file_name.c_str());
+		img_old = file.old;
+		img_preprocessed = file.preprocessed;
+		filename = file.name;
 		// itialize tesseract api without the use of LSTM
 		api = new tesseract::TessBaseAPI();
-		if (img->d == 8)
-			img = pixConvert8To32(img);
-		init_api(img);
+		if (img_preprocessed->d == 8)
+			img_preprocessed = pixConvert8To32(img_preprocessed);
+		init_api(img_preprocessed);
 	}
 
 	void page::set_border(std::unique_ptr<BOX> & box, int r, int g, int b)
 	{
 		for (int i = 0; i < box->w; i++)
 		{
-			pixSetRGBPixel(img, box->x + i, box->y, r, g, b);
-			pixSetRGBPixel(img, box->x + i, box->y + box->h, r, g, b);
+			pixSetRGBPixel(img_old, box->x + i, box->y, r, g, b);
+			pixSetRGBPixel(img_old, box->x + i, box->y + box->h, r, g, b);
 		}
 		for (int i = 0; i < box->h; i++)
 		{
-			pixSetRGBPixel(img, box->x, box->y + i, r, g, b);
-			pixSetRGBPixel(img, box->x + box->w, box->y + i, r, g, b);
+			pixSetRGBPixel(img_old, box->x, box->y + i, r, g, b);
+			pixSetRGBPixel(img_old, box->x + box->w, box->y + i, r, g, b);
 		}
 	}
 
@@ -123,7 +124,7 @@ namespace ocr
 
 		// if there was no value higher than the constant, determine the word ws to be the highest value and the column ws none
 		if (it == all_spaces.end())
-			return { all_spaces.back(), img->w };
+			return { all_spaces.back(), img_preprocessed->w };
 
 		double multi_cols; // multiplication factor of columns
 
@@ -165,7 +166,7 @@ namespace ocr
 		}
 		
 		// if no column whitespace was found, determine the line has no columns
-		result.second = img->w;
+		result.second = img_preprocessed->w;
 		return result;
 	}
 
@@ -176,7 +177,7 @@ namespace ocr
 		// calculate the y axis and height of the new merged boxes
 
 		int y = get_y_axis(first);
-		int height = get_char_height(second, img->w) + get_y_axis(second) - y;
+		int height = get_char_height(second, img_preprocessed->w) + get_y_axis(second) - y;
 
 		// used to keep track of already merged columns from second line
 		std::vector<int> second_line_indices;
@@ -328,7 +329,7 @@ namespace ocr
 
 			// if line is unusual, determine that it will only have one word and column
 			if (line->symbols.size() <= 1 || line->word_ws == 0)
-				line->word_ws = img->w;
+				line->word_ws = img_preprocessed->w;
 
 			// initialize columns of textline by merging
 			sort_by_xcoord(line->symbols);
@@ -539,7 +540,7 @@ namespace ocr
 	void page::delete_footer()
 	{
 		// check whether footer even exists
-		if (textlines.back()->symbols[0].first->y + textlines.back()->symbols[0].first->h < img->h - img->h / 10)
+		if (textlines.back()->symbols[0].first->y + textlines.back()->symbols[0].first->h < img_preprocessed->h - img_preprocessed->h / 10)
 			return;
 
 		int no_of_lines = 0;
@@ -632,7 +633,7 @@ namespace ocr
 
 			// process other parameters of the textline and add this line to the textline vector
 
-			int height = get_char_height(line->symbols, img->w);
+			int height = get_char_height(line->symbols, img_preprocessed->w);
 			line->bbox = std::move(curr_line);
 			textlines[i] = line;
 			textlines[i]->font = height;
@@ -722,15 +723,16 @@ namespace ocr
 					set_border(all_tables[i].column_repres[j], 120, 120, 255);
 				}
 			}
-
 		}
 
-		std::string out = "new_res/" + get_filename(filename) + ".png"; 
-		char* path = &out[0u];
-		pixWrite(path, img, IFF_PNG);
-		api->End();
-		pixDestroy(&img);
 
+
+		std::string out = "new_res/" + filename + ".png"; 
+		char* path = &out[0u];
+		pixWrite(path, img_old, IFF_PNG);
+		api->End();
+		pixDestroy(&img_preprocessed);
+		pixDestroy(&img_old);
 	}
 
 	cell::cell()

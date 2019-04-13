@@ -12,13 +12,6 @@ int get_y_axis(std::vector<std::pair<std::unique_ptr<BOX>, std::string>> & input
 	return (*min_y).first->y;
 }
 
-std::string get_filename(const std::string & input_path)
-{
-	int start = input_path.find_last_of("/\\");
-	int end = input_path.find_last_of(".");
-	return input_path.substr(start + 1, end - start - 1);
-}
-
 double get_multi_factor_words(int space_width, double constant)
 {
 	double x = space_width / constant;

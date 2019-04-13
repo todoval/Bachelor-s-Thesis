@@ -3,13 +3,15 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 #include <ctype.h>
 #include <vector>
 #include <map>
 
-#include "opencv2/imgproc/imgproc.hpp"
-#include <opencv2/ximgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
+
+#include <baseapi.h>
+#include <renderer.h>
+#include "allheaders.h"
 
 namespace preprocessing
 {
@@ -21,16 +23,28 @@ namespace preprocessing
 	binarize: -b, --binarize, parametre:
 	skew correction: -sk, --deskew, parametre:
 	enhance: -e, --enhance,
-
 	*/
 
-	enum scale_method {};
+	enum preprocess_method { SCALE, DENOISE, GREYSCALE, BINARIZE, SKEW, ENHANCE, NONE_PRE };
 
-	enum greyscale_method { AVG, LUMA, SINGLE_R, SINGLE_G, SINGLE_B, DESATURATE };
+	enum scale_method { NONE_SC };
 
-	enum binarization_method { GLOBAL, OTSU, ADAP_MEAN, ADAP_GAUS, NIBLACK, SAUVOLA, BERNSEN, DEF_B };
+	enum greyscale_method { AVG, LUMA, SINGLE_R, SINGLE_G, SINGLE_B, DESATURATE, NONE_G };
 
-	enum denoise_method { GAUSSIAN, MEAN, BILATERAL, MEDIAN, NON_LOCAL };
+	enum binarization_method { OTSU, SAUVOLA, NONE_B };
+
+	enum denoise_method { GAUSSIAN, MEAN, BILATERAL, MEDIAN, NON_LOCAL, NONE_N };
+
+	enum enhancement_method { HIST_EQUALIZATION, SIMPLE, GAMMA, NONE_E };
+
+	enum deskew_method {NONE_DSK};
+
+	struct file_info
+	{
+		std::string name;
+		Pix* old;
+		Pix* preprocessed;
+	};
 
 	class config
 	{
@@ -40,33 +54,19 @@ namespace preprocessing
 		// scale parameters
 		int sc_dpi;
 		scale_method sc_method;
-
-		std::vector<denoise_method> noise_methods;
-
-		std::map<std::string, cv::Mat> files; // files to be processed with their names
-
-		// deskew parameters
-
+		denoise_method noise_method;
+		deskew_method dsk_method;
 		greyscale_method gs_method;
-
 		binarization_method bin_method;
+		enhancement_method en_method;
 
-		// processing argument vector
+		std::vector<file_info> parse_args(int argc, char* argv[]);
 
+	private:
+		void handle_parsing_error();
+
+		// returns the filename from a given full input path
+		std::string get_filename(const std::string & input_path);
 	};
-
-	std::string get_filename(std::string & input_path);
-
-	bool is_number(const std::string& str);
-
-	bool process_scale_arg(const std::string & arg, config & cfg);
-
-	bool process_binar_arg(std::string & arg, config & cfg);
-
-	bool process_greyscale_arg(std::string & arg, config & cfg);
-
-	bool process_denoise_arg(std::string & arg, config & cfg);
-
-    config parse_args(int argc, char* argv[]);
     
 }

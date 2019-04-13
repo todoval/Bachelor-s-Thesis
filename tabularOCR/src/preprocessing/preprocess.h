@@ -1,8 +1,6 @@
 #pragma once
 
 #include "parser.h"
-#include "opencv2/core.hpp"
-#include "opencv2/photo/photo.hpp"
 
 
 #ifdef _WIN32
@@ -18,13 +16,18 @@
 
 namespace preprocessing
 {
+	void handle_preprocessing_error();
+
+	void preprocess_files(std::vector<file_info> & files, config cfg);
+
+	void binarize(binarization_method method, Pix* img);
+
+	void enhance(enhancement_method method, Pix* img);
+
 	// noise reduction
 	// deskew
-	// binarize
 	// contrast enhancement
 	// scaling
-
-	preprocess();
 
 
 }
