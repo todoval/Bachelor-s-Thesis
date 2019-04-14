@@ -1,28 +1,23 @@
 #include "parser.h"
 
-namespace preprocessing
-{
+using namespace tabular_ocr;
+
 	config::config()
 	{
+		// default configuration
 		bin_method = binarization_method::NONE_B;
+		en_method = enhancement_method::NONE_E;
+		sc_method = scale_method::NONE_SC;
+		noise_method = denoise_method::NONE_N;
+		deskew = false;
+		gs_method = greyscale_method::NONE_G;
 	}
 
-
-	/* prepinace
-		scaling: -sc, --scale, parametre: DPI, method;
-		denoise: -n, --denoise, parametre:
-		greyscale: -g, --greyscale, parametre:
-		binarize: -b, --binarize, parametre:
-		skew correction: -sk, --deskew, parametre:
-		enhance: -e, --enhance,
-	*/
-
-	std::vector<file_info> config::parse_args(int argc, char * argv[])
+	std::map<std::string, bool> config::parse_args(int argc, char * argv[])
 	{
-		std::vector<file_info> result;
-		bool parse_files = false;
+		std::map<std::string, bool> result;
 		auto curr_parsing = preprocess_method::NONE_PRE;
-		for (size_t i = 0; i < argc; i++)
+		for (size_t i = 1; i < argc; i++)
 		{
 			std::string arg = argv[i];
 
@@ -51,7 +46,7 @@ namespace preprocessing
 				}
 				else if (arg == "--deskew" || arg == "-sk")
 				{
-					curr_parsing = preprocess_method::SCALE;
+					deskew = true;
 					continue;
 				}
 				else if (arg == "--enhance" || arg == "-e")
@@ -59,30 +54,53 @@ namespace preprocessing
 					curr_parsing = preprocess_method::ENHANCE;
 					continue;
 				}
+				else if (arg == "--preprocess" || arg == "-p")
+				{
+					// set preprocessing parameters to "ideal"
+					//gs_method = greyscale_method::MAX;
+					en_method = enhancement_method::GAMMA;
+					continue;
+				}
 				else
 					handle_parsing_error();
 			}
-			std::transform(arg.begin(), arg.end(), arg.begin(), ::toupper);
+			//std::transform(arg.begin(), arg.end(), arg.begin(), ::toupper);
 			bool parsing_args = true;
 			switch (curr_parsing)
 			{
 			case (preprocess_method::BINARIZE):
-				if (arg == "otsu")
+				if (arg == "OTSU")
 					bin_method = binarization_method::OTSU;
-				else if (arg == "sauvola")
+				else if (arg == "SAUVOLA")
 					bin_method = binarization_method::SAUVOLA;
 				else
-					parse_files = true;
+					handle_parsing_error();
 				break;
 			case (preprocess_method::DENOISE):
 				break;
 			case (preprocess_method::ENHANCE):
+				if (arg == "SIMPLE")
+					en_method = enhancement_method::SIMPLE;
+				else if (arg == "GAMMA")
+					en_method = enhancement_method::GAMMA;
+				else if (arg == "EQUALIZATION")
+					en_method = enhancement_method::HIST_EQUALIZATION;
+				else
+					handle_parsing_error();
 				break;
 			case (preprocess_method::GREYSCALE):
+				if (arg == "AVG")
+					gs_method = greyscale_method::AVG;
+				else if (arg == "MIN")
+					gs_method = greyscale_method::MIN;
+				else if (arg == "MAX")
+					gs_method = greyscale_method::MAX;
+				else if (arg == "LUMA")
+					gs_method = greyscale_method::LUMA;
+				else
+					handle_parsing_error();
 				break;
 			case (preprocess_method::SCALE):
-				break;
-			case (preprocess_method::SKEW):
 				break;
 			case (preprocess_method::NONE_PRE):
 				parsing_args = false;
@@ -92,33 +110,82 @@ namespace preprocessing
 				continue;
 
 			// parse files
-			parse_files = true;
-			std::ifstream input(arg);
-			if (!input.good()) // check whether file exists
-				handle_parsing_error();
-			auto filename = get_filename(arg);
-			auto img = pixRead(arg.c_str());
-			if (img->d == 8)
-				img = pixConvert8To32(img);
-			Pix * copy;
-			pixCopy(copy, img);
-			result.push_back({ filename, img, copy });
+
+			if (std::experimental::filesystem::is_directory(arg))
+			{
+				auto filenames = get_filenames_from_dir(arg);
+				for (auto name : filenames)
+					result[name] = true;
+			}
+			else
+				result[arg] = false;
 		}
 		return result;
 	}
 
-	void config::handle_parsing_error()
+	void tabular_ocr::handle_parsing_error()
 	{
 		std::cout << "Error" << std::endl;
 	}
 
-	std::string config::get_filename(const std::string & input_path)
+	std::string tabular_ocr::get_filename(const std::string & input_path)
 	{
 		int start = input_path.find_last_of("/\\");
 		int end = input_path.find_last_of(".");
 		return input_path.substr(start + 1, end - start - 1);
 	}
 
+	std::string tabular_ocr::get_filename_with_dir(const std::string & input_path)
+	{
+		int start = input_path.substr(0, input_path.find_last_of("/\\")).find_last_of("/\\");
+		int end = input_path.find_last_of(".");
+		return input_path.substr(start + 1, end - start - 1);
+	}
 
+	void tabular_ocr::create_results_subdirectory(const std::string & name)
+	{
+		int end = name.find_last_of("/ \\");
+		int start = name.substr(0, name.find_last_of("/ \\")).find_last_of("/\\");
+		std::string dir_name = name.substr(start + 1, end - start - 1);
+		std::experimental::filesystem::create_directory("results/" + dir_name);
+	}
 
-}
+	void tabular_ocr::save_result(file_info & file)
+	{
+		std::string out = "results/" + file.name + "-gamma.png";
+		char* path = &out[0u];
+		pixWrite(path, file.old, IFF_PNG);
+		pixDestroy(&file.old);
+		pixDestroy(&file.preprocessed);
+	}
+
+	std::vector<std::string> tabular_ocr::get_filenames_from_dir(const std::string & directory)
+	{
+		std::vector<std::string> result;
+		std::experimental::filesystem::path path(directory);
+		for (auto it : std::experimental::filesystem::directory_iterator(path))
+			result.push_back(it.path().generic_string());
+		return result;
+	}
+
+	file_info tabular_ocr::create_file_from_name(const std::string & name, bool is_dir)
+	{
+		std::ifstream input(name);
+		// check whether file exists
+		if (!input.good())
+			handle_parsing_error();
+		// get the filename
+		std::string filename;
+		if (is_dir)
+			filename = get_filename_with_dir(name);
+		else
+			filename = get_filename(name);
+		// load the file into memory
+		auto img = pixRead(name.c_str());
+		if (img->d == 8)
+			img = pixConvert8To32(img);
+		// create a copy of the file
+		Pix * copy = pixCreate(1, 1, 1);
+		copy = pixCopy(copy, img);
+		return { filename, img, copy };
+	}

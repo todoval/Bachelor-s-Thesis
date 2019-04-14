@@ -7,13 +7,13 @@
 #include <ctype.h>
 #include <vector>
 #include <map>
-
+#include <experimental/filesystem>
 
 #include <baseapi.h>
 #include <renderer.h>
 #include "allheaders.h"
 
-namespace preprocessing
+namespace tabular_ocr
 {
 
 	/* prepinace
@@ -25,11 +25,11 @@ namespace preprocessing
 	enhance: -e, --enhance,
 	*/
 
-	enum preprocess_method { SCALE, DENOISE, GREYSCALE, BINARIZE, SKEW, ENHANCE, NONE_PRE };
+	enum preprocess_method { SCALE, DENOISE, GREYSCALE, BINARIZE, ENHANCE, NONE_PRE };
 
 	enum scale_method { NONE_SC };
 
-	enum greyscale_method { AVG, LUMA, SINGLE_R, SINGLE_G, SINGLE_B, DESATURATE, NONE_G };
+	enum greyscale_method { AVG, LUMA, MIN, MAX, NONE_G };
 
 	enum binarization_method { OTSU, SAUVOLA, NONE_B };
 
@@ -37,8 +37,7 @@ namespace preprocessing
 
 	enum enhancement_method { HIST_EQUALIZATION, SIMPLE, GAMMA, NONE_E };
 
-	enum deskew_method {NONE_DSK};
-
+	// a structure that is used for storing information about concrete images
 	struct file_info
 	{
 		std::string name;
@@ -55,18 +54,32 @@ namespace preprocessing
 		int sc_dpi;
 		scale_method sc_method;
 		denoise_method noise_method;
-		deskew_method dsk_method;
 		greyscale_method gs_method;
 		binarization_method bin_method;
 		enhancement_method en_method;
+		bool deskew;
 
-		std::vector<file_info> parse_args(int argc, char* argv[]);
+		std::map<std::string, bool> parse_args(int argc, char* argv[]);
 
-	private:
-		void handle_parsing_error();
-
-		// returns the filename from a given full input path
-		std::string get_filename(const std::string & input_path);
 	};
-    
+
+	// returns the file with initialized pix from the given name
+	file_info create_file_from_name(const std::string & name, bool is_dir);
+
+	// returns a vector of all names of files that are in the given directory
+	std::vector<std::string> get_filenames_from_dir(const std::string& directory);
+
+	// ends the whole program and throws a parsing error
+	void handle_parsing_error();
+
+	// returns a filename from a given full input path
+	std::string get_filename(const std::string & input_path);
+
+	// returns a filename with its parent directory from a given full input path
+	std::string get_filename_with_dir(const std::string & input_path);
+
+	// creates subdirectory of the results directory
+	void create_results_subdirectory(const std::string & name);
+
+	void save_result(file_info & file);
 }

@@ -13,21 +13,25 @@
 
 #endif // _WIN32
 
-
-namespace preprocessing
+namespace tabular_ocr
 {
-	void handle_preprocessing_error();
+	namespace preprocessing
+	{
+		void handle_preprocessing_error();
 
-	void preprocess_files(std::vector<file_info> & files, config cfg);
+		void preprocess_file(file_info & file, config cfg);
 
-	void binarize(binarization_method method, Pix* img);
+		void binarize(binarization_method method, Pix* img);
 
-	void enhance(enhancement_method method, Pix* img);
+		void enhance(enhancement_method method, Pix* img);
 
-	// noise reduction
-	// deskew
-	// contrast enhancement
-	// scaling
+		Pix* convert_to_greyscale(greyscale_method method, Pix ** img);
 
+		Pix* deskew(Pix * img);
 
+		// TO DO
+		// noise reduction
+		// scaling
+
+	}
 }
