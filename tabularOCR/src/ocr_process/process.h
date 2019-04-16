@@ -3,6 +3,7 @@
 #include "utils.h"
 #include <memory>
 #include <unordered_map>
+#include "dict.h"
 
 namespace tabular_ocr
 {
@@ -127,7 +128,7 @@ namespace tabular_ocr
 			page(const page &) = delete;
 			page & operator=(const page&) = delete;
 			page();
-			page(file_info file);
+			page(file_info & file);
 			~page()
 			{
 
@@ -147,7 +148,7 @@ namespace tabular_ocr
 			void determine_columns();
 
 			// initializes tesseract api without the use of LSTM
-			void init_api(Pix *img);
+			void init_api(Pix* &img);
 
 			// gets the symbols and lines recognized by tesseract and initializes class's textlines vector with recognized values
 			void init_textlines();

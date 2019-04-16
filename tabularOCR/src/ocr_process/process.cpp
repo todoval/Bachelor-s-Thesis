@@ -7,15 +7,19 @@ page::page()
 {
 }
 
-page::page(file_info file)
+page::page(file_info & file)
 {
-	img_old = file.old;
-	img_preprocessed = file.preprocessed;
 	filename = file.name;
 	// itialize tesseract api without the use of LSTM
 	api = new tesseract::TessBaseAPI();
-	if (img_preprocessed->d == 8)
-		img_preprocessed = pixConvert8To32(img_preprocessed);
+	img_old = file.old;
+	if (file.preprocessed->d == 8)
+	{
+		auto converted = pixConvert8To32(file.preprocessed);
+		pixDestroy(&file.preprocessed);
+		file.preprocessed = converted;
+	}
+	img_preprocessed = file.preprocessed;
 	init_api(img_preprocessed);
 }
 
@@ -479,6 +483,8 @@ void page::move_append(std::vector<cell>& dest, std::vector<cell>& source)
 
 void page::create_tables_from_cols(std::vector<std::shared_ptr<textline>> & page)
 {
+	if (page.size() <= 1)
+		return;
 	// vector of boxes that represent current table merged by columns
 	std::vector<std::pair<std::unique_ptr<BOX>, std::string>> merged_cols;
 	table curr_table;
@@ -557,6 +563,9 @@ table::table()
 
 void page::delete_footer()
 {
+	if (textlines.empty())
+		return;
+
 	// check whether footer even exists
 	if (textlines.back()->symbols[0].first->y + textlines.back()->symbols[0].first->h < img_preprocessed->h - img_preprocessed->h / 10)
 		return;
@@ -580,7 +589,7 @@ void page::delete_footer()
 	textlines.erase(forward_it, textlines.end());
 }
 
-void page::init_api(Pix *img)
+void page::init_api(Pix* &img)
 {
 	if (api->Init(NULL, "eng", tesseract::OcrEngineMode::OEM_TESSERACT_ONLY))
 	{
@@ -734,7 +743,10 @@ void page::process_image()
 
 	set_table_borders();
 
+	// end and clear api to avoid memory leaks
 	api->End();
+	api->ClearPersistentCache();
+	api->Clear();
 }
 
 cell::cell()

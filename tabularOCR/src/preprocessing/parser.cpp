@@ -57,8 +57,8 @@ using namespace tabular_ocr;
 				else if (arg == "--preprocess" || arg == "-p")
 				{
 					// set preprocessing parameters to "ideal"
-					//gs_method = greyscale_method::MAX;
-					en_method = enhancement_method::GAMMA;
+					gs_method = greyscale_method::MAX;
+					en_method = enhancement_method::SIMPLE;
 					continue;
 				}
 				else
@@ -152,7 +152,7 @@ using namespace tabular_ocr;
 
 	void tabular_ocr::save_result(file_info & file)
 	{
-		std::string out = "results/" + file.name + "-gamma.png";
+		std::string out = "results/" + file.name + "-max.png";
 		char* path = &out[0u];
 		pixWrite(path, file.old, IFF_PNG);
 		pixDestroy(&file.old);
@@ -174,6 +174,7 @@ using namespace tabular_ocr;
 		// check whether file exists
 		if (!input.good())
 			handle_parsing_error();
+		input.close();
 		// get the filename
 		std::string filename;
 		if (is_dir)
@@ -183,9 +184,12 @@ using namespace tabular_ocr;
 		// load the file into memory
 		auto img = pixRead(name.c_str());
 		if (img->d == 8)
-			img = pixConvert8To32(img);
+		{
+			auto converted = pixConvert8To32(img);
+			pixDestroy(&img);
+			img = converted;
+		}
 		// create a copy of the file
-		Pix * copy = pixCreate(1, 1, 1);
-		copy = pixCopy(copy, img);
+		Pix * copy = pixCopy(NULL, img);
 		return { filename, img, copy };
 	}
