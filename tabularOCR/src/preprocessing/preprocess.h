@@ -17,21 +17,28 @@ namespace tabular_ocr
 {
 	namespace preprocessing
 	{
+
+		class preprocessor
+		{
+		public:
+			image img;
+			config cfg;
+
+			preprocessor(image img_p, config cfg_p);
+
+			void preprocess_file();
+
+		private:
+
+			void binarize();
+
+			void enhance();
+
+			void convert_to_greyscale();
+
+			void deskew();
+		};
+
 		void handle_preprocessing_error();
-
-		void preprocess_file(file_info & file, config cfg);
-
-		void binarize(binarization_method method, Pix* img);
-
-		void enhance(enhancement_method method, Pix* img);
-
-		Pix* convert_to_greyscale(greyscale_method method, Pix ** img);
-
-		Pix* deskew(Pix * img);
-
-		// TO DO
-		// noise reduction
-		// scaling
-
 	}
 }

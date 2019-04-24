@@ -7,8 +7,6 @@ using namespace tabular_ocr;
 		// default configuration
 		bin_method = binarization_method::NONE_B;
 		en_method = enhancement_method::NONE_E;
-		sc_method = scale_method::NONE_SC;
-		noise_method = denoise_method::NONE_N;
 		deskew = false;
 		gs_method = greyscale_method::NONE_G;
 	}
@@ -24,17 +22,7 @@ using namespace tabular_ocr;
 			// check whether the argument is not a switch argument
 			if (arg[0] == '-')
 			{
-				if (arg == "--scale" || arg == "-sc")
-				{
-					curr_parsing = preprocess_method::SCALE;
-					continue;
-				}
-				else if (arg == "--denoise" || arg == "-n")
-				{
-					curr_parsing = preprocess_method::DENOISE;
-					continue;
-				}
-				else if (arg == "--greyscale" || arg == "-g")
+				if (arg == "--greyscale" || arg == "-g")
 				{
 					curr_parsing = preprocess_method::GREYSCALE;
 					continue;
@@ -57,14 +45,15 @@ using namespace tabular_ocr;
 				else if (arg == "--preprocess" || arg == "-p")
 				{
 					// set preprocessing parameters to "ideal"
-					gs_method = greyscale_method::MAX;
+					//gs_method = greyscale_method::MAX;
 					en_method = enhancement_method::SIMPLE;
 					continue;
 				}
 				else
 					handle_parsing_error();
 			}
-			//std::transform(arg.begin(), arg.end(), arg.begin(), ::toupper);
+			auto old_arg = arg;
+			std::transform(arg.begin(), arg.end(), arg.begin(), ::toupper);
 			bool parsing_args = true;
 			switch (curr_parsing)
 			{
@@ -74,9 +63,7 @@ using namespace tabular_ocr;
 				else if (arg == "SAUVOLA")
 					bin_method = binarization_method::SAUVOLA;
 				else
-					handle_parsing_error();
-				break;
-			case (preprocess_method::DENOISE):
+					parsing_args = false;
 				break;
 			case (preprocess_method::ENHANCE):
 				if (arg == "SIMPLE")
@@ -86,7 +73,7 @@ using namespace tabular_ocr;
 				else if (arg == "EQUALIZATION")
 					en_method = enhancement_method::HIST_EQUALIZATION;
 				else
-					handle_parsing_error();
+					parsing_args = false;
 				break;
 			case (preprocess_method::GREYSCALE):
 				if (arg == "AVG")
@@ -98,9 +85,7 @@ using namespace tabular_ocr;
 				else if (arg == "LUMA")
 					gs_method = greyscale_method::LUMA;
 				else
-					handle_parsing_error();
-				break;
-			case (preprocess_method::SCALE):
+					parsing_args = false;
 				break;
 			case (preprocess_method::NONE_PRE):
 				parsing_args = false;
@@ -110,6 +95,8 @@ using namespace tabular_ocr;
 				continue;
 
 			// parse files
+
+			arg = old_arg;
 
 			if (std::experimental::filesystem::is_directory(arg))
 			{
@@ -150,13 +137,11 @@ using namespace tabular_ocr;
 		std::experimental::filesystem::create_directory("results/" + dir_name);
 	}
 
-	void tabular_ocr::save_result(file_info & file)
+	void tabular_ocr::save_result(std::string & name, image & img)
 	{
-		std::string out = "results/" + file.name + "-max.png";
+		std::string out = "results/" + name + ".png";
 		char* path = &out[0u];
-		pixWrite(path, file.old, IFF_PNG);
-		pixDestroy(&file.old);
-		pixDestroy(&file.preprocessed);
+		pixWrite(path, img.get(), IFF_PNG);
 	}
 
 	std::vector<std::string> tabular_ocr::get_filenames_from_dir(const std::string & directory)
@@ -182,14 +167,12 @@ using namespace tabular_ocr;
 		else
 			filename = get_filename(name);
 		// load the file into memory
-		auto img = pixRead(name.c_str());
+		auto img = std::unique_ptr<Pix>(pixRead(name.c_str()));
 		if (img->d == 8)
-		{
-			auto converted = pixConvert8To32(img);
-			pixDestroy(&img);
-			img = converted;
-		}
+			img = std::unique_ptr<Pix>(pixConvert8To32(img.get()));
 		// create a copy of the file
-		Pix * copy = pixCopy(NULL, img);
-		return { filename, img, copy };
+		Pix * pix_copy = pixCopy(NULL, img.get());
+		auto copy = std::unique_ptr<Pix>(pix_copy);;
+		file_info to_ret = { filename, std::move(img), std::move(copy) };
+		return to_ret;
 	}

@@ -25,15 +25,13 @@ namespace tabular_ocr
 	enhance: -e, --enhance,
 	*/
 
-	enum preprocess_method { SCALE, DENOISE, GREYSCALE, BINARIZE, ENHANCE, NONE_PRE };
+	typedef std::unique_ptr<Pix> image;
 
-	enum scale_method { NONE_SC };
+	enum preprocess_method { GREYSCALE, BINARIZE, ENHANCE, NONE_PRE };
 
 	enum greyscale_method { AVG, LUMA, MIN, MAX, NONE_G };
 
 	enum binarization_method { OTSU, SAUVOLA, NONE_B };
-
-	enum denoise_method { GAUSSIAN, MEAN, BILATERAL, MEDIAN, NON_LOCAL, NONE_N };
 
 	enum enhancement_method { HIST_EQUALIZATION, SIMPLE, GAMMA, NONE_E };
 
@@ -41,8 +39,8 @@ namespace tabular_ocr
 	struct file_info
 	{
 		std::string name;
-		Pix* old;
-		Pix* preprocessed;
+		image old;
+		image preprocessed;
 	};
 
 	class config
@@ -52,8 +50,6 @@ namespace tabular_ocr
 
 		// scale parameters
 		int sc_dpi;
-		scale_method sc_method;
-		denoise_method noise_method;
 		greyscale_method gs_method;
 		binarization_method bin_method;
 		enhancement_method en_method;
@@ -81,5 +77,5 @@ namespace tabular_ocr
 	// creates subdirectory of the results directory
 	void create_results_subdirectory(const std::string & name);
 
-	void save_result(file_info & file);
+	void save_result(std::string & name, image & img);
 }

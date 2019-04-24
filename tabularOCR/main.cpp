@@ -11,7 +11,6 @@ int main(int argc, char* argv[]) {
 		
 	// read all filenames that should be processed and parse configuration arguments
 	auto filenames = cfg.parse_args(argc, argv);
-
 		
 	std::experimental::filesystem::create_directory("results");
 
@@ -24,16 +23,18 @@ int main(int argc, char* argv[]) {
 		// initialize images from given input files
 		file_info file = create_file_from_name(name.first, name.second);
 
-		preprocessing::preprocess_file(file, cfg);
+		preprocessing::preprocessor preprocessor(std::move(file.preprocessed), cfg);
+		preprocessor.preprocess_file();
+		file.preprocessed = std::move(preprocessor.img);
 
 		ocr::page page(file);
-		page.process_image();
+		image result_img = page.process_image();
 		
 		// saves the results and destroys the allocated structures
-		save_result(file);
+		save_result(file.name, result_img);
 
 		std::cout << "File \"" + name.first +  "\" has been processed." << std::endl;
 	}
 
-	return 0;
+ 		return 0;
 }

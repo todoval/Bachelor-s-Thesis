@@ -12,14 +12,10 @@ page::page(file_info & file)
 	filename = file.name;
 	// itialize tesseract api without the use of LSTM
 	api = new tesseract::TessBaseAPI();
-	img_old = file.old;
+	img_old = std::move(file.old);
 	if (file.preprocessed->d == 8)
-	{
-		auto converted = pixConvert8To32(file.preprocessed);
-		pixDestroy(&file.preprocessed);
-		file.preprocessed = converted;
-	}
-	img_preprocessed = file.preprocessed;
+		file.preprocessed = std::unique_ptr<Pix>(pixConvert8To32(file.preprocessed.get()));
+	img_preprocessed = std::move(file.preprocessed);
 	init_api(img_preprocessed);
 }
 
@@ -27,13 +23,13 @@ void page::set_border(std::unique_ptr<BOX> & box, int r, int g, int b)
 {
 	for (int i = 0; i < box->w; i++)
 	{
-		pixSetRGBPixel(img_old, box->x + i, box->y, r, g, b);
-		pixSetRGBPixel(img_old, box->x + i, box->y + box->h, r, g, b);
+		pixSetRGBPixel(img_old.get(), box->x + i, box->y, r, g, b);
+		pixSetRGBPixel(img_old.get(), box->x + i, box->y + box->h, r, g, b);
 	}
 	for (int i = 0; i < box->h; i++)
 	{
-		pixSetRGBPixel(img_old, box->x, box->y + i, r, g, b);
-		pixSetRGBPixel(img_old, box->x + box->w, box->y + i, r, g, b);
+		pixSetRGBPixel(img_old.get(), box->x, box->y + i, r, g, b);
+		pixSetRGBPixel(img_old.get(), box->x + box->w, box->y + i, r, g, b);
 	}
 }
 
@@ -318,12 +314,6 @@ void page::determine_columns()
 {
 	for (auto line : textlines)
 	{
-		if (line->symbols.empty())
-		{
-			line->col_ws = line->word_ws = 0;
-			continue;
-		}
-
 		// calculate constant that means the minimum required whitespace between words
 		double constant = line->font / REF_FONT_DIVIDER;
 		auto spaces = get_spaces(line->symbols);
@@ -333,7 +323,7 @@ void page::determine_columns()
 		line->col_ws = whitespaces.second;
 
 		// if line is unusual, determine that it will only have one word and column
-		if (line->symbols.size() <= 1 || line->word_ws == 0)
+		if (line->symbols.size() <= 1)
 			line->word_ws = img_preprocessed->w;
 
 		// initialize columns of textline by merging
@@ -481,17 +471,17 @@ void page::move_append(std::vector<cell>& dest, std::vector<cell>& source)
 	}
 }
 
-void page::create_tables_from_cols(std::vector<std::shared_ptr<textline>> & page)
+void page::create_tables_from_cols()
 {
-	if (page.size() <= 1)
+	if (textlines.size() <= 1)
 		return;
 	// vector of boxes that represent current table merged by columns
 	std::vector<std::pair<std::unique_ptr<BOX>, std::string>> merged_cols;
 	table curr_table;
-	for (size_t i = 0; i < page.size() - 1; i++)
+	for (size_t i = 0; i < textlines.size() - 1; i++)
 	{
 		// don't merge lines that are too far away from each other
-		if (rows_in_different_tables(page[i], page[i+1]))
+		if (rows_in_different_tables(textlines[i], textlines[i+1]))
 		{
 			if (merged_cols.size() > 0)
 				init_table(curr_table, merged_cols);
@@ -499,10 +489,10 @@ void page::create_tables_from_cols(std::vector<std::shared_ptr<textline>> & page
 		}
 
 		// initialize two lines that are under each other (or use an already existing table)
-		auto first = &page[i]->columns;
+		auto first = &textlines[i]->columns;
 		if (!merged_cols.empty())
 			first = &merged_cols;
-		auto second = &page[i + 1]->columns;
+		auto second = &textlines[i + 1]->columns;
 
 		// map for saving all the indexes of columns for further merging
 		std::map<int, int> no_of_cols;
@@ -521,12 +511,12 @@ void page::create_tables_from_cols(std::vector<std::shared_ptr<textline>> & page
 				{
 					// add textlines
 					if (curr_table.textlines.empty())
-						curr_table.textlines.push_back(page[i]);
-					curr_table.textlines.push_back(page[i + 1]);
+						curr_table.textlines.push_back(textlines[i]);
+					curr_table.textlines.push_back(textlines[i + 1]);
 					// add current line to an already existing table or initialize table
 					if (merged_cols.empty())
-						merged_cols = merge_lines(page[i]->columns, page[i + 1]->columns, no_of_cols);
-					else merged_cols = merge_lines(merged_cols, page[i + 1]->columns, no_of_cols);
+						merged_cols = merge_lines(textlines[i]->columns, textlines[i + 1]->columns, no_of_cols);
+					else merged_cols = merge_lines(merged_cols, textlines[i + 1]->columns, no_of_cols);
 				}
 				// if there was no match but a table already exists
 				else
@@ -589,7 +579,7 @@ void page::delete_footer()
 	textlines.erase(forward_it, textlines.end());
 }
 
-void page::init_api(Pix* &img)
+void page::init_api(image &img)
 {
 	if (api->Init(NULL, "eng", tesseract::OcrEngineMode::OEM_TESSERACT_ONLY))
 	{
@@ -597,9 +587,10 @@ void page::init_api(Pix* &img)
 		exit(1);
 	}
 	api->SetPageSegMode(tesseract::PageSegMode::PSM_AUTO);
-	api->SetImage(img);
-	api->SetVariable("textord_tabfind_find_tables", "true");
-	api->SetVariable("textord_tablefind_recognize_tables", "true");
+	api->SetImage(img.get());
+	//api->SetVariable("textord_tabfind_find_tables", "true");
+	//api->SetVariable("textord_tablefind_recognize_tables", "true");
+//	api->SetVariable("user_defined_dpi", "72");
 	api->Recognize(0);
 }
 
@@ -614,7 +605,7 @@ void page::init_textlines()
 
 	// sort textline array by their y-coordinate
 	std::sort(textline_arr->box, textline_arr->box,
-		[](BOX* & a, BOX* & b) { return a->y < b->y; });
+		[](BOX* a, BOX* b) { return a->y < b->y; });
 
 	// represents current textline as a box structure
 	std::unique_ptr<BOX> curr_line;
@@ -674,7 +665,7 @@ void page::delete_unusual_lines()
 	while (true)
 	{
 		auto it = std::find_if(textlines.begin(), textlines.end(), [this](auto line)
-		{ return line->word_ws == 0 || line->symbols.empty() || is_textline_table(line);
+		{ return line->symbols.empty() || is_textline_table(line);
 		});
 		if (it != textlines.end())
 			textlines.erase(it);
@@ -725,21 +716,21 @@ int page::get_merged_lines_height(std::vector<std::shared_ptr<textline>>& lines)
 	return heighest - lowest;
 }
 
-void page::process_image()
+image page::process_image()
 {
 	// initializes the textlines vector - adds symbols and fonts to the existing textlines
 	init_textlines();
 
+	delete_unusual_lines();
+
 	// save information about columns into the textline vector
 	determine_columns();
-
-	delete_unusual_lines();
 
 	delete_footer();
 
 	// merge columns into tables
 
-	create_tables_from_cols(textlines);
+	create_tables_from_cols();
 
 	set_table_borders();
 
@@ -747,6 +738,8 @@ void page::process_image()
 	api->End();
 	api->ClearPersistentCache();
 	api->Clear();
+
+	return std::move(img_old);
 }
 
 cell::cell()

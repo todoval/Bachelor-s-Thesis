@@ -120,8 +120,8 @@ namespace tabular_ocr
 		class page
 		{
 		public:
-			Pix *img_old;
-			Pix *img_preprocessed;
+			image img_old;
+			image img_preprocessed;
 			std::vector<table> all_tables;
 			std::vector<std::shared_ptr<textline>> textlines;
 
@@ -137,7 +137,7 @@ namespace tabular_ocr
 			// colors the border of the given box in the current image with the given rgb color
 			void set_border(std::unique_ptr<BOX> & box, int r, int g, int b);
 			// the main function
-			void process_image();
+			image process_image();
 			// saves the preprocessed results
 
 		private:
@@ -148,7 +148,7 @@ namespace tabular_ocr
 			void determine_columns();
 
 			// initializes tesseract api without the use of LSTM
-			void init_api(Pix* &img);
+			void init_api(image &img);
 
 			// gets the symbols and lines recognized by tesseract and initializes class's textlines vector with recognized values
 			void init_textlines();
@@ -166,7 +166,7 @@ namespace tabular_ocr
 			void box_merge_vertical(std::pair<std::unique_ptr<BOX>, std::string> & result, std::pair<std::unique_ptr<BOX>, std::string> & to_add);
 
 			//merges columns into tables and saves them into the all_tables vector 
-			void create_tables_from_cols(std::vector<std::shared_ptr <textline>> & page);
+			void create_tables_from_cols();
 
 			// returns a merged vector of words given a vector of symbols and whitespace between words in a single textline
 			std::vector<std::pair<std::unique_ptr<BOX>, std::string>> merge_into_words(std::vector<std::pair<std::unique_ptr<BOX>, std::string>> & symbols, int whitespace);
