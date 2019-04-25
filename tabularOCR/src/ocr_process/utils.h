@@ -14,17 +14,41 @@
 
 namespace tabular_ocr
 {
+	class bbox
+	{
+	public:
+		l_int32 x;
+		l_int32 y;
+		l_int32 h;
+		l_int32 w;
 
-	typedef std::vector<std::unique_ptr<BOX>> line;
-	typedef std::vector<std::unique_ptr<BOX>> column;
+		bbox();
+		bbox(Box* box);
+
+		bool operator==(const bbox & other) const
+		{
+			return (x == other.x && y == other.y && w == other.w && h == other.h);
+		}
+
+		bool not_initialized();
+	};
+
+	struct boxed_string
+	{
+		bbox box;
+		std::string text;
+	};
+
+	typedef std::vector<bbox> line;
+	typedef std::vector<bbox> column;
 
 	const size_t COL_THRESHOLD = 10;
 
 	// returns the centre on x coordinate of a given box
-	int centre(std::unique_ptr<BOX> & box);
+	int centre(bbox & box);
 
 	// returns the minimal y value that exists in the given line
-	int get_y_axis(std::vector<std::pair<std::unique_ptr<BOX>, std::string>> & input);
+	int get_y_axis(std::vector<boxed_string> & input);
 
 	// given symbol spacing of a line and a constant for normalization of space, determine the multiplication factor between words using a pseudo logarithmic curve
 	double get_multi_factor_words(int space_width, double constant);
@@ -33,21 +57,21 @@ namespace tabular_ocr
 	double get_multi_factor_columns(int space_width);
 
 	// returns true if the given boxes overlap each other
-	bool overlap(std::unique_ptr<BOX> & first, std::unique_ptr<BOX> & second);
+	bool overlap(bbox & first, bbox & second);
 
 	// returns the greatest height of line
-	int get_char_height(std::vector<std::pair<std::unique_ptr<BOX>, std::string>> & symbols, int img_width);
+	int get_char_height(std::vector<boxed_string> & symbols, int img_width);
 
 	// returns the width of a column defined by two boxes
-	int get_width_of_col(std::unique_ptr<BOX> & first, std::unique_ptr<BOX> & second);
+	int get_width_of_col(bbox & first, bbox & second);
 
 	// returns true if given boxes are in same column
-	bool are_in_same_col(std::unique_ptr<BOX> & first, std::unique_ptr<BOX> & second);
+	bool are_in_same_col(bbox & first, bbox & second);
 
 	// returns true if first box is more left than the second
-	bool is_most_left (std::unique_ptr<BOX> & first, std::unique_ptr<BOX> & second);
+	bool is_most_left (bbox & first, bbox & second);
 
 	// sorts the input vector by the x coordinate of the box in one element
-	void sort_by_xcoord(std::vector<std::pair<std::unique_ptr<BOX>, std::string>> & input);
+	void sort_by_xcoord(std::vector<boxed_string> & input);
 
 }

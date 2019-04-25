@@ -22,9 +22,9 @@ namespace tabular_ocr
 			size_t font;
 			size_t word_ws;
 			size_t col_ws;
-			std::unique_ptr<BOX> bbox;
-			std::vector<std::pair<std::unique_ptr<BOX>, std::string>> symbols;
-			std::vector<std::pair<std::unique_ptr<BOX>, std::string>> columns;
+			bbox box;
+			std::vector<boxed_string> symbols;
+			std::vector<boxed_string> columns;
 
 			textline(const textline &) = delete;
 			textline & operator=(const textline&) = delete;
@@ -35,7 +35,7 @@ namespace tabular_ocr
 				col_ws = std::move(other.col_ws);
 				symbols = std::move(other.symbols);
 				columns = std::move(other.columns);
-				bbox = std::move(other.bbox);
+				box = other.box;
 				return *this;
 			}
 
@@ -43,7 +43,7 @@ namespace tabular_ocr
 
 			bool operator==(const textline & other) const
 			{
-				return (other.col_ws == col_ws && other.word_ws == word_ws && font == other.font && bbox == other.bbox
+				return (other.col_ws == col_ws && other.word_ws == word_ws && font == other.font && box == other.box
 					&& symbols.size() == other.symbols.size() && columns.size() == other.columns.size());
 			}
 		};
@@ -52,7 +52,7 @@ namespace tabular_ocr
 		{
 		public:
 			std::string text;
-			std::unique_ptr<BOX> bbox;
+			bbox bbox;
 			int rows_no;
 			int cols_no;
 
@@ -84,9 +84,9 @@ namespace tabular_ocr
 			size_t rows;
 			size_t cols;
 
-			std::vector<std::unique_ptr<BOX>> row_repres;
-			std::vector<std::unique_ptr<BOX>> column_repres;
-			std::unique_ptr<BOX> table_repres;
+			std::vector<bbox> row_repres;
+			std::vector<bbox> column_repres;
+			bbox table_repres;
 			std::vector<cell> cells;
 
 			std::vector<std::shared_ptr<textline>> textlines;
@@ -135,7 +135,7 @@ namespace tabular_ocr
 			};
 
 			// colors the border of the given box in the current image with the given rgb color
-			void set_border(std::unique_ptr<BOX> & box, int r, int g, int b);
+			void set_border(bbox & box, int r, int g, int b);
 			// the main function
 			image process_image();
 			// saves the preprocessed results
@@ -154,43 +154,43 @@ namespace tabular_ocr
 			void init_textlines();
 
 			// returns true if a symbol (defined by a box) is in textline (defined by another box)
-			bool is_symbol_in_textline(std::unique_ptr<BOX> & symbol, std::unique_ptr<BOX> & textline);
+			bool is_symbol_in_textline(bbox & symbol, bbox & textline);
 
 			// if a footer on the page exists, it removes it
 			void delete_footer();
 
 			// merges two given boxes horizontally and returns the result in the result parameter
-			void box_merge_horizontal(std::pair<std::unique_ptr<BOX>, std::string> & result, std::pair<std::unique_ptr<BOX>, std::string> & to_add);
+			void box_merge_horizontal(boxed_string & result, boxed_string & to_add, bool add_space);
 
 			// merges two given boxes vertically and returns the result in the result parameter
-			void box_merge_vertical(std::pair<std::unique_ptr<BOX>, std::string> & result, std::pair<std::unique_ptr<BOX>, std::string> & to_add);
+			void box_merge_vertical(boxed_string & result, boxed_string & to_add);
 
 			//merges columns into tables and saves them into the all_tables vector 
 			void create_tables_from_cols();
 
 			// returns a merged vector of words given a vector of symbols and whitespace between words in a single textline
-			std::vector<std::pair<std::unique_ptr<BOX>, std::string>> merge_into_words(std::vector<std::pair<std::unique_ptr<BOX>, std::string>> & symbols, int whitespace);
+			std::vector<boxed_string> merge_into_words(std::vector<boxed_string> & symbols, int whitespace);
 
 			// returns a merged vector of columns given a vector of words and whitespace between columns in a single textline
-			std::vector<std::pair<std::unique_ptr<BOX>, std::string>> page::merge_into_columns(std::vector<std::pair<std::unique_ptr<BOX>, std::string>> & words, int whitespace);
+			std::vector<boxed_string> page::merge_into_columns(std::vector<boxed_string> & words, int whitespace);
 
 			// returns a vector of whitespaces that exist between given symbols - should not be used on multiline textlines
-			std::vector<int> get_spaces(const std::vector<std::pair<std::unique_ptr<BOX>, std::string>> & symbols);
+			std::vector<int> get_spaces(const std::vector<boxed_string> & symbols);
 
 			// returns a pair representing whitespace between words and whitespace between columns given the spaces in a textline
 			std::pair<int, int> get_whitespaces(std::vector<int> & all_spaces, double constant);
 
 			// merges two given lines according to given map that tells which pairs of boxes should be merged
-			std::vector<std::pair<std::unique_ptr<BOX>, std::string>> merge_lines(std::vector<std::pair<std::unique_ptr<BOX>, std::string>> & first, std::vector<std::pair<std::unique_ptr<BOX>, std::string>> & second, std::map<int, int> & no_of_cols);
+			std::vector<boxed_string> merge_lines(std::vector<boxed_string> & first, std::vector<boxed_string> & second, std::map<int, int> & no_of_cols);
 
 			// removes textlines that are unimportant for recognition from the textline vector
 			void delete_unusual_lines();
 
 			// returns a box representation of a table
-			std::unique_ptr<BOX> merge_to_table_box(std::vector<std::pair<std::unique_ptr<BOX>, std::string>> & cols);
+			bbox merge_to_table_box(std::vector<boxed_string> & cols);
 
 			// initialize the given table with the information given by the second parameter
-			void init_table(table & curr_table, std::vector<std::pair<std::unique_ptr<BOX>, std::string>> & merged_cols);
+			void init_table(table & curr_table, std::vector<boxed_string> & merged_cols);
 
 			// returns true if the line recognized by tesseract is too big to be a simple textline - probably a badly recognized table
 			bool is_textline_table(std::shared_ptr<textline> line);
@@ -199,7 +199,7 @@ namespace tabular_ocr
 			bool are_in_same_row(std::shared_ptr<textline> & first, std::shared_ptr<textline> & second, int whitespace);
 
 			// returns the vector of cells in a table defined by rows and columns
-			std::vector<cell> create_cells(std::vector<std::shared_ptr<textline>> & row, std::vector<std::pair<std::unique_ptr<BOX>, std::string>> & merged_cols);
+			std::vector<cell> create_cells(std::vector<std::shared_ptr<textline>> & row, std::vector<boxed_string> & merged_cols);
 
 			// appends the source vector to the dest vector
 			void move_append(std::vector<cell>& dest, std::vector<cell>& source);
@@ -208,7 +208,7 @@ namespace tabular_ocr
 			int get_merged_lines_height(std::vector<std::shared_ptr<textline>> & lines);
 
 			// returns the input vector without the string parameter, used for compatibility purposes
-			std::vector<std::unique_ptr<BOX>> remove_string_from_pair(std::vector<std::pair<std::unique_ptr<BOX>, std::string>> & input);
+			std::vector<bbox> remove_string_from_pair(std::vector<boxed_string> & input);
 
 			// returns true if the given word has no meaningful context
 			bool is_word_empty(const char* word);
@@ -220,10 +220,10 @@ namespace tabular_ocr
 			bool rows_in_different_tables(std::shared_ptr<textline> & first, std::shared_ptr<textline> & second);
 
 			// returns true if first[iter_one] is in the same column as second[iter_two] after one iteration
-			bool find_same_column(size_t & iter_one, size_t & iter_two, std::vector<std::pair<std::unique_ptr<BOX>, std::string>> * first, std::vector<std::pair<std::unique_ptr<BOX>, std::string>> * second);
+			bool find_same_column(size_t & iter_one, size_t & iter_two, std::vector<boxed_string> * first, std::vector<boxed_string> * second);
 
 			// returns true if given boxes can be merged and do not overlap with anything else
-			bool can_merge_columns(size_t & iter_one, size_t & iter_two, std::vector<std::pair<std::unique_ptr<BOX>, std::string>> * first, std::vector<std::pair<std::unique_ptr<BOX>, std::string>> * second);
+			bool can_merge_columns(size_t & iter_one, size_t & iter_two, std::vector<boxed_string> * first, std::vector<boxed_string> * second);
 
 			// returns a whitespace between rows given lines in the same table
 			int get_row_whitespace(std::vector<std::shared_ptr<textline>> lines);
