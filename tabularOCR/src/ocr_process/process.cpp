@@ -481,8 +481,8 @@ void page::create_tables_from_cols()
 		// don't merge lines that are too far away from each other
 		if (rows_in_different_tables(textlines[i], textlines[i+1]))
 		{
-			if (merged_cols.size() > 0)
-				init_table(curr_table, merged_cols);
+			curr_table.textlines.push_back(textlines[i]);
+			init_table(curr_table, merged_cols);
 			continue;
 		}
 
@@ -513,8 +513,8 @@ void page::create_tables_from_cols()
 					curr_table.textlines.push_back(textlines[i + 1]);
 					// add current line to an already existing table or initialize table
 					if (merged_cols.empty())
-						merged_cols = merge_lines(textlines[i].columns, textlines[i + 1].columns, no_of_cols);
-					else merged_cols = merge_lines(merged_cols, textlines[i + 1].columns, no_of_cols);
+						merged_cols = merge_lines(curr_table.textlines[curr_table.textlines.size() - 2].columns, curr_table.textlines.back().columns, no_of_cols);
+					else merged_cols = merge_lines(merged_cols, curr_table.textlines.back().columns, no_of_cols);
 				}
 				// if there was no match but a table already exists
 				else
@@ -661,16 +661,13 @@ void page::init_textlines()
 
 void page::delete_unusual_lines()
 {
-	while (true)
+	auto filtered_lines = std::vector<textline>{  };
+	for (auto & line : textlines)
 	{
-		auto it = std::find_if(textlines.begin(), textlines.end(), [this](auto line)
-		{ return line.symbols.empty() || is_textline_table(line);
-		});
-		if (it != textlines.end())
-			textlines.erase(it);
-		else
-			break;
+		if (!line.symbols.empty() && !is_textline_table(line))
+			filtered_lines.push_back(line);
 	}
+	std::swap(filtered_lines, textlines);
 }
 
 bbox page::merge_to_table_box(const std::vector<boxed_string> & cols)
