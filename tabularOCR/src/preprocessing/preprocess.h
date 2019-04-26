@@ -2,17 +2,6 @@
 
 #include "parser.h"
 
-
-#ifdef _WIN32
-
-#include "allheaders.h"
-
-#else
-
-#include "leptonica/allheaders.h"
-
-#endif // _WIN32
-
 namespace tabular_ocr
 {
 	namespace preprocessing

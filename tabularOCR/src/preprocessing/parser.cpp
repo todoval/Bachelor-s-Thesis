@@ -137,7 +137,7 @@ using namespace tabular_ocr;
 		std::experimental::filesystem::create_directory("results/" + dir_name);
 	}
 
-	void tabular_ocr::save_result(std::string & name, image & img)
+	void tabular_ocr::save_result(const std::string & name, const image & img)
 	{
 		std::string out = "results/" + name + ".png";
 		char* path = &out[0u];

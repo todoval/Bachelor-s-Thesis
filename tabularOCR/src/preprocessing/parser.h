@@ -1,17 +1,21 @@
 #pragma once
 
-#include <string>
 #include <iostream>
 #include <fstream>
-#include <algorithm>
-#include <ctype.h>
-#include <vector>
 #include <map>
 #include <experimental/filesystem>
 
+#ifdef _WIN32
+
 #include <baseapi.h>
-#include <renderer.h>
 #include "allheaders.h"
+
+#else
+
+#include <tesseract/baseapi.h>
+#include "leptonica/allheaders.h"
+
+#endif // _WIN32
 
 namespace tabular_ocr
 {
@@ -77,5 +81,5 @@ namespace tabular_ocr
 	// creates subdirectory of the results directory
 	void create_results_subdirectory(const std::string & name);
 
-	void save_result(std::string & name, image & img);
+	void save_result(const std::string & name, const image & img);
 }

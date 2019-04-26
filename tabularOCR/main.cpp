@@ -1,4 +1,3 @@
-#include <memory>
 #include "src/preprocessing/preprocess.h"
 #include "src/ocr_process/process.h"
 
@@ -36,5 +35,5 @@ int main(int argc, char* argv[]) {
 		std::cout << "File \"" + name.first +  "\" has been processed." << std::endl;
 	}
 
- 		return 0;
+ 	return 0;
 }

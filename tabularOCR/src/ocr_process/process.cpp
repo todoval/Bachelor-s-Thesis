@@ -19,7 +19,7 @@ page::page(file_info & file)
 	init_api(img_preprocessed);
 }
 
-void page::set_border(bbox & box, int r, int g, int b)
+void page::set_border(const bbox & box, int r, int g, int b)
 {
 	for (int i = 0; i < box.w; i++)
 	{
@@ -68,9 +68,9 @@ std::vector<int>::iterator page::get_val_above_constant (std::vector<int> & all_
 	return it;
 }
 
-bool page::rows_in_different_tables(std::shared_ptr<textline>& first, std::shared_ptr<textline>& second)
+bool page::rows_in_different_tables(const textline& first, const textline& second)
 {
-	return get_y_axis(second->symbols) - get_y_axis(first->symbols) > ROW_CONSTANT*std::max(second->font, first->font);
+	return get_y_axis(second.symbols) - get_y_axis(first.symbols) > ROW_CONSTANT*std::max(second.font, first.font);
 }
 
 bool page::find_same_column(size_t & iter_one, size_t & iter_two, std::vector<boxed_string> * first, std::vector<boxed_string> * second)
@@ -171,7 +171,7 @@ std::pair<int, int> page::get_whitespaces(std::vector<int> & all_spaces, double 
 	return result;
 }
 
-std::vector<boxed_string> page::merge_lines(std::vector<boxed_string> & first, std::vector<boxed_string> & second, std::map<int, int>& no_of_cols)
+std::vector<boxed_string> page::merge_lines(const std::vector<boxed_string> & first, const std::vector<boxed_string> & second, std::map<int, int>& no_of_cols)
 {
 	std::vector<boxed_string> result;
 
@@ -239,7 +239,7 @@ std::vector<boxed_string> page::merge_lines(std::vector<boxed_string> & first, s
 	return result;
 }
 
-void page::box_merge_vertical(boxed_string & result, boxed_string & to_add)
+void page::box_merge_vertical(boxed_string & result, const boxed_string & to_add)
 {
 	if (result.box.not_initialized())
 		result = to_add;
@@ -253,7 +253,7 @@ void page::box_merge_vertical(boxed_string & result, boxed_string & to_add)
 	}
 }
 
-void page::box_merge_horizontal(boxed_string & result, boxed_string &to_add, bool add_space)
+void page::box_merge_horizontal(boxed_string & result, const boxed_string &to_add, bool add_space)
 {
 	if (result.box.not_initialized())
 		result = to_add;
@@ -269,7 +269,7 @@ void page::box_merge_horizontal(boxed_string & result, boxed_string &to_add, boo
 	}
 }
 
-std::vector<boxed_string> page::merge_into_words(std::vector<boxed_string> & symbols, int whitespace)
+std::vector<boxed_string> page::merge_into_words(const std::vector<boxed_string> & symbols, int whitespace)
 {
  	std::vector<boxed_string> result = {};
 	auto word = boxed_string{};
@@ -290,7 +290,7 @@ std::vector<boxed_string> page::merge_into_words(std::vector<boxed_string> & sym
 	return result;
 }
 
-std::vector<boxed_string> page::merge_into_columns(std::vector<boxed_string> & words, int whitespace)
+std::vector<boxed_string> page::merge_into_columns(const std::vector<boxed_string> & words, int whitespace)
 {
 	std::vector<int> word_gaps = get_spaces(words);
 	std::vector<boxed_string> columns = {};
@@ -315,28 +315,28 @@ std::vector<boxed_string> page::merge_into_columns(std::vector<boxed_string> & w
 
 void page::determine_columns()
 {
-	for (auto line : textlines)
+	for (auto & line : textlines)
 	{
 		// calculate constant that means the minimum required whitespace between words
-		double constant = line->font / REF_FONT_DIVIDER;
-		auto spaces = get_spaces(line->symbols);
+		double constant = line.font / REF_FONT_DIVIDER;
+		auto spaces = get_spaces(line.symbols);
 		auto whitespaces = get_whitespaces(spaces, constant);
 
-		line->word_ws = whitespaces.first;
-		line->col_ws = whitespaces.second;
+		line.word_ws = whitespaces.first;
+		line.col_ws = whitespaces.second;
 
 		// if line is unusual, determine that it will only have one word and column
-		if (line->symbols.size() <= 1)
-			line->word_ws = img_preprocessed->w;
+		if (line.symbols.size() <= 1)
+			line.word_ws = img_preprocessed->w;
 
 		// initialize columns of textline by merging
-		sort_by_xcoord(line->symbols);
-		auto words = merge_into_words(line->symbols, line->word_ws);
-		line->columns = merge_into_columns(words, line->col_ws);
+		sort_by_xcoord(line.symbols);
+		auto words = merge_into_words(line.symbols, line.word_ws);
+		line.columns = merge_into_columns(words, line.col_ws);
 	}
 }
 
-std::vector<bbox> page::remove_string_from_pair(std::vector<boxed_string> & input)
+std::vector<bbox> page::remove_string_from_pair(const std::vector<boxed_string> & input)
 {
 	std::vector<bbox> result;
 	for (auto & elem : input)
@@ -354,11 +354,11 @@ bool page::is_word_empty(const char * word)
 	return false;
 }
 
-int page::get_row_whitespace(std::vector<std::shared_ptr<textline>> lines)
+int page::get_row_whitespace(const std::vector<textline> lines)
 {
 	std::vector<int> whitespaces;
 	for (size_t i = 0; i < lines.size() - 1; i++)
-		whitespaces.push_back(lines[i + 1]->box.y - (lines[i]->box.h + lines[i]->box.y));
+		whitespaces.push_back(lines[i + 1].box.y - (lines[i].box.h + lines[i].box.y));
 	std::sort(whitespaces.begin(), whitespaces.end());
 	std::pair<int, int> whitespace = { 0,0 }; // whitespace and its multiplicator
 	for (size_t i = 0; i < whitespaces.size() - 1; i++)
@@ -377,18 +377,14 @@ int page::get_row_whitespace(std::vector<std::shared_ptr<textline>> lines)
 
 void page::set_table_borders()
 {
-	for (int i = 0; i < all_tables.size(); i++)
-	{
+	for (size_t i = 0; i < all_tables.size(); i++)
 		set_cell_borders(all_tables[i]);
-	}
 }
 
-void page::set_cell_borders(table & table)
+void page::set_cell_borders(const table & table)
 {
-	for (auto & col : table.column_repres)
-		set_border(col, 255, 0, 0);
-//	for (auto & cell : table.cells)
-	//	set_border(cell.bbox, 120, 120, 255);
+	for (auto & cell : table.cells)
+		set_border(cell.bbox, 255, 0, 0);
 }
 
 void page::init_table(table & curr_table, std::vector<boxed_string> & merged_cols)
@@ -398,7 +394,7 @@ void page::init_table(table & curr_table, std::vector<boxed_string> & merged_col
 		// create cells
 			
 		// vector of textlines that represent one table merged by rows
-		std::vector<std::shared_ptr<textline>> curr_row = { curr_table.textlines[0] };
+		std::vector<textline> curr_row = { curr_table.textlines[0] };
 
 		// whitespace that determines whether cells are in the same row or not
 		int row_ws = get_row_whitespace(curr_table.textlines);
@@ -409,32 +405,32 @@ void page::init_table(table & curr_table, std::vector<boxed_string> & merged_col
 				curr_row.push_back(curr_table.textlines[i]);
 			else
 			{
-				auto bbox = curr_row[0]->box;
+				auto bbox = curr_row[0].box;
 				curr_table.row_repres.push_back(bbox);
 
 				// create cells
 
 				auto cells = create_cells(curr_row, merged_cols);
-				move_append(cells, curr_table.cells);
-
+				move_append(curr_table.cells, cells);
 				curr_row = { curr_table.textlines[i] };
 			}
 		}
 		auto cells = create_cells(curr_row, merged_cols);
-		move_append(cells, curr_table.cells);
+		move_append(curr_table.cells, cells);
 
 		curr_table.rows = curr_table.row_repres.size();
 		curr_table.cols = merged_cols.size();
-		curr_table.table_repres = merge_to_table_box(merged_cols);
-		curr_table.column_repres = remove_string_from_pair(merged_cols);
+		curr_table.table_repres = std::move(merge_to_table_box(merged_cols));
+		curr_table.column_repres = std::move(remove_string_from_pair(merged_cols));
 
 		all_tables.push_back(std::move(curr_table));
 	}
 
 	merged_cols.clear();
+	curr_table.textlines.clear();
 }
 
-std::vector<cell> page::create_cells(std::vector<std::shared_ptr<textline>> & row, std::vector<boxed_string> & merged_cols)
+std::vector<cell> page::create_cells(std::vector<textline> & row, std::vector<boxed_string> & merged_cols)
 {
 	std::vector<cell> result;
 	for (size_t j = 0; j < merged_cols.size(); j++)
@@ -447,11 +443,11 @@ std::vector<cell> page::create_cells(std::vector<std::shared_ptr<textline>> & ro
 			continue;
 		}
 		curr_cell.bbox.h = get_merged_lines_height(row);
-		curr_cell.bbox.y = get_y_axis(row[0]->symbols);
+		curr_cell.bbox.y = get_y_axis(row[0].symbols);
 		curr_cell.cols_no = 1;
 		curr_cell.rows_no = row.size();
 		for (auto line : row)
-			for (auto & col : line->columns)
+			for (auto & col : line.columns)
 				if (overlap(col.box, curr_cell.bbox))
 					curr_cell.text = col.text + " ";
 			
@@ -491,10 +487,10 @@ void page::create_tables_from_cols()
 		}
 
 		// initialize two lines that are under each other (or use an already existing table)
-		auto first = &textlines[i]->columns;
+		auto first = &textlines[i].columns;
 		if (!merged_cols.empty())
 			first = &merged_cols;
-		auto second = &textlines[i + 1]->columns;
+		auto second = &textlines[i + 1].columns;
 
 		// map for saving all the indexes of columns for further merging
 		std::map<int, int> no_of_cols;
@@ -517,8 +513,8 @@ void page::create_tables_from_cols()
 					curr_table.textlines.push_back(textlines[i + 1]);
 					// add current line to an already existing table or initialize table
 					if (merged_cols.empty())
-						merged_cols = merge_lines(textlines[i]->columns, textlines[i + 1]->columns, no_of_cols);
-					else merged_cols = merge_lines(merged_cols, textlines[i + 1]->columns, no_of_cols);
+						merged_cols = merge_lines(textlines[i].columns, textlines[i + 1].columns, no_of_cols);
+					else merged_cols = merge_lines(merged_cols, textlines[i + 1].columns, no_of_cols);
 				}
 				// if there was no match but a table already exists
 				else
@@ -559,17 +555,17 @@ void page::delete_footer()
 		return;
 
 	// check whether footer even exists
-	if (textlines.back()->symbols[0].box.y + textlines.back()->symbols[0].box.h < img_preprocessed->h - img_preprocessed->h / 10)
+	if (textlines.back().symbols[0].box.y + textlines.back().symbols[0].box.h < img_preprocessed->h - img_preprocessed->h / 10)
 		return;
 
 	int no_of_lines = 0;
 	// iterate from the end of the page and check for footers
-	std::vector<std::shared_ptr<textline>>::reverse_iterator it = textlines.rbegin();
+	std::vector<textline>::reverse_iterator it = textlines.rbegin();
 	for (it; it != textlines.rend() - 1 ; it++)
 	{
 		// calculate the height difference between two textlines above each other
 		auto k = *(std::next(it));
-		int line_diff = get_y_axis((*it)->columns) - get_y_axis((*std::next(it))->columns) - (*std::next(it))->font;
+		int line_diff = get_y_axis((*it).columns) - get_y_axis((*std::next(it)).columns) - (*std::next(it)).font;
 		if (line_diff > FOOTER_THRESHOLD)
 			break;
 		no_of_lines++;
@@ -613,10 +609,10 @@ void page::init_textlines()
 	// represents current textline as a box structure
 	bbox curr_line;
 	// represents the textline that will be added to the textline vector
-	std::shared_ptr<textline> line = std::make_shared<textline>();
+	textline line = textline();
 
 	// initialize the textline vector that is a part of the page class
-	textlines = std::vector<std::shared_ptr<textline>>(textline_arr->n);
+	textlines = std::vector<textline>(textline_arr->n);
 
 	// iterate over textlines and symbols and initialize all textlines with symbols that belong to them
 	for (size_t i = 0; i < textline_arr->n; i++)
@@ -646,7 +642,7 @@ void page::init_textlines()
 				if (is_symbol_in_textline(sym_box, curr_line))
 				{
 					std::string sym(word);
-					line->symbols.push_back({ sym_box, sym });
+					line.symbols.push_back({ sym_box, sym });
 				}
 				delete[] word;
 			} while (ri->Next(level));
@@ -654,11 +650,11 @@ void page::init_textlines()
 
 		// process other parameters of the textline and add this line to the textline vector
 
-		int height = get_char_height(line->symbols, img_preprocessed->w);
-		line->box = curr_line;
+		int height = get_char_height(line.symbols, img_preprocessed->w);
+		line.box = curr_line;
 		textlines[i] = line;
-		textlines[i]->font = height;
-		line = std::make_shared<textline>();
+		textlines[i].font = height;
+		line = textline();
 	}
 	delete[] textline_arr;
 }
@@ -668,7 +664,7 @@ void page::delete_unusual_lines()
 	while (true)
 	{
 		auto it = std::find_if(textlines.begin(), textlines.end(), [this](auto line)
-		{ return line->symbols.empty() || is_textline_table(line);
+		{ return line.symbols.empty() || is_textline_table(line);
 		});
 		if (it != textlines.end())
 			textlines.erase(it);
@@ -677,7 +673,7 @@ void page::delete_unusual_lines()
 	}
 }
 
-bbox page::merge_to_table_box(std::vector<boxed_string> & cols)
+bbox page::merge_to_table_box(const std::vector<boxed_string> & cols)
 {
 	if (cols.empty())
 		return bbox();
@@ -689,10 +685,10 @@ bbox page::merge_to_table_box(std::vector<boxed_string> & cols)
 	return result;
 }
 
-bool page::is_textline_table(std::shared_ptr<textline> line)
+bool page::is_textline_table(const textline & line)
 {
-	int y_lowest = get_y_axis(line->symbols) + line->font*2;
-	for (auto & symbol : line->symbols)
+	int y_lowest = get_y_axis(line.symbols) + line.font*2;
+	for (auto & symbol : line.symbols)
 	{
 		if (symbol.box.y > y_lowest)
 			return true;
@@ -700,22 +696,22 @@ bool page::is_textline_table(std::shared_ptr<textline> line)
 	return false;
 }
 
-bool page::are_in_same_row(std::shared_ptr<textline>& first, std::shared_ptr<textline>& second, int whitespace)
+bool page::are_in_same_row(const textline& first, const textline& second, int whitespace)
 {
-	if (first->box.y + first->box.h + whitespace > second->box.y)
+	if (first.box.y + first.box.h + whitespace > second.box.y)
 		return true;
 	return false;
 }
 
-int page::get_merged_lines_height(std::vector<std::shared_ptr<textline>>& lines)
+int page::get_merged_lines_height(const std::vector<textline>& lines)
 {
 	int heighest = 0;
-	for (auto & symbol : lines.back()->symbols)
+	for (auto & symbol : lines.back().symbols)
 	{
 		if (symbol.box.y + symbol.box.h > heighest)
 			heighest = symbol.box.y + symbol.box.h;
 	}
-	int lowest = get_y_axis(lines.front()->symbols);
+	int lowest = get_y_axis(lines.front().symbols);
 	return heighest - lowest;
 }
 
