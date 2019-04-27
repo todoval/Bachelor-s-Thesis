@@ -27,10 +27,10 @@ int main(int argc, char* argv[]) {
 		file.preprocessed = std::move(preprocessor.img);
 
 		ocr::page page(file);
-		image result_img = page.process_image();
+		page.process_image();
 		
 		// saves the results and destroys the allocated structures
-		save_result(file.name, result_img);
+		save_result(file.name, page.img_old);
 
 		std::cout << "File \"" + name.first +  "\" has been processed." << std::endl;
 	}

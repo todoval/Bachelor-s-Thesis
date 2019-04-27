@@ -132,8 +132,7 @@ namespace tabular_ocr
 			// colors the border of the given box in the current image with the given rgb color
 			void set_border(const bbox & box, int r, int g, int b);
 			// the main function
-			image process_image();
-			// saves the preprocessed results
+			void process_image();
 
 		private:
 			std::unique_ptr<tesseract::TessBaseAPI> api;

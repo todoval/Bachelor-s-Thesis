@@ -671,7 +671,7 @@ void page::init_textlines()
 
 void page::delete_unusual_lines()
 {
-	auto filtered_lines = std::vector<textline>{  };
+	std::vector<textline> filtered_lines;
 	for (auto & line : textlines)
 	{
 		if (!line.symbols.empty() && !is_textline_table(line))
@@ -722,7 +722,7 @@ int page::get_merged_lines_height(const std::vector<textline>& lines)
 	return heighest - lowest;
 }
 
-image page::process_image()
+void page::process_image()
 {
 	// initializes the textlines vector - adds symbols and fonts to the existing textlines
 	init_textlines();
@@ -744,8 +744,6 @@ image page::process_image()
 	api->End();
 	api->ClearPersistentCache();
 	api->Clear();
-
-	return std::move(img_old);
 }
 
 cell::cell()
