@@ -629,9 +629,9 @@ void page::init_textlines()
 		curr_line = textline_arr[i];
 
 		// get the tesseract symbol iterator
-		tesseract::ResultIterator* ri = api->GetIterator();
+		std::unique_ptr<tesseract::ResultIterator> ri(api->GetIterator());
 		tesseract::PageIteratorLevel level = tesseract::RIL_SYMBOL;
-		if (ri != 0)
+		if (ri)
 		{
 			do
 			{
