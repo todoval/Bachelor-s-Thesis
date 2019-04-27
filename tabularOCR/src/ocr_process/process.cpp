@@ -11,10 +11,10 @@ page::page(file_info & file)
 {
 	filename = file.name;
 	// itialize tesseract api without the use of LSTM
-	api = new tesseract::TessBaseAPI();
+	api = std::make_unique<tesseract::TessBaseAPI>();
 	img_old = std::move(file.old);
 	if (file.preprocessed->d == 8)
-		file.preprocessed = std::unique_ptr<Pix>(pixConvert8To32(file.preprocessed.get()));
+		file.preprocessed = image(pixConvert8To32(file.preprocessed.get()));
 	img_preprocessed = std::move(file.preprocessed);
 	init_api(img_preprocessed);
 }
@@ -344,12 +344,11 @@ std::vector<bbox> page::remove_string_from_pair(const std::vector<boxed_string> 
 	return result;
 }
 
-bool page::is_word_empty(const char * word)
+bool page::is_word_empty(const std::string& word)
 {
-	for (size_t i = 0; word[i] != 0; i++)
+	for (auto c:word) //TODO: neni tohle obracene? vraci to true prave kdyz je ve slove ALESPON JEDNA mezera, 'empty' normalne znamena ze ve slove jsou JEN mezery.
 	{
-		if ((unsigned char)word[i] == ' ')
-			return true;
+		if (c == ' ') return true;
 	}
 	return false;
 }
@@ -384,7 +383,7 @@ void page::set_table_borders()
 void page::set_cell_borders(const table & table)
 {
 	for (auto & cell : table.cells)
-		set_border(cell.bbox, 255, 0, 0);
+		set_border(cell.box, 255, 0, 0);
 }
 
 void page::init_table(table & curr_table, std::vector<boxed_string> & merged_cols)
@@ -436,19 +435,19 @@ std::vector<cell> page::create_cells(std::vector<textline> & row, std::vector<bo
 	for (size_t j = 0; j < merged_cols.size(); j++)
 	{
 		cell curr_cell;
-		curr_cell.bbox = merged_cols[j].box;
-		if (curr_cell.bbox.not_initialized())
+		curr_cell.box = merged_cols[j].box;
+		if (curr_cell.box.not_initialized())
 		{
 			merged_cols.clear();
 			continue;
 		}
-		curr_cell.bbox.h = get_merged_lines_height(row);
-		curr_cell.bbox.y = get_y_axis(row[0].symbols);
+		curr_cell.box.h = get_merged_lines_height(row);
+		curr_cell.box.y = get_y_axis(row[0].symbols);
 		curr_cell.cols_no = 1;
 		curr_cell.rows_no = row.size();
 		for (auto line : row)
 			for (auto & col : line.columns)
-				if (overlap(col.box, curr_cell.bbox))
+				if (overlap(col.box, curr_cell.box))
 					curr_cell.text = col.text + " ";
 			
 		result.push_back(std::move(curr_cell));
@@ -580,8 +579,9 @@ void page::delete_footer()
 
 void page::init_api(image &img)
 {
-	if (api->Init(NULL, "eng", tesseract::OcrEngineMode::OEM_TESSERACT_ONLY))
+	if (api->Init(NULL, "eng"))
 	{
+		//TODO: co takhle cerr << ?
 		fprintf(stderr, "Could not initialize tesseract.\n");
 		exit(1);
 	}
@@ -600,24 +600,33 @@ textline::textline()
 void page::init_textlines()
 {
 	// array of textlines that exist in the image
-	Boxa * textline_arr = api->GetComponentImages(tesseract::RIL_TEXTLINE, false, NULL, NULL);
+	std::vector<bbox> textline_arr;
+	{
+		Boxa * ba = api->GetComponentImages(tesseract::RIL_TEXTLINE, false, NULL, NULL);
+		textline_arr.reserve(ba->n);
+		for(size_t i=0;i<ba->n;++i) {
+			textline_arr.emplace_back(ba->box[i]);
+		}
+		boxaDestroy(&ba);
+	}
 
 	// sort textline array by their y-coordinate
-	std::sort(textline_arr->box, textline_arr->box,
-		[](BOX* a, BOX* b) { return a->y < b->y; });
+	std::sort(textline_arr.begin(), textline_arr.end(),
+		[](const bbox&a, const bbox&b) { return a.y < b.y; });
 
 	// represents current textline as a box structure
 	bbox curr_line;
 	// represents the textline that will be added to the textline vector
-	textline line = textline();
+	textline line; //TODO: tohle je java: = textline();
 
 	// initialize the textline vector that is a part of the page class
-	textlines = std::vector<textline>(textline_arr->n);
+	textlines.clear();
+	textlines.resize(textline_arr.size());
 
 	// iterate over textlines and symbols and initialize all textlines with symbols that belong to them
-	for (size_t i = 0; i < textline_arr->n; i++)
+	for (size_t i = 0; i < textline_arr.size(); i++)
 	{
-		curr_line = bbox(boxCopy(textline_arr->box[i]));
+		curr_line = textline_arr[i];
 
 		// get the tesseract symbol iterator
 		tesseract::ResultIterator* ri = api->GetIterator();
@@ -626,25 +635,27 @@ void page::init_textlines()
 		{
 			do
 			{
-				const char* word = ri->GetUTF8Text(level);
-				// check whether the given word is not a false positive symbol
-				if (is_word_empty(word))
+				std::string sym;
 				{
-					delete[] word;
-					continue;
+					std::unique_ptr<const char[]> word(ri->GetUTF8Text(level));
+					sym.assign(word.get());
 				}
+
+				// check whether the given word is not a false positive symbol
+				if (is_word_empty(sym)) continue;
 				float conf = ri->Confidence(level);
-				int x1, y1, x2, y2;
+
 
 				// get the bbox of the recognized symbol
-				ri->BoundingBox(level, &x1, &y1, &x2, &y2);
-				bbox sym_box = bbox(boxCreate(x1, y1, x2 - x1, y2 - y1));
-				if (is_symbol_in_textline(sym_box, curr_line))
+				bbox sym_box;
 				{
-					std::string sym(word);
-					line.symbols.push_back({ sym_box, sym });
+					int x1, y1, x2, y2;
+					ri->BoundingBox(level, &x1, &y1, &x2, &y2);
+					sym_box = bbox(x1, y1, x2 - x1, y2 - y1);
 				}
-				delete[] word;
+
+				if (is_symbol_in_textline(sym_box, curr_line))
+					line.symbols.push_back({sym_box, sym});
 			} while (ri->Next(level));
 		}
 
@@ -656,7 +667,6 @@ void page::init_textlines()
 		textlines[i].font = height;
 		line = textline();
 	}
-	delete[] textline_arr;
 }
 
 void page::delete_unusual_lines()

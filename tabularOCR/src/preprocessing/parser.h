@@ -29,7 +29,11 @@ namespace tabular_ocr
 	enhance: -e, --enhance,
 	*/
 
-	typedef std::unique_ptr<Pix> image;
+	struct pixDestroy_wrap {
+		void operator()(struct Pix* p) { pixDestroy(&p); }
+	};
+
+	using image = std::unique_ptr<struct Pix, pixDestroy_wrap>;
 
 	enum preprocess_method { GREYSCALE, BINARIZE, ENHANCE, NONE_PRE };
 

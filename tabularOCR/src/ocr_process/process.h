@@ -47,7 +47,7 @@ namespace tabular_ocr
 		{
 		public:
 			std::string text;
-			bbox bbox;
+			bbox box;
 			int rows_no;
 			int cols_no;
 
@@ -58,7 +58,7 @@ namespace tabular_ocr
 			cell& operator=(cell&& other)
 			{
 				text = std::move(other.text);
-				bbox = std::move(other.bbox);
+				box = std::move(other.box);
 				rows_no = std::move(other.rows_no);
 				cols_no = std::move(other.cols_no);
 				return *this;
@@ -66,7 +66,7 @@ namespace tabular_ocr
 			cell(cell && other)
 			{
 				text = std::move(other.text);
-				bbox = std::move(other.bbox);
+				box = std::move(other.box);
 				rows_no = std::move(other.rows_no);
 				cols_no = std::move(other.cols_no);
 			}
@@ -136,7 +136,7 @@ namespace tabular_ocr
 			// saves the preprocessed results
 
 		private:
-			tesseract::TessBaseAPI *api;
+			std::unique_ptr<tesseract::TessBaseAPI> api;
 			std::string filename;
 
 			// assigns each textline it's columns and whitespaces
@@ -167,7 +167,7 @@ namespace tabular_ocr
 			std::vector<boxed_string> merge_into_words(const std::vector<boxed_string> & symbols, int whitespace);
 
 			// returns a merged vector of columns given a vector of words and whitespace between columns in a single textline
-			std::vector<boxed_string> page::merge_into_columns(const std::vector<boxed_string> & words, int whitespace);
+			std::vector<boxed_string> merge_into_columns(const std::vector<boxed_string> & words, int whitespace);
 
 			// returns a vector of whitespaces that exist between given symbols - should not be used on multiline textlines
 			std::vector<int> get_spaces(const std::vector<boxed_string> & symbols);
@@ -206,10 +206,10 @@ namespace tabular_ocr
 			std::vector<bbox> remove_string_from_pair(const std::vector<boxed_string> & input);
 
 			// returns true if the given word has no meaningful context
-			bool is_word_empty(const char* word);
+			bool is_word_empty(const std::string& word);
 
 			// returns the iterator to the place in a sorted vector where the value is higher that the given constant
-			std::vector<int>::iterator page::get_val_above_constant(std::vector<int> & all_spaces, double constant);
+			std::vector<int>::iterator get_val_above_constant(std::vector<int> & all_spaces, double constant);
 
 			// returns true when given lines are too far away from each other to be in the same table
 			bool rows_in_different_tables(const textline & first, const textline & second);

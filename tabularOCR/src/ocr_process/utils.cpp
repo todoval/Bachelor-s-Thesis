@@ -1,21 +1,6 @@
 #include "utils.h"
 
-tabular_ocr::bbox::bbox()
-{
-	x = y = w = h = 0;
-}
-
-tabular_ocr::bbox::bbox(Box * box)
-{
-	x = box->x;
-	y = box->y;
-	w = box->w;
-	h = box->h;
-
-	delete box;
-}
-
-bool tabular_ocr::bbox::not_initialized()
+bool tabular_ocr::bbox::not_initialized() const
 {
 	return (x == 0 && y == 0 && h == 0 && w == 0);
 }

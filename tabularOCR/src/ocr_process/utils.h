@@ -22,15 +22,19 @@ namespace tabular_ocr
 		l_int32 h;
 		l_int32 w;
 
-		bbox();
-		bbox(Box* box);
+		bbox(): x(0), y(0), h(0), w(0) {}
+		bbox(const Box* box) : x(box->x), y(box->y), h(box->h), w(box->w) {}
+
+		template<class I>
+		inline bbox(const I&x, const I&y, const I&h, const I&w)
+		: x(x), y(y), h(h), w(w) {}
 
 		bool operator==(const bbox & other) const
 		{
 			return (x == other.x && y == other.y && w == other.w && h == other.h);
 		}
 
-		bool not_initialized();
+		bool not_initialized() const;
 	};
 
 	struct boxed_string

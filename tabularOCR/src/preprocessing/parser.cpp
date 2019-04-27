@@ -1,5 +1,7 @@
 #include "parser.h"
 
+#include <algorithm>
+
 using namespace tabular_ocr;
 
 	config::config()
@@ -167,12 +169,10 @@ using namespace tabular_ocr;
 		else
 			filename = get_filename(name);
 		// load the file into memory
-		auto img = std::unique_ptr<Pix>(pixRead(name.c_str()));
+		image img((struct Pix*)pixRead(name.c_str()));
 		if (img->d == 8)
-			img = std::unique_ptr<Pix>(pixConvert8To32(img.get()));
+			img = image(pixConvert8To32(img.get()));
+		image img_copy(pixCopy(NULL, img.get()));
 		// create a copy of the file
-		Pix * pix_copy = pixCopy(NULL, img.get());
-		auto copy = std::unique_ptr<Pix>(pix_copy);;
-		file_info to_ret = { filename, std::move(img), std::move(copy) };
-		return to_ret;
+		return file_info{filename, std::move(img), std::move(img_copy)};
 	}

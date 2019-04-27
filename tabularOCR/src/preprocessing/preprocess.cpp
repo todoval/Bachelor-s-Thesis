@@ -24,16 +24,16 @@
 
 	void tabular_ocr::preprocessing::preprocessor::binarize()
 	{
-		Pix* img_ptr = img.get();
+		Pix* binarized;
 		if (cfg.bin_method == binarization_method::OTSU)
-			pixOtsuAdaptiveThreshold(img.get(), 100, 100, 0, 0, NULL, NULL, &img_ptr);
+			pixOtsuAdaptiveThreshold(img.get(), 100, 100, 0, 0, 0.0f, NULL, &binarized);
 		else if (cfg.bin_method == binarization_method::SAUVOLA)
-			pixSauvolaBinarize(img.get(), 16, 0.5, 1, NULL, NULL, NULL, &img_ptr);
+			pixSauvolaBinarize(img.get(), 16, 0.5, 1, NULL, NULL, NULL, &binarized);
 		else if (cfg.bin_method == binarization_method::NONE_B)
 			return;
 		else
 			handle_preprocessing_error();
-		img = std::unique_ptr<Pix>(img_ptr);
+		img = image(binarized);
 	}
 
 	void tabular_ocr::preprocessing::preprocessor::enhance()
@@ -56,25 +56,25 @@
 		{
 			Pix* gs = pixConvertRGBToGray(img.get(), 1 / 3, 1 / 3, 1 / 3);
 			if (gs != nullptr && gs != img.get())
-				img = std::unique_ptr<Pix>(gs);
+				img = image(gs);
 		}
 		else if (cfg.gs_method == greyscale_method::LUMA)
 		{
 			Pix* gs = pixConvertRGBToGray(img.get(), 0.2126, 0.7152, 0.0722);
 			if (gs != nullptr && gs != img.get())
-				img = std::unique_ptr<Pix>(gs);
+				img = image(gs);
 		}
 		else if (cfg.gs_method == greyscale_method::MIN)
 		{
 			Pix* gs = pixConvertRGBToGrayMinMax(img.get(), L_CHOOSE_MIN);
 			if (gs != nullptr && gs != img.get())
-				img = std::unique_ptr<Pix>(gs);
+				img = image(gs);
 		}
 		else if (cfg.gs_method == greyscale_method::MAX)
 		{
 			Pix* gs = pixConvertRGBToGrayMinMax(img.get(), L_CHOOSE_MAX);
 			if (gs != nullptr && gs != img.get())
-				img = std::unique_ptr<Pix>(gs);
+				img = image(gs);
 		}
 		else if (cfg.gs_method == greyscale_method::NONE_G)
 			return;
@@ -88,7 +88,7 @@
 		{
 			Pix* deskewed = pixDeskew(img.get(), 0);
 			if (deskewed != nullptr && deskewed != img.get())
-				img = std::unique_ptr<Pix>(deskewed);
+				img = image(deskewed);
 		}
 	}
 
