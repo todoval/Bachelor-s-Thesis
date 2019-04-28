@@ -1,7 +1,151 @@
 \chapter{Table Recognition Implementation}
 
-- conversion of formats to .tiff format (tesseract doesn't know .pdf format)
-- preprocessing in the following steps - scaling, deskew, contrast, binarization, noise reduction, scanning border reduction, alpha channel?
+This chapter gives us an overview of procedures and tools used to create a table recognition software. 
 
-// existuju aj ine transformacie, ako sharpening, alpha correction etc, add small border
+The implementation is divided into two main parts - preprocessing, which consists of parsing arguments from command line and image manipulation, and tabular OCR, which calls a character recognition software and given the output data, determines the presence of tables in the input images.
 
+\section{Preprocessing}
+
+The preprocessing part of the implementation is mostly only an interface representing everything that could still be implemented. It consists of two parts - a parser and a preprocessor.
+
+\emph{The parser} is used for processing the input command line arguments. It also contains a configuration class, which saves the values of preprocessing arguments and filenames that need to be processed. This is later used in the preprocesser. 
+
+The main function of the parser is a function of the configuration class \emph{parse\_args()}. It takes all of the command line arguments and initializes the configuration class with the given values. If no value has been specified, the current preprocessing option will not be implemented. The only exception to this is the command line option \emph{-p} of \emph{--preprocess}, which initializes the preprocessing option values to those that had the best results overall.
+
+The return value of the \emph{parse\_args()} function is a map. It is used for mapping a filename to a boolean value depending on whether the file is a directory. The parser therefore also contains functions for file manipulation, like creating directories, subdirectories, determination of files or directories, extracting the filename from path and other. 
+
+Also, the parser contains a \emph{file\_info} struct used for future manipulation with the images. This struct will be used during the whole process and will be thoroughly discussed in the following sections.
+
+After the parsing part is done, processing of the individual images begins. This is done in a for loop for each map entry returned from the parser. Images are therefore processed one by one.
+
+Processing of each image begins with initializing the \emph{file\_info} struct. This contains the name of the image, which will be later used for saving the output, and in the beginning, two copies of the image. One of these two copies is then passed to the preprocessor and this image is then processed. However, the output of table detection algorithm in the form of table borders are drawn on the first image. Therefore the user does not have to see the preprocessor output, as the preprocessed images may be too noisy, hard to read and will most likely lose most of the color information.
+
+After the struct is initialized, the \emph{preprocessor} is called. It contains a main function - \emph{preprocess\_file}, which takes the already initialized configuration class and one of the image in the file\_info struct, and preprocesses it according to the configuration settings.
+
+In this implementation, only the basic preprocessing options are available, e.g. enhancing, deskewing, greyscale conversion and binarization. These are all implemented in the Leptonica library which also provides the calls of these functions. The support for preprocessing is only basic, as it was not the goal of this thesis. The user is therefore advised to preprocess the image manually. However, we will discuss the importance of preprocessing and the options of improvement (like usage of OpenCV, determination of the need to preprocess etc.) in the next sections [odkazy]. 
+
+\section{Tabular OCR}
+
+The actual table recognition is executed in a \emph{process} file along with a \emph{utils} file that contains a few helper functions. The main function called is a function of page class, \emph{process\_image()}, that executes our table detection algorithm.
+
+Our algorithm is based mainly on whitespace detection. Upon detecting whitespaces between individual symbols, we try to heuristically estimate the whitespaces between words and, furthermore, columns, for each textline of the image. Once we have all textlines separated into columns, we try to merge consecutive lines with similar columns into a table.  
+
+In this section, we will analyze this algorithm step-by-step and overview the functions used.
+
+\begin{description}
+\item[Textline initialization] The whole process begins with initialization of individual textlines. This is the only place where we use the character recognition from the Tesseract software.
+
+We initialize the Tesseract API without the use of neural networks and obtain both lines and symbols from the API. Then, we iterate over all the lines and symbols and try to assign symbols into lines to which we think they might belong to. The result of this function is therefore a list of all textlines that contain the information about their individual symbols, like positioning and their actual value in ASCII.
+
+This function runs in $O(n^2)$. The initial idea for this implementation was to firstly sort both the symbols and lines vector by their y coordinates (which is simply $O(\log n)$) and iterate the cycle in $O(m*n)$ by simply iterating symbols and jumping to another line once symbol does not fit in the given line. This would mean a significant improvement in the time complexity. However, a problem occurred when iterating symbols. By default, Tesseract recognizes anything it can find and assumes it to be a symbol. This creates a lot of false positives, including noise recognized as dots, white spaces, and, most importantly, horizontal or vertical lines, like footer or header separators, underlining of words, table borders etc. We tried to adjust our algorithm to ignore empty characters. Horizontal and vertical line detection, however, was a harder task. Although most of the lines are pretty simple to detect (either their width or height is significantly greater than the other, or either width or height is unusually small in comparison to other characters), there is no one criterion that would suffice all lines, with problems occurring mostly at thick but short lines. Therefore, we sacrificed(?? slovo?) the time complexity in favor of accuracy.
+
+This function is the place where most of the mistakes are made and time complexity is consumed. Although a robust software, Tesseract recognition is still far from ideal and sometimes fails at even the simplest images. Also, its recognition takes up significantly more time than all of the other functions combined. We will discuss the details of Tesseract recognition complexity and errors and their possible improvements in following chapters.
+
+\item[Deletion of unnecessary lines]
+
+As already mentioned, Tesseract recognition algorithm includes a lot of false positives. In this function, we delete all unnecessary lines, specifically:
+
+\begin{itemize}
+\item\textbf {Empty lines: } Like horizontal or vertical line segments, borders or other lines that contain no ASCII symbols are of no use and are therefore deleted from the textline list.
+
+\item\textbf {Table textlines: } Table textlines are parts of the image that already had a border around them, which might have been either a table, form or even a graphics image. Tesseract often recognizes these parts as single textlines. These textlines therefore contain multiple other textlines, and are significantly greater in height. We delete these textlines by simply looking at their height and the font of their symbols.
+\end{itemize}
+
+Once this step of the algorithm is done, we are left only with lines that contain symbols and can be a part of the table.
+
+\item[Column detection]
+Upon obtaining the textlines, we try to determine the list of their columns from the symbols they contain. This is done for each line individually. Firstly, we merge symbols into words. After that, we merge words into columns. Although we could simply just merge symbols into columns and ignore the whole processing of the words, this would leave us with no spaces between words in individual columns.
+
+We start this process by getting all the spaces between individual symbols and sorting them by size. For a human eye, upon seeing this list, to determine the whitespace between individual words and columns is mostly a pretty easy task. A sample list looks usually something like this:
+
+// TO DO
+
+It is quite obvious that the word whitespace will therefore be 8 and column whitespace 165. In our program, we determined these whitespaces by iterating over all the spaces. Once we find two subsequent spaces that have "great difference between their values", we assume the greater one to be the whitespace of either words, columns or both.
+
+So how do we determine whether the difference is too great? For both word and column whitespaces, we calculate a so-called \emph{multiplicator factor} and use it according to(like??) the next code snippet that is used for the determination of the word whitespace.
+
+\begin{code}
+for (it; it != all_spaces.end() - 1; it++)
+{
+	// get multiplication factor of current space
+	double multi_factor = get_multi_factor_words(*it, constant);
+	if (*std::next(it) >= multi_factor * *it)
+	{
+		// found the word whitespace at *std::next(it)
+		// code to execute once the whitespace is found
+	}
+}
+\end{code}
+
+The simplest observation is - the greater the current space is, the less the multiplication factor should be. Based on this, many different values and curves have been tried for the determination of multiplication factor. First observations from these attempts led to the estimation that the best curve to use would be logarithmic. However, the current implementation seemed to worked well enough and was therefore left as it is.
+
+The determination of the column whitespace was done similarly. Although the function determining the multiplication factor was altered, the idea stayed the same.
+
+Upon determining the column and word whitespaces, the only thing left is to merge symbols by these whitespaces.
+
+The determination of whitespaces was probably the hardest part of the algorithm. There have been multiple different ideas for the implementation. The one that has been preferred most of the time was the idea of separating textlines according to their \emph{fonts} (tj. (aka, ako to napisem?) their heights). The ones with similar fonts were assigned to same \emph{font category}, and the whitespace was then determined from the whole category. The word whitespace recognition worked slightly better with this approach. However, the determination of columns had a higher chance of failure, as the sizes of column spaces differed greatly and the algorithm had a problem with finding the point where word spaces end and column spaces start. Therefore, this simpler approach was chosen.
+
+Another approach was to simply determine the size of the column space by a constant, e.g. word\_whitespace*constant = column\_whitespace. Suprisingly, the results of this approach were comparable to those of the current implementation. However, it was deemed to fail when it came to small fonts or full-page tables, and had no room for improvement in contrast with the current approach.
+
+\item[Table creation]
+
+Once we have the information about columns for each textline, we can start searching for tables. The table detection algorithm is done by a simple $O(n)$ algorithm - iterating the textlines from top to bottom and merging two consecutive textlines together if they belong to the same table.
+
+Following is an algorithm used to determine whether two lines represented by columns are in the same table:
+
+TO DO - ako to sformatovat?
+
+\begin{algorithm}[H]
+\caption{Are textlines in same table}
+\begin{algorithmic}[1]
+\State $iter\_first$ represents the current place we are when iterating over columns of first line
+\State $iter\_second$ represents the current place we are when iterating over columns of second line
+\While{true}
+\If {either $iter\_first$ or $iter\_second$ is at the end of their line}
+\If {at least one pair of columns was found that should be merged}
+\State \emph{merge()}
+\EndIf
+\EndIf
+\If {current\_columns\_overlap() } \Comment{a function that checks whether the bounding boxes of the two columns overlap in the x axis}
+\If {found columns do not overlap with other existing columns in the x axis}
+\State save the position of overlapping columns for future mergeing
+\EndIf
+\Else 
+\State increase either $iter\_first$ or $iter\_second$ depending on which is poiting to the box that has a lower x-axis
+\State continue
+\EndIf
+\State $iter\_first \gets iter\_first+1$
+\State $iter\_second \gets iter\_second+1$
+\EndWhile
+\end{algorithmic}
+\end{algorithm}
+
+Merge of the textlines is done by merging columns that have been detected to overlap, and adding other columns with no such attribute. In a typical n*m table, every column should overlap with the one underneath it, which is also mostly the case when running this algorithm.
+
+Once we have at least two merged textlines, we use this new merged line as a current textline. Therefore, when creating a table, we append new lines to the already merged ones. At the end of this algorithm, our current table is therefore represented as a textline with the information about its columns (and a list of textlines that are in the current table).
+
+\item[Output creation]
+
+What we care about when creating an output are table cells. We create these by simply overlaying (prelozit?) rows and columns and saving their common areas as cells. The problem arises with the existence of multi-line rows, that is, rows that often span over multiple Tesseract recognized textlines. In our implementation, a simple constant-based algorithm is added to recognize at least some of them and therefore merge multiple textlines into one row. The algorithm for this could be improved differently, which will be discussed in the next chapter. 
+
+Once we obtain cells, the only thing left is to create a user-friendly representation of the recognized data. Here, the user has two options according to the parameter he sets in the command line environment. 
+
+The first option is a simple image output. Recognized cells are therefore bordered (?) by colored boxes in the original input image and saved in a PNG file.
+
+The other option is a json structure of the recognized cells. 
+
+TO-DO
+
+By default, both output options are selected and therefore two files are saved in the newly created \emph{results} directory inside the build directory.
+
+\end{description}
+
+
+
+
+\begin{figure}
+    \noindent
+	\makebox[\textwidth]{\includegraphics[width=\paperwidth-100pt]{../img/programFlow.pdf}}
+	\caption{Program Flow Diagram}
+	\label{fig:mff}
+\end{figure}
