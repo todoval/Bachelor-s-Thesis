@@ -12,6 +12,9 @@
 
 #endif // _WIN32
 
+#include <json.hpp>
+using json = nlohmann::json;
+
 namespace tabular_ocr
 {
 	class bbox
@@ -26,8 +29,8 @@ namespace tabular_ocr
 		bbox(const Box* box) : x(box->x), y(box->y), h(box->h), w(box->w) {}
 
 		template<class I>
-		inline bbox(const I&x, const I&y, const I&h, const I&w)
-		: x(x), y(y), h(h), w(w) {}
+		inline bbox(const I&x, const I&y, const I&w, const I&h)
+		: x(x), y(y), w(w), h(h) {}
 
 		bool operator==(const bbox & other) const
 		{
@@ -35,6 +38,8 @@ namespace tabular_ocr
 		}
 
 		bool not_initialized() const;
+
+		json to_json();
 	};
 
 	struct boxed_string

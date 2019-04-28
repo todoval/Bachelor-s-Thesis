@@ -6,7 +6,7 @@ Work in progress.
 
 Windows:
 1) Clone directory and download cppan.
-2) Run cppan in the tabularOCR directory.
+2) Run cppan in any directory.
 3) Build the project using cmake.
 4) Set the environment variable TESSDATA_PREFIX to tabularOCR/tessdata directory.
 5) Run tabularOCR.exe from the build/bin/Debug directory. Pass either a directory or multiple image files as parameters.

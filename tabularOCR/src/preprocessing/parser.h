@@ -21,8 +21,6 @@ namespace tabular_ocr
 {
 
 	/* prepinace
-	scaling: -sc, --scale, parametre: DPI, method;
-	denoise: -n, --denoise, parametre:
 	greyscale: -g, --greyscale, parametre:
 	binarize: -b, --binarize, parametre:
 	skew correction: -sk, --deskew, parametre:

@@ -480,8 +480,9 @@ void page::create_tables_from_cols()
 		// don't merge lines that are too far away from each other
 		if (rows_in_different_tables(textlines[i], textlines[i+1]))
 		{
-			curr_table.textlines.push_back(textlines[i]);
-			init_table(curr_table, merged_cols);
+			if (merged_cols.size() > 0)
+			//curr_table.textlines.push_back(textlines[i]);
+				init_table(curr_table, merged_cols);
 			continue;
 		}
 
@@ -512,8 +513,8 @@ void page::create_tables_from_cols()
 					curr_table.textlines.push_back(textlines[i + 1]);
 					// add current line to an already existing table or initialize table
 					if (merged_cols.empty())
-						merged_cols = merge_lines(curr_table.textlines[curr_table.textlines.size() - 2].columns, curr_table.textlines.back().columns, no_of_cols);
-					else merged_cols = merge_lines(merged_cols, curr_table.textlines.back().columns, no_of_cols);
+						merged_cols = merge_lines(textlines[i].columns, textlines[i + 1].columns, no_of_cols);
+					else merged_cols = merge_lines(merged_cols, textlines[i + 1].columns, no_of_cols);
 				}
 				// if there was no match but a table already exists
 				else
@@ -579,7 +580,7 @@ void page::delete_footer()
 
 void page::init_api(image &img)
 {
-	if (api->Init(NULL, "eng"))
+	if (api->Init(NULL, "eng", tesseract::OcrEngineMode::OEM_TESSERACT_ONLY))
 	{
 		//TODO: co takhle cerr << ?
 		fprintf(stderr, "Could not initialize tesseract.\n");
@@ -644,7 +645,6 @@ void page::init_textlines()
 				// check whether the given word is not a false positive symbol
 				if (is_word_empty(sym)) continue;
 				float conf = ri->Confidence(level);
-
 
 				// get the bbox of the recognized symbol
 				bbox sym_box;
@@ -738,6 +738,8 @@ void page::process_image()
 
 	create_tables_from_cols();
 
+	json_form = to_json();
+	std::cout << json_form.dump(3) << std::endl;
 	set_table_borders();
 
 	// end and clear api to avoid memory leaks
@@ -748,4 +750,39 @@ void page::process_image()
 
 cell::cell()
 {
+}
+
+json table::to_json()
+{
+	json cell_list = json::array();
+	for (auto & cell : cells)
+	{
+		cell_list.push_back(cell.to_json());
+	}
+	return json{
+		{"rows",rows},
+		{"cols",cols},
+		{"table_repres",table_repres.to_json()},
+		{"cells",cell_list}
+	};
+}
+
+json page::to_json()
+{
+	json table_list = json::array();
+	for (auto & table : all_tables)
+	{
+		table_list.push_back(table.to_json());
+	}
+	return table_list;
+}
+
+json cell::to_json()
+{
+	return json{
+		{"text",text},
+		{"box",box.to_json()},
+		{"rows_no",rows_no},
+		{"cols_no",cols_no}
+	};
 }

@@ -87,3 +87,13 @@ void tabular_ocr::sort_by_xcoord(std::vector<boxed_string>& input)
 	std::sort(input.begin(), input.end(),
 		[](auto & a, auto & b) { return a.box.x < b.box.x; });
 }
+
+json tabular_ocr::bbox::to_json()
+{
+	return json{
+		{"x",x},
+		{"y",y},
+		{"w",w},
+		{"h",h}
+	};
+}

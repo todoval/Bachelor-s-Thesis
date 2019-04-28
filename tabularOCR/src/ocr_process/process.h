@@ -71,6 +71,8 @@ namespace tabular_ocr
 				cols_no = std::move(other.cols_no);
 			}
 
+			json to_json();
+
 		};
 
 		class table
@@ -110,6 +112,8 @@ namespace tabular_ocr
 			}
 
 			table();
+
+			json to_json();
 		};
 
 		class page
@@ -134,9 +138,11 @@ namespace tabular_ocr
 			// the main function
 			void process_image();
 
+			json to_json();
 		private:
 			std::unique_ptr<tesseract::TessBaseAPI> api;
 			std::string filename;
+			json json_form;
 
 			// assigns each textline it's columns and whitespaces
 			void determine_columns();

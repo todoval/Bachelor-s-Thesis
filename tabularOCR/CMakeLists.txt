@@ -12,16 +12,26 @@ if (MSVC)
     #on windows please use the cppan to create .cppan directory
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
-    add_subdirectory(.cppan)
+    #add_subdirectory(.cppan)
+    find_package(CPPAN REQUIRED)
+    cppan_add_package(
+        pvt.cppan.demo.google.tesseract.libtesseract
+        pvt.cppan.demo.danbloomberg.leptonica
+    )
+    cppan_execute()
 else()
     #on unix, install the following libraries:
     #libleptonica-dev libtesseract-dev libopencv-dev
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
     find_package(PkgConfig)
     pkg_check_modules(lept REQUIRED lept)
-    pkg_check_modules(opencv REQUIRED opencv)
     pkg_check_modules(tesseract REQUIRED tesseract)
 endif()
+
+LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
+include( external_json )
+include_directories( ${JSON_INCLUDE_DIRS} )
 
 set(SOURCES
     ${PROJECT_SOURCE_DIR}/main.cpp 
@@ -36,14 +46,7 @@ if (MSVC)
     target_link_libraries(tabularOCR
         pvt.cppan.demo.google.tesseract.libtesseract
         pvt.cppan.demo.danbloomberg.leptonica
-        pvt.cppan.demo.intel.opencv.ml
-        pvt.cppan.demo.intel.opencv.imgproc
-        pvt.cppan.demo.intel.opencv.highgui
-        pvt.cppan.demo.intel.opencv.imgcodecs
-        pvt.cppan.demo.intel.opencv.core
-        pvt.cppan.demo.intel.opencv.contrib.ximgproc
- 	  pvt.cppan.demo.intel.opencv.photo
     )
 else()
-    target_link_libraries(tabularOCR opencv_ml opencv_imgproc lept tesseract opencv_photo opencv_core opencv_imgcodecs opencv_highgui stdc++fs)
+    target_link_libraries(tabularOCR lept tesseract stdc++fs)
 endif()
