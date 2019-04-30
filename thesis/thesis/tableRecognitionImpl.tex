@@ -89,7 +89,7 @@ Another approach was to simply determine the size of the column space by a const
 
 \item[Table creation]
 
-Once we have the information about columns for each textline, we can start searching for tables. The table detection algorithm is done by a simple $O(n)$ algorithm - iterating the textlines from top to bottom and merging two consecutive textlines together if they belong to the same table.
+Once we have the information about columns for each textline, we can start searching for tables. The table detection algorithm is done by a simple $O(n)$ algorithm --- iterating the textlines from top to bottom and merging two consecutive textlines together if they belong to the same table.
 
 Following is an algorithm used to determine whether two lines represented by columns are in the same table:
 
