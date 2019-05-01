@@ -111,7 +111,11 @@ As the algorithm works quite aggressively, it produces a lot of false positives.
 
 \end{enumerate}
 
-Results of this algorithm have shown 86\% precision. The biggest problems have shown to be full-page tables, often resulting in over or under-segmentation, partial detection or false positive detection. We will further present the results of this algorithm on our data in \xxx{taggni results sekciu}, where we compare them to our algorithm.
+Results of this algorithm have shown 86\% precision. The biggest problems have shown to be full-page tables, often resulting in over or under-segmentation, partial detection or false positive detection.
+
+However, there is no user-friendly way to use this software. As Tesseract is a library designated for software developers, there is no way to just download the software and run a table recognition command. To actually detect a table, a user must first write its own program where it uses the functions of the added Tesseract table recognition files. Then, he needs to process the data the library returns and output them in a meaningful format, which requires a non-trivial knowledge of the Tesseract implementation.
+
+We will further present the results of this algorithm on our data in \xxx{taggni results sekciu}, where we compare them to our algorithm.
    
 \begin{figure}[H]
 \hspace*{\fill} % separation between the subfigures
@@ -144,22 +148,16 @@ Results of this algorithm have shown 86\% precision. The biggest problems have s
 
 \subsection{Other existing approaches}
 
-Over the years, there have been many heuristic approaches presented for table detection. In this chapter, we are going to have a look at a few of them and determine what they have in common, as well as point out their pros and cons.
+Besides Tesseract, there have been many heuristic approaches presented for table detection. In this section, we are going to have a look at a few of them and determine what they have in common, as well as point out their pros and cons.
 
-Presented as one of the first table detection algorithms by \citet{TRecs}, the \textbf{T-Recs} table recognition system is based on a bottom-up approach of clustering word bounding boxes and building a "segmentation graph". This results in creating different regions of page, and these are then evaluated according to certain criterion. If they satisfy them, the region is determined to be a table. Although widely used in the future, this techniques has a few setbacks. T-Recs is controlled by a set of numerical parameters, which result in different results of table detection depending on the layout that is given. These parameters need to be set manually. Moreover, it yields unsatisfactory results on multi-column documents.
+Presented as one of the first table detection algorithms by \citet{TRecs}, the \emph{T-Recs} table recognition system is based on a bottom-up approach of clustering word bounding boxes and building a "segmentation graph". This results in creating different regions of page, and these are then evaluated according to certain criterion. If they satisfy them, the region is determined to be a table. Although widely used in the past, this techniques has a few setbacks. T-Recs is controlled by a set of numerical parameters, which result in different results of table detection depending on the layout that is given. These parameters need to be set manually. Moreover, it yields unsatisfactory results on multi-column documents.
 
 Another algorithm was described by \citet{MediumTable}. In single-column documents, a page can be easily segmented into individual text-lines. The table detection problem is then perceived as an optimization problem, where the start and end text-lines belonging to a table are identified by optimizing some quality function. However, this approach fails on multi-column documents, or on documents having more than one table.
 
-Problems during analysis of multi-column documents were approached by \citet{tableDetHeterogeneous}. Here, page segmentation process is performed by Tesseract via \emph{tab-stop detection} \xxx{odkaz na section hore?}, which claims to work well on multi-columned documents. Based on the results of Tesseract's analysis, this algorithm then aggressively searches for text column partitions that could possibly belong to a table region. Although this process returns the desired table partitions, it also produces a lot of false alarms, like section headings, page headers, footers, equations and so on. A smoothing filter is applied to remove these unwanted partitions.
-
-Detection of table columns is performed from these partitions. Vertically aligned partitions are simply grouped into a single column with further removal of columns with only one partition. Table columns then need to be grouped together to form a table. In this algorithm, a merge is performed only if at least one horizontal ruling is present between two columns.
-
-Results of this algorithm have shown 86\% precision. The biggest problems have shown to be full-page tables, often resulting in over or under-segmentation, partial detection or false positive detection. 
-
 \citet{tableDetectCesarini} describes another approach based on the document being hierarchically represented by a structure similar to a MXY tree. The presence of a table is determined by searching the tree for parallel lines, which contain white spaces and other perpendicular lines between them. Located tables can be merged on the basis of proximity and similarity criteria. However, this approach fails if no lines in tables are presented --- which is usually the case of many tables.
 
-Another method is presented by \textbf{pdf2table} project \cite{pdf2table}. This method is based on assigning each text object of the page its positional attributes. Depending on them, text objects are then merged into single-lines (lines with only one text object), multi-lines (lines with more than one text object) and multi-line blocks (multiple multi-lines merged together). The table detection algorithm is based on merging multi-line blocks that may belong to the same table, with the help of a heuristical threshold that determines the greatest number of single-line objects between two multi-line blocks possible.
+Another method is presented by \emph{pdf2table} project \cite{pdf2table}. This method is based on assigning each text object of the page its positional attributes. Depending on them, text objects are then merged into single-lines (lines with only one text object), multi-lines (lines with more than one text object) and multi-line blocks (multiple multi-lines merged together). The table detection algorithm is based on merging multi-line blocks that may belong to the same table, with the help of a heuristical threshold that determines the greatest number of single-line objects between two multi-line blocks possible.
 
-This method also assumes the input to be a single-column documents. However, a user can provide it with an information about the number of columns, which yields much more accurate results.
+This method also assumes the input to be a single-column document. However, a user can provide it with an information about the number of columns, which yields much more accurate results.
 
 Multiple other approaches exist, each one of them working on different types of tables and yielding slightly different results. Worth mentioning is, for example, \emph{Sparse Line Detection} \cite{sparseLineDetection}, which however already uses principles based on machine learning. Some of the other methods briefly mentioned by \citet{otherDetection1} or \citet{otherDetection2}.

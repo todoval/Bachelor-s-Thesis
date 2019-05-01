@@ -633,23 +633,48 @@ There exist many other segmentation methods that approach this problem different
 
 \subsection{Representation and feature extraction}
 
-\xxx{toto dorobim lebo tomu nerozumiem}
+Upon extracting elements by page segmentation, we are left with an unnecessary amount of information. We could feed all of them into a recognizer. This would, however, decrease accuracy of recognition and significantly increase its time complexity. For these reasons, a set of features is extracted for each element that distinguishes it from other element classes while keeping characteristic differences. There exist various different features, generally divided into local features, which are usually geometric (like number of endpoints of each character, convex or concave parts, branches etc.), and global features, which are usually topological (connectivity, number of profiles, number of holes\ldots). The set of features that will represent each characters needs to be picked carefully, so that they define the shape of a character precisely a uniquely but are also the smallest set possible to prevent increased memory usage and time complexity.
 
-Upon extracting elements by page segmentation, we are left with an unnecessary amount of information. We could feed all of them into a recognizer. This would, however, decrease accuracy of recognition and significantly increase its time complexity. For these reasons, a set of features is extracted for each element that distinguishes it from other classes while keeping characteristic differences. This can be \xxx{done in various ways} \citep{featureExtractionBook}.
+There exist three methods for performing feature extraction, described by both \citet{featureExtractionBook} and \citet{featureExtractiontext}. They differ in the ways the features are derived from the character, in reconstructability (whether the image can be reconstructed to its previous version solely from its features), in invariance to transformations and many more. We describe these methods in the following list:
 
-\todo{description list bez termu opet nejde pouzit, chces to predelat na tabulku nebo nejakej normalni seznam}
 \begin{itemize}
 
-\item The first group of techniques we will discuss are the \textbf{global transformation and series expansion} \todo{proc bold?}
-\xxx{nejak som chcela dat nadpis tomu itemu a toto vyzera ze to tak zvyraznuje, mam dat emph?} methods. These include methods like Fourier or Gabor transform, Fourier Descriptor,Wavelets, Moments and Karhunen-Loeve expansion, and are based on the representation of continuous signals by a linear combination of simpler functions. The coefficients of the linear combination provide a compact encoding known as transformation or series expansion. Deformations like translation and rotations are invariant under global transformation and series expansion.
+\item \textbf{Global transformation and series expansion} \todo{proc bold?} \xxx{nejak som chcela dat nadpis tomu itemu a toto vyzera ze to tak zvyraznuje, mam dat emph?}:
 
-\item Another \todo{Je hlavni vlastnost statistickejch reprezentaci, ze jsou `another'?} representation and following extraction technique is \textbf{statistical representation}. Unlike transforms, it uses a statistical distribution of points to take care of font and style variations to some extend. Methods based on this representation are e.g. \emph{zoning}, \emph{crossings and distances} and \emph{projections}.\todo{Je to v necem lepsi nebo horsi nez ta prvni metoda?}
+These include methods like Fourier or Gabor transform, Fourier Descriptor, Wavelets, Moments and Karhunen-Loeve expansion, and are based on the representation of continuous signals by a linear combination of simpler functions. The coefficients of the linear combination provide a compact encoding known as transformation or series expansion. Therefore, deformations like translation and rotations are invariant under global transformation and series expansion. However, the downside of this approach is the time complexity, as this method requires a number of non-trivial computations {\xxx{calculations?}}.
 
-\item Various character can also be represented by their geometrical and topological features, based on the basic line types that form the character skeleton. The output of this representation and feature extraction process can be assigned into a feature vector.
-This is called \textbf{geometrical and topological representation}, and includes techniques like \emph{extracting and counting topological structures}, \emph{measuring and approximating the geometrical properties}, \emph{coding} and \emph{graphs and trees}.\todo{tady ctenar absolutne nebude tusit co si pod tim predstavit --- jak se do toho vrazej ty grafy a stromy?}
+\item \textbf{Statistical representation}
+
+Unlike transforms, these features are based on the statistical distribution of points in the element. They provide high speed and low complexity and also take care of different font and style variations to some extend. Methods based on this representation are e.g. \emph{zoning} (where the frame containing the character is split into different zones, which are then analyzed for densities of points and strokes), \emph{crossings and distances} (crossing --- the number of crossings of the character along vertical and horizontal lines; distances --- the distances of character pixels from frame boundaries), and other like projections, characteristic loci etc. 
+
+The downside of this approach is the invariance to transforms --- if the character is only slightly skewed, the feature extraction results will greatly differ.
+
+\item \textbf{Geometrical and topological representation}
+
+These features are based on the basic line type that form a character skeleton, extracting features of the character contour like extreme points, maxima, minima, cross points, line ends, isolated dots, different types of strokes and many more. These feature have high tolerances to distortions and style variations, and their output can be assigned into a feature extraction vector.
+
 \end{itemize}
 
-\xxx{To sum up,}\todo{informal} the goal of any representation and feature extraction technique is to create a "skeleton" for each character by selecting the most representative information from the raw data which maximizes the recognition rate with the least amount of elements. However, these are still a number of differences between the features. The most noticeable difference is reconstructability - for some methods, the image can be reconstructed to its previous version solely because of features. Others, like statistical representation, lose information about the original image and would need complicated approximation algorithms to restore at least some of it. Another difference is the transformations to which features are invariant.
+In conclusion, the goal of any representation and feature extraction technique is to create a "skeleton" for each character by selecting the most representative information from the raw data which maximizes the recognition rate with the least amount of elements. 
+
+\begin{figure}[H]
+\hspace*{\fill} % separation between the subfigures
+\begin{subfigure}{0.30\textwidth}
+\includegraphics[width=\linewidth,height=30mm]{img/feature_zoning.png}
+\caption{Zoning} \label{fig:1b}
+\end{subfigure}
+\hspace*{\fill} % separation between the subfigures
+\begin{subfigure}{0.30\textwidth}
+\includegraphics[width=\linewidth,height=30mm]{img/feature_crossing.png}
+\caption{Crossing and distances \citep{crossingAndDistances}} \label{fig:1c}
+\end{subfigure}
+\begin{subfigure}{0.30\textwidth}
+\includegraphics[width=\linewidth,height=30mm]{img/features_geometrical.png}
+\caption{Example of a few geometrical and topological features \citep{geometricalFeatures}} \label{fig:1c}
+\end{subfigure}
+\caption{Examples of feature extraction techniques} \label{fig:1}
+\end{figure}
+
 
 \subsection{Character classification}
 \todo{Trosku problem je, ze na relativne jednoduchy metody pripravy textu spotrebujes 15 stranek a o hledani a klasifikaci pismen mas 1 sekci.}
