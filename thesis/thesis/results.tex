@@ -1,8 +1,45 @@
 \chapter{Results}
 
-In this chapter, we analyze the performance of our software and compare its results to those of the Tesseract \emph{table find} algorithm.
+In this chapter, we analyze the performance of our software and compare its results to those of the Tesseract \emph{table find} algorithm. For these purposes, we use our own testing set of 155 images containing one or more tables. We deliberately chose images that were not scanned or disrupted in any way, as this would only further disrupt the results from Tesseract recognition. As both our algorithm and Tesseract rely on the correctness of the recognized characters and our goal is to test the table recognition, we did everything we could to improve the Tesseract recognition process. 
 
-\section{}
+\section{Performance measures}
+
+As already mentioned, Tesseract is a robust engine. Its recognition and its functions therefore take a great amount of time, which is also the reason why the time complexity of our implementation is significantly higher. 
+
+In comparison, when we run our software on a single image ($1654\times2339$ with the size 675 KB), the absolute time of recognition is 11.6 seconds. Tesseract's API initialization uses 9.6 seconds of this time (with its \emph{recognize()} function that performs the character and line recognition in 9.2 seconds), and our functions for saving results (which use the calls of Leptonica) take 0.5 seconds. About 1.4 seconds is consumed by our \emph{init\_textlines()} function, which also uses the calls of the Tesseract API. However, this function needs to iterate over all symbols and textlines multiple times, which also adds to the time complexity. The time complexity of the other functions (which is below 0.1 seconds) is therefore negligible compared to the already stated performance measures.
+
+We ran a performance test on all 155 images to provide a better concept of the amount of time that our software spends on each function. We did not add any preprocessing, as it is a part of the Leptonica library and therefore does not affect the performance of entirely our functions. Furthermore, upon running a few tests on the preprocessor functions, they seemed to barely affect the performance.
+
+The results from our test were as follows:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ccccc}
+\toprule
+\textbf{All} & \textbf{Tesseract API} & \textbf{Textline initialization} & \textbf{Result saving} & \textbf{Other}\\
+\midrule
+100\% & 65.94\% & 30.26\% & 2.9\% & 0.9\% \\
+\bottomrule
+\end{tabular}
+\caption{Time complexity of individual functions} 
+\label{table:forward-inverted}
+\end{table}
+
+The initialization of textlines, however, is tricky. In most of the cases, its time complexity does not exceed 20\%. However, a few images, usually those containing full-page tables, sometimes spent even more time analyzing textlines than with the actual recognition.
+
+In the following sections, we will discuss the options of reducing this time complexity in favor of the accuracy of results. This includes the discussion about the effects of the quality of an image on the results and time complexity, as well as the amount of text in an image on the time complexity.
+
+\section{Effects of image quality}
+
+The quality of the input image greatly affects Tesseract's recognition system and therefore our recognition system.
+
+
+\section{Effects of preprocessing}
+
+As mentioned multiple times in the previous chapters, preprocessing is a crucial part of any OCR engine, including Tesseract. In this section, we will show its importance along with a few examples of how the recognition results change when only slight tweaks in an image are made.
+
+
+
 
 
 \section{Comparison to Tesseract's tablefind}
