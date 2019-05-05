@@ -312,18 +312,13 @@ In the \xxx{taggnut tabulku} table, we provide an overview of a few of the most 
 
 \xxx{Nejake su posunute + nebolo by lepsie to spravit s nejakou sipkou a dat pod to len jeden caption?}
 
-\begin{figure}[H]
+\begin{figure}
 \centering
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing/deskew_orig.jpg}
-\caption{Original image} \label{fig:1a}
-\end{subfigure}
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing/deskew_new.jpg}
-\caption{Deskewed} \label{fig:1b}
-\end{subfigure}
+\includegraphics[width=.3\linewidth]{img/preprocessing/deskew_orig.jpg}
+\qquad
+\includegraphics[width=.3\linewidth]{img/preprocessing/deskew_new.jpg}
+\caption{Image deskewing illustrated. Left: original image, right: deskewed image.}
+\label{fig:deskewing}
 \end{figure}
 
 \subsection{Noise reduction}
@@ -332,55 +327,34 @@ Image noise is an usually unwanted random variation of brightness or color infor
 
 For OCR engines, processing noise can be quite tricky. Its presence is especially crucial during binarization and edge detection. These processes are based on the differences between the "outside" of the element and its "inside". When noise is present, it can disrupt these borders, which can often cause the failure of recognition.
 
-\begin{longtable}{p{8em}p{10em}p{11em}}
+\begin{table}[p]
+{\small
+\begin{tabular}{p{8em}p{12em}l}
 \toprule
 \textbf{Type} & \textbf{Description} & \textbf{Image} \\
 \midrule
-Salt and Pepper
-
-(\emph{impulse noise})
+Salt and Pepper \par (\emph{impulse noise})
 &
-
-randomly occuring black and white pixels
-
-caused by sharp and sudden disturbances in image signal
-
-present in old photographs
-
+Randomly occuring black and white pixels caused by sharp and sudden
+disturbances in image signal present in old photographs.
 &
-\fbox{\raisebox{-\height}{\includegraphics[width=0.3\textwidth,
-height=30mm]{img/preprocessing/noise_saltpepper.png}}}\\
-
-Statistical
-
-noise
-
+\includegraphics[width=0.3\textwidth, align=t]{img/preprocessing/noise_saltpepper.png} \\
+Statistical noise 
 &
-
-unexplained variability whithin an image
-
-characterized by a probability density function
-
-e.g \emph{Gaussian noise}, \emph{Shot noise}, \emph{Quantization noise} or film grain
-
+Unexplained variability whithin an image, usually characterized by a probability density function, e.g.~\emph{Gaussian noise}, \emph{Shot noise}, \emph{Quantization noise} or film grain.
 &
-\fbox{\raisebox{-\height}{\includegraphics[width=0.3\textwidth,
-height=30mm]{img/preprocessing/noise_gaussian.jpg}}}\\
+\includegraphics[width=0.3\textwidth, align=t]{img/preprocessing/noise_gaussian.jpg}\\
 Other
-
 &
-
-like \emph{anisotropic} or \emph{periodic} noise
-
-often found in old photographs or documents
-
+E.g.~\emph{anisotropic} or \emph{periodic} noise, often found in old photographs or documents.
 &
-\fbox{\raisebox{-\height}{\includegraphics[width=0.3\textwidth,
-height=30mm]{img/preprocessing/noise_periodic.jpg}}}\\
+\includegraphics[width=0.3\textwidth, align=t]{img/preprocessing/noise_periodic.jpg} \\
 \bottomrule
-\caption{Different types of noise}
+\end{tabular}
+}
+\caption{Different types of noise.}
 \label{tab:types_of_noise}
-\end{longtable}
+\end{table}
 
 There exist various approaches dealing with noise reduction. These include different types of filtering or comparison methods to firstly detect which pixels were corrupted by noise and then determining their value in the output image.
 
@@ -394,29 +368,21 @@ There exist various approaches dealing with noise reduction. These include diffe
 
 \end{description}
 
-\begin{figure}[H]
+\begin{figure}
 \centering
-\includegraphics[width=0.3\linewidth]{img/preprocessing/denoise_orig.png}
-\caption{Original Image} \label{fig:1a}
-\end{figure}
-
-\begin{figure}[H]
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing/denoise_gauss.png}
-\caption{Gaussian filter} \label{fig:1a}
-\end{subfigure}
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing/denoise_median.png}
-\caption{Median filter} \label{fig:1b}
-\end{subfigure}
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing/denoise_nonlocal.png}
-\caption{Non-local means method} \label{fig:1c}
-\end{subfigure}
-\caption{Comparison of denoising techniques} \label{fig:1}
+\begin{tabular}{cc}
+Original & Gaussian filter \\
+\includegraphics[width=.4\linewidth]{img/preprocessing/denoise_orig.png}
+&
+\includegraphics[width=.4\linewidth]{img/preprocessing/denoise_gauss.png}
+\vspace{1em} \\
+Median filter & Non-local means method \\
+\includegraphics[width=.4\linewidth]{img/preprocessing/denoise_median.png}
+&
+\includegraphics[width=.4\linewidth]{img/preprocessing/denoise_nonlocal.png}
+\end{tabular}
+\caption{Comparison of denoising techniques.}
+\label{fig:denoising}
 \end{figure}
 
 What combination of techniques to use for the optimal results greatly depends on the input image --- if there is little to no noise, de-noising an image can cause more harm than good. Therefore, it is always important to approximately compute the signal:noise ratio before applying any kind of filters.
@@ -440,18 +406,15 @@ The results of this algorithm depend greatly on the values of thresholds, margin
 
 Another approach is the one mentioned by \citet{marginalNoiseEdge}. It is based on edge density calculations, and the fact that text areas have generally a much lower density than edge areas. An edge detector (in this case, \emph{sobel}) is used for examining vertical marginal noise, and later horizontal marginal noise. It returns the positions of the margins. Anything beyond these positions is detected as an unwanted noise, and can be therefore removed by filters or other removal algorithms.
 
-\begin{figure}[H]
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth,height=60mm]{img/preprocessing/scan_borders_orig.png}
-\caption{Original Image} \label{fig:1a}
-\end{subfigure}
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth,height=60mm]{img/preprocessing/scan_borders_result.png}
-\caption{Scanning Borders Removed} \label{fig:1b}
-\end{subfigure}
-\hspace*{\fill} % separation between the subfigures
+\begin{figure}
+\centering
+
+\includegraphics[height=10em]{img/preprocessing/scan_borders_orig.png}
+\qquad
+\includegraphics[height=10em]{img/preprocessing/scan_borders_result.png}
+
+\caption{Removal of scanning artifacts. Left: original, right: removed scanning borders.}
+\label{fig:scanning}
 \end{figure}
 
 \xxx{TO DO - preco nie su vedla seba? :( }
