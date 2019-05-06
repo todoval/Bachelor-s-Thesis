@@ -132,41 +132,43 @@ As decribed by~\citet{grayscaleCadik}, these exist many more algorithms approach
 \caption{Comparison of grayscale techniques} \label{fig:1}
 \end{figure}
 
+\subsubsection{Threshold-based binarization}
 Once the image is in grayscale mode, the next step is to binarize it. Binarization methods work on the basis of a \emph{threshold} --- a set value that a pixel is compared with. If it is greater than the threshold, it is assumed to be white, otherwise, it is colored black. Various binarization methods differ in the way that this threshold is calculated and used.
 
 he simplest approach to binarization is \emph{global thresholding} \citep{globalThresh}. It works by choosing a threshold value and iterating over the whole image, comparing the value of each pixel to this threshold. If it is greater, the pixel in resulting image will be black, otherwise white. As the brightness and contrast of different images vary, it is impossible to choose a threshold suitable for all images.
 
-Therefore, other more complex methods are used:
-
+More complex methods that aim to correct the problems of simple thresholding exist; these include e.g. the following:
 \begin{itemize}
-\item\textbf{Otsu's method} \citep{otsu} is one of the most widely used and mentioned methods for image binarization. First, it computes the threshold value from the input image and then applies global thresholding. To get the optimal value of the threshold, Otsu's method works by dividing the pixels into two groups - background and foreground pixels. It chooses these groups so that the within-group variance is minimized and between-group variance is maximized. Upside to this method is that it is simple and easy to implement. However, upon applying it to images with uneven dark or bright spots, it deems to be unusable.
-
-\item\textbf{Local Thresholding} \citep{localOtherBin} differs from Otsu's method by assigning different threshold values to the segments of the image. This solves the problem with unevenly lit spots --- darker spots will be assigned a lower threshold value, while brighter will be assigned a higher threshold value. The difference between different local thresholding algorithms is the way the values are assigned. For example, \emph{Niblack's Method} \citep{adaptiveBin} determines the threshold of every pixel by using the mean and standard deviation of surrounding pixels, which causes errors in blank regions of the image. \emph{Sauvola Method} \citep{adaptiveBin} improves this by using the dynamic range of image gray-value standard deviation. However, this often results in text thinning. Another method worth mentioning is \emph{Bernsen's} \citep{adaptiveBin}, where the threshold is set to the mean value between the lowest and highest gray-level pixel in the neighborhood.
-
-\item\textbf{Adaptive methods} attempt to overcome the fact that every document is different and techniques that work for a few inputs may substantially corrupt others. To determine which technique to use for each document image would be a useful feature in most cases. This is the exact problem that adaptive methods try to solve. As described in \citep{adaptiveBin}, their approach is to analyze the document image surface and determine the most useful method with the help of a "hybrid switching" module.
-
+\item Otsu's method for global threshold estimation
+\item Local-thresholding methods,~\citep{localOtherBin}:
+\begin{itemize}
+\item Niblack method
+\item Bernsen method
+\item Sauvola adaptive thresholding
+\end{itemize}
 \end{itemize}
 
-Comprehensive reviews of other, more complicated methods (mostly based on already mentioned techniques) are available \citet{localOtherBin}.
-
-\begin{figure}[H]
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing/bin_orig.png}
-\caption{Original Image} \label{fig:1a}
-\end{subfigure}
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing/bin_glob.png}
-\caption{Global Thresholding} \label{fig:1b}
-\end{subfigure}
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing/bin_sauvola.png}
-\caption{Sauvola Binarization}\label{fig:1c}
-\end{subfigure}
-\caption{Comparison of binarization methods on unevenly lit image} \label{fig:1}
+\begin{figure}
+\centering
+{\sffamily
+\begin{tabular}{ccc}
+Original scanned image &
+Global Thresholding &
+Sauvola Binarization \\
+\includegraphics[width=.3\linewidth]{img/preprocessing/bin_orig.png} &
+\includegraphics[width=.3\linewidth]{img/preprocessing/bin_glob.png} &
+\includegraphics[width=.3\linewidth]{img/preprocessing/bin_sauvola.png}
+\end{tabular}
+}
+\caption{Comparison of binarization method outpus on an unevenly lit image.}
+\label{fig:thresholds}
 \end{figure}
+
+Otsu's method aims to correct the global thresholding problem by statistically optimizing the global threshold value~\citep{otsu}. This is done by dynamically classifying the image pixels into background and foreground accordingly to the threshold, and choosing the threshold such that the variance of pixel values in each group is minimized, while the variance between group is maximized. While simple and easy to implement, it is inherently unable to fix high variance or uneven spots in image background.
+
+Local thresholding methods solve the problem with uneven background brightness by allowing different threshold values in different parts of image. Niblack's method~\citep{adaptiveBin} determines the threshold of every pixel by using the mean and standard deviation of surrounding pixels (similarly as with deconvolution matrix filters). While that works for regions that contain text, the approach amplifies the low-variance noise in blank regions of the image. Sauvola Method~\citep{adaptiveBin} improves the algorithm by using the dynamic range of pixel values in larger neighborhood to aid decision whether the current region is blank or not. Bernsen's~\citep{adaptiveBin} method is similar to that of Niblack, but the threshold is set to the mean value between the lowest- and highest-value pixel in the local neighborhood; which is computationally efficient, and produces less artifacts in blank regions.
+
+Visual differences between the mentioned methods are displayed in~\cref{fig:thresholds}. Comprehensive reviews of other, more complex methods are available~\citep{localOtherBin}.
 
 \subsection{Contrast enhancement}
 
@@ -370,6 +372,7 @@ There exist various approaches dealing with noise reduction. These include diffe
 
 \begin{figure}
 \centering
+{\sffamily
 \begin{tabular}{cc}
 Original & Gaussian filter \\
 \includegraphics[width=.4\linewidth]{img/preprocessing/denoise_orig.png}
@@ -381,6 +384,7 @@ Median filter & Non-local means method \\
 &
 \includegraphics[width=.4\linewidth]{img/preprocessing/denoise_nonlocal.png}
 \end{tabular}
+}
 \caption{Comparison of denoising techniques.}
 \label{fig:denoising}
 \end{figure}
