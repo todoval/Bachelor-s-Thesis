@@ -2,3 +2,5 @@ tabularOCR/build
 tabularOCR/.cppan
 tabularOCR/.vs
 tabularOCR/.vscode
+tabularOCR/results
+tabularOCR/test_images
