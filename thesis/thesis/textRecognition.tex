@@ -113,7 +113,7 @@ Another way to approach grayscale conversion is to represents the color based on
 
 As decribed by~\citet{grayscaleCadik}, these exist many more algorithms approaching this problem. Most of them require more complicated computations and try to preserve attributes of the image that may be lost during the process --- like contrast or luminance.
 
-\begin{figure}[H]
+\begin{figure}[t]
 \hspace*{\fill} % separation between the subfigures
 \begin{subfigure}{0.31\textwidth}
 \includegraphics[width=\linewidth]{img/preprocessing/grayscale_orig.jpg}
@@ -132,41 +132,43 @@ As decribed by~\citet{grayscaleCadik}, these exist many more algorithms approach
 \caption{Comparison of grayscale techniques} \label{fig:1}
 \end{figure}
 
+\subsubsection{Threshold-based binarization}
 Once the image is in grayscale mode, the next step is to binarize it. Binarization methods work on the basis of a \emph{threshold} --- a set value that a pixel is compared with. If it is greater than the threshold, it is assumed to be white, otherwise, it is colored black. Various binarization methods differ in the way that this threshold is calculated and used.
 
 he simplest approach to binarization is \emph{global thresholding} \citep{globalThresh}. It works by choosing a threshold value and iterating over the whole image, comparing the value of each pixel to this threshold. If it is greater, the pixel in resulting image will be black, otherwise white. As the brightness and contrast of different images vary, it is impossible to choose a threshold suitable for all images.
 
-Therefore, other more complex methods are used:
-
+More complex methods that aim to correct the problems of simple thresholding exist; these include e.g. the following:
 \begin{itemize}
-\item\textbf{Otsu's method} \citep{otsu} is one of the most widely used and mentioned methods for image binarization. First, it computes the threshold value from the input image and then applies global thresholding. To get the optimal value of the threshold, Otsu's method works by dividing the pixels into two groups - background and foreground pixels. It chooses these groups so that the within-group variance is minimized and between-group variance is maximized. Upside to this method is that it is simple and easy to implement. However, upon applying it to images with uneven dark or bright spots, it deems to be unusable.
-
-\item\textbf{Local Thresholding} \citep{localOtherBin} differs from Otsu's method by assigning different threshold values to the segments of the image. This solves the problem with unevenly lit spots --- darker spots will be assigned a lower threshold value, while brighter will be assigned a higher threshold value. The difference between different local thresholding algorithms is the way the values are assigned. For example, \emph{Niblack's Method} \citep{adaptiveBin} determines the threshold of every pixel by using the mean and standard deviation of surrounding pixels, which causes errors in blank regions of the image. \emph{Sauvola Method} \citep{adaptiveBin} improves this by using the dynamic range of image gray-value standard deviation. However, this often results in text thinning. Another method worth mentioning is \emph{Bernsen's} \citep{adaptiveBin}, where the threshold is set to the mean value between the lowest and highest gray-level pixel in the neighborhood.
-
-\item\textbf{Adaptive methods} attempt to overcome the fact that every document is different and techniques that work for a few inputs may substantially corrupt others. To determine which technique to use for each document image would be a useful feature in most cases. This is the exact problem that adaptive methods try to solve. As described in \citep{adaptiveBin}, their approach is to analyze the document image surface and determine the most useful method with the help of a "hybrid switching" module.
-
+\item Otsu's method for global threshold estimation
+\item Local-thresholding methods,~\citep{localOtherBin}:
+\begin{itemize}
+\item Niblack method
+\item Bernsen method
+\item Sauvola adaptive thresholding
+\end{itemize}
 \end{itemize}
 
-Comprehensive reviews of other, more complicated methods (mostly based on already mentioned techniques) are available \citet{localOtherBin}.
-
-\begin{figure}[H]
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing/bin_orig.png}
-\caption{Original Image} \label{fig:1a}
-\end{subfigure}
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing/bin_glob.png}
-\caption{Global Thresholding} \label{fig:1b}
-\end{subfigure}
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing/bin_sauvola.png}
-\caption{Sauvola Binarization}\label{fig:1c}
-\end{subfigure}
-\caption{Comparison of binarization methods on unevenly lit image} \label{fig:1}
+\begin{figure}
+\centering
+{\sffamily
+\begin{tabular}{ccc}
+Original scanned image &
+Global Thresholding &
+Sauvola Binarization \\
+\includegraphics[width=.3\linewidth]{img/preprocessing/bin_orig.png} &
+\includegraphics[width=.3\linewidth]{img/preprocessing/bin_glob.png} &
+\includegraphics[width=.3\linewidth]{img/preprocessing/bin_sauvola.png}
+\end{tabular}
+}
+\caption{Comparison of binarization method outpus on an unevenly lit image.}
+\label{fig:thresholds}
 \end{figure}
+
+Otsu's method aims to correct the global thresholding problem by statistically optimizing the global threshold value~\citep{otsu}. This is done by dynamically classifying the image pixels into background and foreground accordingly to the threshold, and choosing the threshold such that the variance of pixel values in each group is minimized, while the variance between group is maximized. While simple and easy to implement, it is inherently unable to fix high variance or uneven spots in image background.
+
+Local thresholding methods solve the problem with uneven background brightness by allowing different threshold values in different parts of image. Niblack's method~\citep{adaptiveBin} determines the threshold of every pixel by using the mean and standard deviation of surrounding pixels (similarly as with deconvolution matrix filters). While that works for regions that contain text, the approach amplifies the low-variance noise in blank regions of the image. Sauvola Method~\citep{adaptiveBin} improves the algorithm by using the dynamic range of pixel values in larger neighborhood to aid decision whether the current region is blank or not. Bernsen's~\citep{adaptiveBin} method is similar to that of Niblack, but the threshold is set to the mean value between the lowest- and highest-value pixel in the local neighborhood; which is computationally efficient, and produces less artifacts in blank regions.
+
+Visual differences between the mentioned methods are displayed in~\cref{fig:thresholds}. Comprehensive reviews of other, more complex methods are available~\citep{localOtherBin}.
 
 \subsection{Contrast enhancement}
 
@@ -179,12 +181,11 @@ In a histogram, contrast of the current color component is represented as distri
 
 \begin{figure}[H]
 \centering
-\hspace*{\fill} % separation between the subfigures
 \begin{subfigure}{0.31\textwidth}
 \includegraphics[width=\linewidth]{img/preprocessing//histogram_low.png}
 \caption{Low contrast image histogram} \label{fig:1a}
 \end{subfigure}
-\hspace*{\fill} % separation between the subfigures
+\qquad
 \begin{subfigure}{0.31\textwidth}
 \includegraphics[width=\linewidth]{img/preprocessing/histogram_high.png}
 \caption{High contrast image histogram} \label{fig:1b}
@@ -228,12 +229,11 @@ For text image enhancement, the most popular choice is histogram equalization, o
 
 \begin{figure}[H]
 \centering
-\hspace*{\fill} % separation between the subfigures
 \begin{subfigure}{0.31\textwidth}
 \includegraphics[width=\linewidth]{img/preprocessing/contrast_low.png}
 \caption{Before} \label{fig:1a}
 \end{subfigure}
-\hspace*{\fill} % separation between the subfigures
+\qquad
 \begin{subfigure}{0.31\textwidth}
 \includegraphics[width=\linewidth]{img/preprocessing/contrast_high.png}
 \caption{After}
@@ -309,21 +309,13 @@ In the \xxx{taggnut tabulku} table, we provide an overview of a few of the most 
 
 \end{longtable}
 
-
-\xxx{Nejake su posunute + nebolo by lepsie to spravit s nejakou sipkou a dat pod to len jeden caption?}
-
-\begin{figure}[H]
+\begin{figure}
 \centering
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing/deskew_orig.jpg}
-\caption{Original image} \label{fig:1a}
-\end{subfigure}
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing/deskew_new.jpg}
-\caption{Deskewed} \label{fig:1b}
-\end{subfigure}
+\includegraphics[height=0.25\textheight]{img/preprocessing/deskew_orig.jpg}
+\qquad
+\includegraphics[height=0.25\textheight]{img/preprocessing/deskew_new.jpg}
+\caption{Image deskewing illustrated. Left: original image, right: deskewed image.}
+\label{fig:deskewing}
 \end{figure}
 
 \subsection{Noise reduction}
@@ -332,55 +324,34 @@ Image noise is an usually unwanted random variation of brightness or color infor
 
 For OCR engines, processing noise can be quite tricky. Its presence is especially crucial during binarization and edge detection. These processes are based on the differences between the "outside" of the element and its "inside". When noise is present, it can disrupt these borders, which can often cause the failure of recognition.
 
-\begin{longtable}{p{8em}p{10em}p{11em}}
+\begin{table}[p]
+{\small
+\begin{tabular}{p{8em}p{12em}l}
 \toprule
 \textbf{Type} & \textbf{Description} & \textbf{Image} \\
 \midrule
-Salt and Pepper
-
-(\emph{impulse noise})
+Salt and Pepper \par (\emph{impulse noise})
 &
-
-randomly occuring black and white pixels
-
-caused by sharp and sudden disturbances in image signal
-
-present in old photographs
-
+Randomly occuring black and white pixels caused by sharp and sudden
+disturbances in image signal present in old photographs.
 &
-\fbox{\raisebox{-\height}{\includegraphics[width=0.3\textwidth,
-height=30mm]{img/preprocessing/noise_saltpepper.png}}}\\
-
-Statistical
-
-noise
-
+\includegraphics[width=0.3\textwidth, align=t]{img/preprocessing/noise_saltpepper.png} \\
+Statistical noise 
 &
-
-unexplained variability whithin an image
-
-characterized by a probability density function
-
-e.g \emph{Gaussian noise}, \emph{Shot noise}, \emph{Quantization noise} or film grain
-
+Unexplained variability whithin an image, usually characterized by a probability density function, e.g.~\emph{Gaussian noise}, \emph{Shot noise}, \emph{Quantization noise} or film grain.
 &
-\fbox{\raisebox{-\height}{\includegraphics[width=0.3\textwidth,
-height=30mm]{img/preprocessing/noise_gaussian.jpg}}}\\
+\includegraphics[width=0.3\textwidth, align=t]{img/preprocessing/noise_gaussian.jpg}\\
 Other
-
 &
-
-like \emph{anisotropic} or \emph{periodic} noise
-
-often found in old photographs or documents
-
+E.g.~\emph{anisotropic} or \emph{periodic} noise, often found in old photographs or documents.
 &
-\fbox{\raisebox{-\height}{\includegraphics[width=0.3\textwidth,
-height=30mm]{img/preprocessing/noise_periodic.jpg}}}\\
+\includegraphics[width=0.3\textwidth, align=t]{img/preprocessing/noise_periodic.jpg} \\
 \bottomrule
-\caption{Different types of noise}
+\end{tabular}
+}
+\caption{Different types of noise.}
 \label{tab:types_of_noise}
-\end{longtable}
+\end{table}
 
 There exist various approaches dealing with noise reduction. These include different types of filtering or comparison methods to firstly detect which pixels were corrupted by noise and then determining their value in the output image.
 
@@ -394,29 +365,23 @@ There exist various approaches dealing with noise reduction. These include diffe
 
 \end{description}
 
-\begin{figure}[H]
+\begin{figure}
 \centering
-\includegraphics[width=0.3\linewidth]{img/preprocessing/denoise_orig.png}
-\caption{Original Image} \label{fig:1a}
-\end{figure}
-
-\begin{figure}[H]
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing/denoise_gauss.png}
-\caption{Gaussian filter} \label{fig:1a}
-\end{subfigure}
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing/denoise_median.png}
-\caption{Median filter} \label{fig:1b}
-\end{subfigure}
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing/denoise_nonlocal.png}
-\caption{Non-local means method} \label{fig:1c}
-\end{subfigure}
-\caption{Comparison of denoising techniques} \label{fig:1}
+{\sffamily
+\begin{tabular}{cc}
+Original & Gaussian filter \\
+\includegraphics[width=.4\linewidth]{img/preprocessing/denoise_orig.png}
+&
+\includegraphics[width=.4\linewidth]{img/preprocessing/denoise_gauss.png}
+\vspace{1em} \\
+Median filter & Non-local means method \\
+\includegraphics[width=.4\linewidth]{img/preprocessing/denoise_median.png}
+&
+\includegraphics[width=.4\linewidth]{img/preprocessing/denoise_nonlocal.png}
+\end{tabular}
+}
+\caption{Comparison of denoising techniques.}
+\label{fig:denoising}
 \end{figure}
 
 What combination of techniques to use for the optimal results greatly depends on the input image --- if there is little to no noise, de-noising an image can cause more harm than good. Therefore, it is always important to approximately compute the signal:noise ratio before applying any kind of filters.
@@ -440,21 +405,16 @@ The results of this algorithm depend greatly on the values of thresholds, margin
 
 Another approach is the one mentioned by \citet{marginalNoiseEdge}. It is based on edge density calculations, and the fact that text areas have generally a much lower density than edge areas. An edge detector (in this case, \emph{sobel}) is used for examining vertical marginal noise, and later horizontal marginal noise. It returns the positions of the margins. Anything beyond these positions is detected as an unwanted noise, and can be therefore removed by filters or other removal algorithms.
 
-\begin{figure}[H]
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth,height=60mm]{img/preprocessing/scan_borders_orig.png}
-\caption{Original Image} \label{fig:1a}
-\end{subfigure}
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth,height=60mm]{img/preprocessing/scan_borders_result.png}
-\caption{Scanning Borders Removed} \label{fig:1b}
-\end{subfigure}
-\hspace*{\fill} % separation between the subfigures
-\end{figure}
+\begin{figure}
+\centering
 
-\xxx{TO DO - preco nie su vedla seba? :( }
+\includegraphics[height=10em]{img/preprocessing/scan_borders_orig.png}
+\qquad
+\includegraphics[height=10em]{img/preprocessing/scan_borders_result.png}
+
+\caption{Removal of scanning artifacts. Left: original, right: removed scanning borders.}
+\label{fig:scanning}
+\end{figure}
 
 \section{Text detection process}
 
@@ -657,7 +617,7 @@ These features are based on the basic line type that form a character skeleton, 
 
 In conclusion, the goal of any representation and feature extraction technique is to create a "skeleton" for each character by selecting the most representative information from the raw data which maximizes the recognition rate with the least amount of elements. 
 
-\begin{figure}[H]
+\begin{figure}[t]
 \hspace*{\fill} % separation between the subfigures
 \begin{subfigure}{0.30\textwidth}
 \includegraphics[width=\linewidth,height=30mm]{img/textDetection/feature_zoning.png}
@@ -685,7 +645,7 @@ One way to approach classification is by \emph{Template Matching} \citep{templat
 
 Although the implementation of this method is very simple, even small disfigurements and noise can greatly affect its efficiency. Also, in this case, a feature extraction would be unnecessary as all templates are created manually.
 
-\begin{figure}[H]
+\begin{figure}[t]
     \noindent
 	\makebox[\textwidth]{\includegraphics[width=30em]
 	{img/characterClassification/templates.png}}
@@ -696,18 +656,18 @@ Although the implementation of this method is very simple, even small disfigurem
 Another approach is by using \emph{statistical techniques}~\citep{characterClassification} that also make use of the previous steps mentioned in this thesis. They are based on statistical modeling of the data. To determine the output, extraction of the features from input image (such as size, shape, intensity) is first performed. Then, with the help of statistical decision functions, these features are compared to the statistical model. The problem with these algorithms is that they have no information about whole-part relations. 
 
 \begin{figure}[H]
-\hspace*{\fill} % separation between the subfigures
 \begin{subfigure}{0.30\textwidth}
-\includegraphics[width=\linewidth,height=30mm]{img/characterClassification/statis_endPoint.jpg}
+\includegraphics[height=10em]{img/characterClassification/statis_endPoint.jpg}
 \caption{Existence and number of end points} \label{fig:1b}
 \end{subfigure}
 \hspace*{\fill} % separation between the subfigures
 \begin{subfigure}{0.30\textwidth}
-\includegraphics[width=\linewidth,height=30mm]{img/characterClassification/statis_vertical.jpg}
+\includegraphics[height=10em]{img/characterClassification/statis_vertical.jpg}
 \caption{Number of vertical lines} \label{fig:1c}
 \end{subfigure}
+\hspace*{\fill} % separation between the subfigures
 \begin{subfigure}{0.30\textwidth}
-\includegraphics[width=\linewidth,height=30mm]{img/characterClassification/statis_horizontal.jpg}
+\includegraphics[height=10em]{img/characterClassification/statis_horizontal.jpg}
 \caption{Number of horizontal lines} \label{fig:1c}
 \end{subfigure}
 \caption{A few of the possible extracted features in statistical techniques \citep{vithlani2015structural}} \label{fig:1}
@@ -721,7 +681,7 @@ In the case of character classification, training data is created by passing var
 
 This method is for example used in a one of the simplest machine learning algorithms, and that is the \emph{KNN Classification Algorithm}, or K-Nearest Neighbor algorithm. The input image is compared to the training data and chooses its K nearest objects (objects that are the most similar). After that, the image is classified with being assigned to the class most common among its K nearest neighbors.
 
-\begin{figure}[H]
+\begin{figure}[t]
 \centering
 \includegraphics[width=0.7\linewidth]{img/characterClassification/knn.pdf}
 \caption{KNN algorithm: with k=3, the algorithm will assign the new element to class A; wth k=7 to class B } \label{fig:1a}
@@ -772,3 +732,5 @@ On contrary to Tesseract, OpenCV is a user-friendly library. It is widely used a
 The reason for mentioning OpenCV is exactly for its vast variety of preprocessing options. There are many projects that incorporate the work of OpenCV and Tesseract to achieve the most accurate and, most importantly, user-friendly results. Although OpenCV is mostly used via its Python interface, it also has a C++ and Java interfaces which can connect with Tesseract either directly via its C++ API, or through a wrapper like PyTesseract.
 
  However, these programs have almost no value for developers (except for comparison studies), whose work is still either concentrated on improving and expanding the Tesseract engine, or based on Tesseract's robust library.
+ 
+ 

@@ -15,7 +15,7 @@
 %\let\openright=\clearpage
 
 %% Settings for two-sided (duplex) printing
-\documentclass[12pt,a4paper,twoside]{report}
+\documentclass[12pt,a4paper,twoside,openright]{report}
 % \setlength\textwidth{145mm}
 % \setlength\textheight{247mm}
 % \setlength\oddsidemargin{14.2mm}
@@ -48,6 +48,7 @@
 \usepackage{amsfonts}       % math fonts
 \usepackage{amsthm}         % theorems, definitions, etc.
 \usepackage{bbding}         % various symbols (squares, asterisks, scissors, ...)
+\usepackage{graphbox}       % figure alignment
 \usepackage{bm}             % boldface symbols (\bm)
 \usepackage{graphicx}       % embedding of pictures
 \usepackage{fancyvrb}       % improved verbatim environment
@@ -66,6 +67,7 @@
 \usepackage{longtable}
 \usepackage{subcaption}
 \usepackage{listings}
+\usepackage{cleveref}
 
 \newcommand{\xxx}[1]{\textcolor{red}{#1}}
 
