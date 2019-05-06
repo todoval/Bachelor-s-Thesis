@@ -113,7 +113,7 @@ Another way to approach grayscale conversion is to represents the color based on
 
 As decribed by~\citet{grayscaleCadik}, these exist many more algorithms approaching this problem. Most of them require more complicated computations and try to preserve attributes of the image that may be lost during the process --- like contrast or luminance.
 
-\begin{figure}[H]
+\begin{figure}[t]
 \hspace*{\fill} % separation between the subfigures
 \begin{subfigure}{0.31\textwidth}
 \includegraphics[width=\linewidth]{img/preprocessing/grayscale_orig.jpg}
@@ -181,12 +181,11 @@ In a histogram, contrast of the current color component is represented as distri
 
 \begin{figure}[H]
 \centering
-\hspace*{\fill} % separation between the subfigures
 \begin{subfigure}{0.31\textwidth}
 \includegraphics[width=\linewidth]{img/preprocessing//histogram_low.png}
 \caption{Low contrast image histogram} \label{fig:1a}
 \end{subfigure}
-\hspace*{\fill} % separation between the subfigures
+\qquad
 \begin{subfigure}{0.31\textwidth}
 \includegraphics[width=\linewidth]{img/preprocessing/histogram_high.png}
 \caption{High contrast image histogram} \label{fig:1b}
@@ -230,12 +229,11 @@ For text image enhancement, the most popular choice is histogram equalization, o
 
 \begin{figure}[H]
 \centering
-\hspace*{\fill} % separation between the subfigures
 \begin{subfigure}{0.31\textwidth}
 \includegraphics[width=\linewidth]{img/preprocessing/contrast_low.png}
 \caption{Before} \label{fig:1a}
 \end{subfigure}
-\hspace*{\fill} % separation between the subfigures
+\qquad
 \begin{subfigure}{0.31\textwidth}
 \includegraphics[width=\linewidth]{img/preprocessing/contrast_high.png}
 \caption{After}
@@ -311,14 +309,11 @@ In the \xxx{taggnut tabulku} table, we provide an overview of a few of the most 
 
 \end{longtable}
 
-
-\xxx{Nejake su posunute + nebolo by lepsie to spravit s nejakou sipkou a dat pod to len jeden caption?}
-
 \begin{figure}
 \centering
-\includegraphics[width=.3\linewidth]{img/preprocessing/deskew_orig.jpg}
+\includegraphics[height=0.25\textheight]{img/preprocessing/deskew_orig.jpg}
 \qquad
-\includegraphics[width=.3\linewidth]{img/preprocessing/deskew_new.jpg}
+\includegraphics[height=0.25\textheight]{img/preprocessing/deskew_new.jpg}
 \caption{Image deskewing illustrated. Left: original image, right: deskewed image.}
 \label{fig:deskewing}
 \end{figure}
@@ -420,8 +415,6 @@ Another approach is the one mentioned by \citet{marginalNoiseEdge}. It is based 
 \caption{Removal of scanning artifacts. Left: original, right: removed scanning borders.}
 \label{fig:scanning}
 \end{figure}
-
-\xxx{TO DO - preco nie su vedla seba? :( }
 
 \section{Text detection process}
 
@@ -624,7 +617,7 @@ These features are based on the basic line type that form a character skeleton, 
 
 In conclusion, the goal of any representation and feature extraction technique is to create a "skeleton" for each character by selecting the most representative information from the raw data which maximizes the recognition rate with the least amount of elements. 
 
-\begin{figure}[H]
+\begin{figure}[t]
 \hspace*{\fill} % separation between the subfigures
 \begin{subfigure}{0.30\textwidth}
 \includegraphics[width=\linewidth,height=30mm]{img/textDetection/feature_zoning.png}
@@ -652,7 +645,7 @@ One way to approach classification is by \emph{Template Matching} \citep{templat
 
 Although the implementation of this method is very simple, even small disfigurements and noise can greatly affect its efficiency. Also, in this case, a feature extraction would be unnecessary as all templates are created manually.
 
-\begin{figure}[H]
+\begin{figure}[t]
     \noindent
 	\makebox[\textwidth]{\includegraphics[width=30em]
 	{img/characterClassification/templates.png}}
@@ -663,7 +656,6 @@ Although the implementation of this method is very simple, even small disfigurem
 Another approach is by using \emph{statistical techniques}~\citep{characterClassification} that also make use of the previous steps mentioned in this thesis. They are based on statistical modeling of the data. To determine the output, extraction of the features from input image (such as size, shape, intensity) is first performed. Then, with the help of statistical decision functions, these features are compared to the statistical model. The problem with these algorithms is that they have no information about whole-part relations. 
 
 \begin{figure}[H]
-\hspace*{\fill} % separation between the subfigures
 \begin{subfigure}{0.30\textwidth}
 \includegraphics[height=10em]{img/characterClassification/statis_endPoint.jpg}
 \caption{Existence and number of end points} \label{fig:1b}
@@ -673,6 +665,7 @@ Another approach is by using \emph{statistical techniques}~\citep{characterClass
 \includegraphics[height=10em]{img/characterClassification/statis_vertical.jpg}
 \caption{Number of vertical lines} \label{fig:1c}
 \end{subfigure}
+\hspace*{\fill} % separation between the subfigures
 \begin{subfigure}{0.30\textwidth}
 \includegraphics[height=10em]{img/characterClassification/statis_horizontal.jpg}
 \caption{Number of horizontal lines} \label{fig:1c}
@@ -688,7 +681,7 @@ In the case of character classification, training data is created by passing var
 
 This method is for example used in a one of the simplest machine learning algorithms, and that is the \emph{KNN Classification Algorithm}, or K-Nearest Neighbor algorithm. The input image is compared to the training data and chooses its K nearest objects (objects that are the most similar). After that, the image is classified with being assigned to the class most common among its K nearest neighbors.
 
-\begin{figure}[H]
+\begin{figure}[t]
 \centering
 \includegraphics[width=0.7\linewidth]{img/characterClassification/knn.pdf}
 \caption{KNN algorithm: with k=3, the algorithm will assign the new element to class A; wth k=7 to class B } \label{fig:1a}
@@ -739,3 +732,5 @@ On contrary to Tesseract, OpenCV is a user-friendly library. It is widely used a
 The reason for mentioning OpenCV is exactly for its vast variety of preprocessing options. There are many projects that incorporate the work of OpenCV and Tesseract to achieve the most accurate and, most importantly, user-friendly results. Although OpenCV is mostly used via its Python interface, it also has a C++ and Java interfaces which can connect with Tesseract either directly via its C++ API, or through a wrapper like PyTesseract.
 
  However, these programs have almost no value for developers (except for comparison studies), whose work is still either concentrated on improving and expanding the Tesseract engine, or based on Tesseract's robust library.
+ 
+ 
