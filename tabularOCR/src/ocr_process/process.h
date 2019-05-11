@@ -1,3 +1,4 @@
+#pragma once
 #include "utils.h"
 
 namespace tabular_ocr
@@ -20,20 +21,6 @@ namespace tabular_ocr
 			std::vector<boxed_string> symbols;
 			std::vector<boxed_string> columns;
 
-			/*
-			textline(const textline &) = delete;
-			textline & operator=(const textline&) = delete;
-			textline& operator=(textline&& other)
-			{
-				font = std::move(other.font);
-				word_ws = std::move(other.word_ws);
-				col_ws = std::move(other.col_ws);
-				symbols = std::move(other.symbols);
-				columns = std::move(other.columns);
-				box = other.box;
-				return *this;
-			}
-			*/
 			textline();
 
 			bool operator==(const textline & other) const
@@ -133,16 +120,18 @@ namespace tabular_ocr
 
 			};
 
-			// colors the border of the given box in the current image with the given rgb color
-			void set_border(const bbox & box, int r, int g, int b);
 			// the main function
 			void process_image();
 
+			// sets the borders of all cells in all tables of the image
+			void set_table_borders();
 			json to_json();
 		private:
 			std::unique_ptr<tesseract::TessBaseAPI> api;
 			std::string filename;
-			json json_form;
+
+			// colors the border of the given box in the current image with the given rgb color
+			void set_border(const bbox & box, int r, int g, int b);
 
 			// assigns each textline it's columns and whitespaces
 			void determine_columns();
@@ -199,7 +188,7 @@ namespace tabular_ocr
 			bool are_in_same_row(const textline & first, const textline & second, int whitespace);
 
 			// returns the vector of cells in a table defined by rows and columns
-			std::vector<cell> create_cells(std::vector<textline> & row, std::vector<boxed_string> & merged_cols);
+			std::vector<cell> create_cells(std::vector<textline> & row, std::vector<boxed_string> & merged_cols, size_t row_no);
 
 			// appends the source vector to the dest vector
 			void move_append(std::vector<cell>& dest, std::vector<cell>& source);
@@ -227,9 +216,6 @@ namespace tabular_ocr
 
 			// returns a whitespace between rows given lines in the same table
 			int get_row_whitespace(const std::vector<textline> lines);
-
-			// sets the borders of all cells in all tables of the image
-			void set_table_borders();
 
 			// sets borders to all the cells in the given table
 			void set_cell_borders(const table & table);

@@ -4,11 +4,12 @@
 using namespace tabular_ocr;
 
 int main(int argc, char* argv[]) {
-		
+
 	// create default configuration
 	config cfg;
 		
 	// read all filenames that should be processed and parse configuration arguments
+	
 	auto filenames = cfg.parse_args(argc, argv);
 		
 	std::experimental::filesystem::create_directory("results");
@@ -18,7 +19,7 @@ int main(int argc, char* argv[]) {
 		// if the file was a directory, create a subdirectory
 		if (name.second)
 			create_results_subdirectory(name.first);
-			
+
 		// initialize images from given input files
 		file_info file = create_file_from_name(name.first, name.second);
 
@@ -28,12 +29,21 @@ int main(int argc, char* argv[]) {
 
 		ocr::page page(file);
 		page.process_image();
-		
-		// saves the results and destroys the allocated structures
-		save_result(file.name, page.img_old);
 
-		std::cout << "File \"" + name.first +  "\" has been processed." << std::endl;
+		// saves the results given the output parameters
+
+		if (cfg.img_output)
+		{
+			page.set_table_borders();
+			save_img_result(file.name, page.img_old);
+		}
+		if (cfg.json_output)
+		{
+			json json_form = page.to_json();
+			save_json_result(file.name, json_form);
+		}
+
+		std::cout << "File \"" + name.first + "\" has been processed." << std::endl;
 	}
-
  	return 0;
 }

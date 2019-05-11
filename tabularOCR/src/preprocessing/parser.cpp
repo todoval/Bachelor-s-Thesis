@@ -10,6 +10,8 @@ using namespace tabular_ocr;
 		bin_method = binarization_method::NONE_B;
 		en_method = enhancement_method::NONE_E;
 		deskew = false;
+		img_output = false;
+		json_output = false;
 		gs_method = greyscale_method::NONE_G;
 	}
 
@@ -49,6 +51,16 @@ using namespace tabular_ocr;
 					// set preprocessing parameters to "ideal"
 					//gs_method = greyscale_method::MAX;
 					en_method = enhancement_method::SIMPLE;
+					continue;
+				}
+				else if (arg == "--output-json")
+				{
+					json_output = true;
+					continue;
+				}
+				else if (arg == "--output-image")
+				{
+					img_output = true;
 					continue;
 				}
 				else
@@ -109,12 +121,20 @@ using namespace tabular_ocr;
 			else
 				result[arg] = false;
 		}
+		// if no output is specified, output both files
+		if (!img_output && !json_output)
+		{
+			img_output = true;
+			json_output = true;
+		}
+
 		return result;
 	}
 
 	void tabular_ocr::handle_parsing_error()
 	{
 		std::cout << "Error" << std::endl;
+		exit(1);
 	}
 
 	std::string tabular_ocr::get_filename(const std::string & input_path)
@@ -139,11 +159,18 @@ using namespace tabular_ocr;
 		std::experimental::filesystem::create_directory("results/" + dir_name);
 	}
 
-	void tabular_ocr::save_result(const std::string & name, const image & img)
+	void tabular_ocr::save_img_result(const std::string & name, const image & img)
 	{
 		std::string out = "results/" + name + ".png";
 		char* path = &out[0u];
 		pixWrite(path, img.get(), IFF_PNG);
+	}
+
+	void tabular_ocr::save_json_result(const std::string & name, const json & json_form)
+	{
+		std::string out_name = "results/" + name + ".json";
+		std::ofstream outfile(out_name);
+		outfile << json_form.dump(3) << std::endl;
 	}
 
 	std::vector<std::string> tabular_ocr::get_filenames_from_dir(const std::string & directory)

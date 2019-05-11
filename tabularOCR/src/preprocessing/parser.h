@@ -17,6 +17,9 @@
 
 #endif // _WIN32
 
+#include <json.hpp>
+using json = nlohmann::json;
+
 namespace tabular_ocr
 {
 
@@ -54,15 +57,15 @@ namespace tabular_ocr
 	public:
 		config();
 
-		// scale parameters
-		int sc_dpi;
 		greyscale_method gs_method;
 		binarization_method bin_method;
 		enhancement_method en_method;
 		bool deskew;
 
-		std::map<std::string, bool> parse_args(int argc, char* argv[]);
+		bool json_output;
+		bool img_output;
 
+		std::map<std::string, bool> parse_args(int argc, char* argv[]);
 	};
 
 	// returns the file with initialized pix from the given name
@@ -83,5 +86,7 @@ namespace tabular_ocr
 	// creates subdirectory of the results directory
 	void create_results_subdirectory(const std::string & name);
 
-	void save_result(const std::string & name, const image & img);
+	void save_img_result(const std::string & name, const image & img);
+
+	void save_json_result(const std::string & name, const json & json_form);
 }

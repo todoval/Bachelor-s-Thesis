@@ -2,7 +2,6 @@
 
 using namespace tabular_ocr;
 using namespace tabular_ocr::ocr;
-
 page::page()
 {
 }
@@ -118,7 +117,9 @@ std::pair<int, int> page::get_whitespaces(std::vector<int> & all_spaces, double 
 
 	// sort spaces and start the algorithm
 	std::sort(all_spaces.begin(), all_spaces.end());
+
 	std::pair<int, int> result;
+
 
 	// iterate the all_spaces vector to get above the constant value
 	auto it = get_val_above_constant(all_spaces, constant);
@@ -346,11 +347,11 @@ std::vector<bbox> page::remove_string_from_pair(const std::vector<boxed_string> 
 
 bool page::is_word_empty(const std::string& word)
 {
-	for (auto c:word) //TODO: neni tohle obracene? vraci to true prave kdyz je ve slove ALESPON JEDNA mezera, 'empty' normalne znamena ze ve slove jsou JEN mezery.
+	for (auto c:word)
 	{
-		if (c == ' ') return true;
+		if (c != ' ') return false;
 	}
-	return false;
+	return true;
 }
 
 int page::get_row_whitespace(const std::vector<textline> lines)
@@ -394,6 +395,7 @@ void page::init_table(table & curr_table, std::vector<boxed_string> & merged_col
 			
 		// vector of textlines that represent one table merged by rows
 		std::vector<textline> curr_row = { curr_table.textlines[0] };
+		size_t row_no = 0;
 
 		// whitespace that determines whether cells are in the same row or not
 		int row_ws = get_row_whitespace(curr_table.textlines);
@@ -409,12 +411,13 @@ void page::init_table(table & curr_table, std::vector<boxed_string> & merged_col
 
 				// create cells
 
-				auto cells = create_cells(curr_row, merged_cols);
+				auto cells = create_cells(curr_row, merged_cols, row_no);
+				row_no++;
 				move_append(curr_table.cells, cells);
 				curr_row = { curr_table.textlines[i] };
 			}
 		}
-		auto cells = create_cells(curr_row, merged_cols);
+		auto cells = create_cells(curr_row, merged_cols, row_no);
 		move_append(curr_table.cells, cells);
 
 		curr_table.rows = curr_table.row_repres.size();
@@ -429,7 +432,7 @@ void page::init_table(table & curr_table, std::vector<boxed_string> & merged_col
 	curr_table.textlines.clear();
 }
 
-std::vector<cell> page::create_cells(std::vector<textline> & row, std::vector<boxed_string> & merged_cols)
+std::vector<cell> page::create_cells(std::vector<textline> & row, std::vector<boxed_string> & merged_cols, size_t row_no)
 {
 	std::vector<cell> result;
 	for (size_t j = 0; j < merged_cols.size(); j++)
@@ -443,8 +446,8 @@ std::vector<cell> page::create_cells(std::vector<textline> & row, std::vector<bo
 		}
 		curr_cell.box.h = get_merged_lines_height(row);
 		curr_cell.box.y = get_y_axis(row[0].symbols);
-		curr_cell.cols_no = 1;
-		curr_cell.rows_no = row.size();
+		curr_cell.cols_no = j;
+		curr_cell.rows_no = row_no;
 		for (auto line : row)
 			for (auto & col : line.columns)
 				if (overlap(col.box, curr_cell.box))
@@ -582,14 +585,11 @@ void page::init_api(image &img)
 {
 	if (api->Init(NULL, "eng", tesseract::OcrEngineMode::OEM_TESSERACT_ONLY))
 	{
-		//TODO: co takhle cerr << ?
-		fprintf(stderr, "Could not initialize tesseract.\n");
+		std::cerr << "Failed to initialize tesseract!" << std::endl;
 		exit(1);
 	}
 	api->SetPageSegMode(tesseract::PageSegMode::PSM_AUTO);
 	api->SetImage(img.get());
-	//api->SetVariable("textord_tabfind_find_tables", "true");
-	//api->SetVariable("textord_tablefind_recognize_tables", "true");
 //	api->SetVariable("user_defined_dpi", "72");
 	api->Recognize(0);
 }
@@ -618,7 +618,7 @@ void page::init_textlines()
 	// represents current textline as a box structure
 	bbox curr_line;
 	// represents the textline that will be added to the textline vector
-	textline line; //TODO: tohle je java: = textline();
+	textline line;
 
 	// initialize the textline vector that is a part of the page class
 	textlines.clear();
@@ -637,10 +637,8 @@ void page::init_textlines()
 			do
 			{
 				std::string sym;
-				{
-					std::unique_ptr<const char[]> word(ri->GetUTF8Text(level));
-					sym.assign(word.get());
-				}
+				std::unique_ptr<const char[]> word(ri->GetUTF8Text(level));
+				sym.assign(word.get());
 
 				// check whether the given word is not a false positive symbol
 				if (is_word_empty(sym)) continue;
@@ -648,11 +646,9 @@ void page::init_textlines()
 
 				// get the bbox of the recognized symbol
 				bbox sym_box;
-				{
-					int x1, y1, x2, y2;
-					ri->BoundingBox(level, &x1, &y1, &x2, &y2);
-					sym_box = bbox(x1, y1, x2 - x1, y2 - y1);
-				}
+				int x1, y1, x2, y2;
+				ri->BoundingBox(level, &x1, &y1, &x2, &y2);
+				sym_box = bbox(x1, y1, x2 - x1, y2 - y1);
 
 				if (is_symbol_in_textline(sym_box, curr_line))
 					line.symbols.push_back({sym_box, sym});
@@ -724,6 +720,16 @@ int page::get_merged_lines_height(const std::vector<textline>& lines)
 
 void page::process_image()
 {
+
+	int spp = pixGetSpp(img_old.get());
+	if (spp == 4)
+	{
+		auto rem_img = image(pixRemoveAlpha(img_old.get()));
+		pixSetSpp(rem_img.get(), 3);
+		img_old = image(pixCopy(nullptr, rem_img.get()));
+	}
+
+
 	// initializes the textlines vector - adds symbols and fonts to the existing textlines
 	init_textlines();
 
@@ -737,10 +743,6 @@ void page::process_image()
 	// merge columns into tables
 
 	create_tables_from_cols();
-
-	json_form = to_json();
-	std::cout << json_form.dump(3) << std::endl;
-	set_table_borders();
 
 	// end and clear api to avoid memory leaks
 	api->End();
