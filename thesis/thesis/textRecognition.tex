@@ -1,37 +1,35 @@
-\chapter{Text Recognition Algorithms}
+\chapter{Text recognition algorithms}
 
-The root of any complex OCR software is text recognition. It is based on transforming an input image into its segmented form, with segments containing information about individual characters and their positions. In this chapter, we will analyze the individual steps that this process requires, along with a few obstacles the text recognition algorithms come across. These contribute to a poor quality of the given image and greatly impact the overall results. This leads to the conclusion that the software should behave according to them and try to solve these problems.
+Text recognition forms the basis of any complex OCR software. Its task is to transform an input image into its segmented form, with segments containing information about individual characters and their positions.
 
-Firstly, we will therefore present the most common problems that lead to low image quality.
+We begin this chapter by presenting various aspects that impact the quality of the input image, which we have observed to affect the results of the text recognition algorithms. To reduce the effects of these aspects, we also focus on the related task of preprocessing the input image. After that, we analyze the individual steps of the text detection process and review the existing techniques used for this purpose.
+	
+\section{Common obstacles of successful text recognition}
 
-Secondly, we will demonstrate ways to solve them, which include image manipulation and the techniques of preprocessing. These try to minimize negative effects of poor quality images on text recognition algorithms.
+Even for human perception, the task of recognizing text in a complex document might become difficult due to various factors. Text recognition engines work similarly or, in specific cases trivial for human perception, even worse.
 
-Only once the preprocessing part is done can we move onto the actual recognition. This also consists of multiple steps. To detect characters or symbols in an image, we firstly need to segment the image into simpler parts that are easier to recognize. The individual techniques and types of segmentation, along with data representation are also thoroughly analyzed in this chapter. The last step of the algorithm discussed is actual character recognition from small segments and their transformation into a text format.
-
-In this chapter, we also present an overview of some of the most popular optical character recognition software, including Tesseract, that is used in our implementation.
-
-\section{Text Recognition Problems}
-
-\xxx{meno tejto sekcie ok?}
-
-Text recognition algorithms are most likely deemed to fail when the image presented is of low quality. This is because, similarly to the human eye, the software expects a significant difference between the characters and the background, expects parts of the images that represent the same character to look the same and is accustomed to working with aligned and properly straightened images.
-
-In their paper,~\citet{preprocessAll} describe the following major difficulties that complicate the text recognition process:
+Common difficulties faced by text recognition algorithms have been reviewed by~\citet{preprocessAll}. These can be categorized into following major classes:
 
 \begin{description}
-\item[Font face variability] Nowadays, a multitude of different fonts and styles is used in the documents. This includes different headers and footers, headings and body text, along with bold, italics and underlined characters, not to even mention differently colored fonts and even custom-made fonts. To hold the information about each and every one would be unsustainable for any OCR software, and, in case of custom-made fonts, even impossible, as there is currently no database of all existing fonts. Therefore, the OCR software needs to make assumptions and use heuristics to match its expectation of the character shape with the actual symbol it recognized.
-\item[Handwritten text] Handwritten text is usually perceived as a type of more complicated font. On contrary to typical machine fonts, the characters that are supposed to be the same do not always have to look that way. This is why the OCR software has to count on minor character mistakes. These depend on different factors, such as line height, length, character size and others. Furthermore, handwriting can sometimes be unrecognizable even by a human eye. This case often prompts the software to fail.
-\item[Scan quality] Poor scanning process or just poor initial image may cause suboptimal performance of the recognition algorithm. The image can be low-contrasted, not sharp enough, lines can be disrupted or pixelated (mostly in case of a low scan resolution), or it can contain a lot of noise. These problems are usually partly solved during the preprocessing part of OCR algorithm.
-\item[Skew problems] Images that are skewed also come under the part of preprocessing. As the result of a scan or even a photography is almost never an image with a perfectly aligned text as it was on the paper, this needs to fixed, so the actual algorithm can count on correctly aligned images.
-\item[Colors] As already mentioned before, OCR softwares work on the basis of distinguishing characters from the background. This leads to a simple observation --- the better the contrast of the image, the better the OCR results. Colored images generally have a lower contrast than when they are in black and white. Furthermore, there is no need for OCR software to keep the color information during the process, as it would only significantly complicate detection and increase time. Before passing to OCR, images therefore undergo binarization.
-\item[Glyph similarity] Even people sometimes make mistakes when distinguishing characters like S and 5, O and 0, or I and l. OCR software can often make the same mistake, especially when handling documents that use various numbers of fonts \xxx{toto je ok?}, decorative fonts, or even  handwritten text.
+
+\item[Font face variability] Text documents contain a lot of different fonts and styles, including different headings, body text, footer and header sizes along with bold, italics and underlined characters, differently colored fonts and even custom-made fonts. Furthermore, when it comes to handwritten text, each character is slightly different and the text contains a lot of inaccuracies. To hold the information about every possible font and style would therefore be impractical for any OCR software, and, in case of custom-made fonts or handwritten text, even impossible. Therefore, an OCR software needs to use heuristics to match the actual symbol it recognized to its expectation of the character shape. This does not always produce the desirable results. In specific cases, especially in decorative fonts or handwritten text, characters like S or 5, 0 or O and I or l are hard to distinguish even by human perception. This often results in the failure of text detection algorithm for these specific characters.
+
+\item[Scan quality] The optimal results of image acquisition techniques, like scanning, are high-contrast images with no inaccuracies. However, the scanning process often disrupts the input image, which results in low contrast, insufficient sharpness, pixelation, noise and disruption of lines. This is usually due to a low resolution scan or human made mistakes during scanning. We use the techniques of preprocessing to try and reconstruct this error prone image into a suitable input for text recognition engines.
+
+\item[Skew problems] Photographing or scanning an image often results in minor human made skew and rotation problems. However, most of the text recognition engines already assume the input to be properly vertically and horizontally aligned for the simplicity and time complexity of its algorithm. This deems the engines to fail on skewed images. Therefore, we attempt to deskew the input images during preprocessing with the use of deskewing techniques.
+
+\item[Colors] To distinguish characters from the image background, OCR engines use various techniques based on the color values of the individual pixels, their contrast, brightness\ldots When it comes to monochrome one images, to determine this division of image pixels is a simple task. With colored inputs, however, many complications arise. For example, recognition of green text on a red background fails when presented to a method based on contrast. This and improved time complexity of the algorithm is the reason why images often undergo the process of binarization. 
+
 \end{description}
 
-These and multiple other factors are also the reason why the majority of OCR software works with `assumptions' about documents --- that the document has only one column, is not handwritten, that its lines are horizontally aligned and so on. Also, this is why no OCR software can work perfectly and will always keep encountering documents that are unrecoverable. 
+These difficulties motivate the common OCR implementations to work with optimistic assumptions about documents, for example that the document has only one column, that it is not handwritten, that its lines are horizontally aligned\ldots
 
-However, there are many ways in which we can improve the results of the OCR. They either try to solve the already mentioned problems by processes like deskewing, image enhancement, denoising, or they simply increase the performance of OCR engines, like binarization. We will cover them thoroughly in the next section.
+Several image processing techniques are used to eliminate the effects of most of
+these obstacles. These techniques try to preserve as much document information as possible in quick and simple ways. Moreover, they attempt to increase the performance of OCR engines. We cover them thoroughly in the next preprocessing section.
 
-\section{Preprocessing}
+Only once these techniques are applied to the input image is it passed to the text recognition process. Therefore, ideally, the only obstacles left for text recognition process to solve are font-faced problems.
+
+\section{Preprocessing for OCR}
 
 Many of the existing OCR engines already come with some kind of built-in preprocessing filter. Their problem is that they most likely do not match the exact image case and are usually very simple.
 
@@ -41,15 +39,15 @@ In this section, we will discuss the most important image transformations that w
 
 \subsection{Scaling}
 
-OCR usually benefits from a properly scaled image with good resolution. It contains more detailed information that can be used to interpret text, which leads to higher accuracy of the result. This can be specifically applied to the case of resolution and bit-depth.
+Most common methods of character recognition demand a large set of training data. Classification of newly recognized characters is then performed by comparing them to this training data.
 
-Many popular OCR engines (e.g. Tesseract~\cite{TesseractQual}, ABBYY FineReader~\cite{ABBYYdpi}) encourage their users to use 300 dpi images. Their reason for that is pretty simple --- it is the point where they gain the most accuracy without sacrificing speed and file size~\cite{preprocessAll}. Another reason for the use of 300 dpi is the fact that most OCR engines are trained to this resolution. Some engines (like the already mentioned ABBYY FineReader~\cite{ABBYYdpi}), no matter what resolution you give them will actually sample up or down to get to 300 dpi. 
+Many popular OCR engines (e.g. Tesseract~\cite{TesseractQual}, ABBYY FineReader~\cite{ABBYYdpi}) encourage their users to use 300 dpi images. Their reason for that is pretty simple --- most of their training data were obtained from 300 dpi images, as this resolution was high enough for a clear recognition of character features, but also low enough to maintain a reasonable execution time of the algorithm. Therefore, the resolution of 300 dpi is where their recognition obtains the most accuracy~\cite{preprocessAll}. 
 
 Obtaining a 300 dpi scan using currently available hardware is simple enough. However, if the user has already provided us with an image of a different resolution, our next step is to either upscale (if the dpi of the input image was lower) or downscale (if the dpi of the input image was higher) the image. In both cases, a technique called \emph{interpolation} is used. 
 
 Interpolation works by using known data to estimate values at unknown points. It specifically approximates the resulting pixel's color and intensity based on the values at surrounding pixels. When downscaling, this technique therefore computes one color value for each set of pixels, which are the color values of the pixels in the new image. When upscaling, it computes color values of the new pixels by approximating the values of the old pixels around them.
 
-This technique tries to minimize the aliasing effect of the resulting image --- so the scaled picture does not appear visibly pixelated and it's edges are not jagged.
+This technique tries to minimize the aliasing effect of the resulting image --- so the scaled picture does not appear visibly pixelated and its edges are not jagged.
 
 Interpolation algorithms can be grouped into two categories: \emph{adaptive} and \emph{non-adaptive}.
 
@@ -61,7 +59,7 @@ Interpolation algorithms can be grouped into two categories: \emph{adaptive} and
 \centering
 {\sffamily
 \begin{tabular}{cc}
-Original & Nearest-neighbor Interpolation\
+Original & Nearest-neighbor Interpolation\\
  & (1 pixel) \\
 \includegraphics[width=.4\linewidth]{img/preprocessing/interp_orig.png}
 &
@@ -75,7 +73,6 @@ Bilinear Interpolation & Bicubic Interpolation \\
 \end{tabular}
 }
 \caption{Non-adaptive methods of Interpolation}
-\xxx{ten 1 pixel chcem mat pod nearest-neighbor}
 \label{fig:preprocessInterpolation}
 \end{figure}
 
@@ -97,7 +94,7 @@ Many binarization algorithms work under the assumption that the input image is a
 
 Another way to approach grayscale conversion is to represent the color based on its HSL values and convert it to its least saturated variant.
 
-As decribed by~\citet{grayscaleCadik}, these exist many more algorithms approaching this problem. Most of them require more complicated computations and try to preserve attributes of the image that may be lost during the process --- like contrast or luminance.
+As described by~\citet{grayscaleCadik}, these exist many more algorithms approaching this problem. Most of them require more complicated computations and try to preserve attributes of the image that may be lost during the process --- like contrast or luminance.
 
 \begin{figure}[t]
 \centering
@@ -290,13 +287,13 @@ For OCR engines, processing noise can be quite tricky. Its presence is especiall
 \midrule
 Salt and Pepper \par (\emph{impulse noise})
 &
-Randomly occuring black and white pixels caused by sharp and sudden
+Randomly occurring black and white pixels caused by sharp and sudden
 disturbances in image signal present in old photographs.
 &
 \includegraphics[width=0.3\textwidth, align=t]{img/preprocessing/noise_saltpepper.png} \\
 Statistical noise 
 &
-Unexplained variability whithin an image, usually characterized by a probability density function, e.g.~\emph{Gaussian noise}, \emph{Shot noise}, \emph{Quantization noise} or film grain.
+Unexplained variability within an image, usually characterized by a probability density function, e.g.~\emph{Gaussian noise}, \emph{Shot noise}, \emph{Quantization noise} or film grain.
 &
 \includegraphics[width=0.3\textwidth, align=t]{img/preprocessing/noise_gaussian.jpg}\\
 Other
@@ -311,16 +308,15 @@ E.g.~\emph{anisotropic} or \emph{periodic} noise, often found in old photographs
 \label{tab:preprocessNoiseTypes}
 \end{table}
 
-When performing noise reduction, common image processing filters are used~\citep{denoisingTechniques}. These can be categorized as either \emph{linear} or \emph{non-linear}, depending on their linearity relationships.
+When performing noise reduction, common image processing filters are used~\citep{denoisingTechniques}. These can be categorized as either linear or non-linear, depending on their linearity relationships.
 
-Linear filtering, such as \emph{mean filtering}, \emph{Gaussian filtering} or \emph{Wiener filtering}, is a filtering in which the value of an output pixel is a linear combination of the values of the pixels in the input pixel's neighborhood. When used for noise reduction, they work on averaging the color values of neighbour pixels, so they can help assure an averaged view of the contrast along regions of different color. This, however, rather than correcting the color of the affected pixel, results in creating an area with an average (and incorrect) color. This blurs the edges and smooths out other fine details. They are still widely used, though, as they require only a small amount of computations, which leads to increased speed and easy and simple implementations.
+\emph{Linear filtering}, such as \emph{mean filtering}, \emph{Gaussian filtering} or \emph{Wiener filtering}, is a filtering in which the value of an output pixel is a linear combination of the values of the pixels in the input pixel's neighborhood. When used for noise reduction, it works on averaging the color values of neighbour pixels, so it can help assure an averaged view of the contrast along regions of different color. This, however, rather than correcting the color of the affected pixel, results in creating an area with an average (and incorrect) color. This blurs the edges and smooths out other fine details. These filters are still widely used, though, as they require only a small amount of computations, which leads to increased speed and easy and simple implementations.
 
-Non-linear filtering, on the other hand, renders an output which is not a linear function of its input. In noise reduction, one of the most popular filter in this category is a \emph{median filter}. It works similarly to a mean filter, but for each pixel, instead of replacing its value with a mean of surrounding pixels, it calculates the median. In comparison to linear filters, it provides considerably sharper images and in most cases preserves the edges. The downside is the increased run time, and with high level of noise, results are almost the same as with linear filters. However, it is highly effective on salt and pepper noise.
+\emph{Non-linear filtering}, on the other hand, renders an output which is not a linear function of its input. They include filters like \emph{median filter} or \emph{non-local means method}~\citep{nonLocalMeans}, which are used for denoising purposes. They differ in the way the value of the current pixel is computed. Non-local means method is based on taking a mean value of all pixels of the image, weighted by how similar these pixels are to the target pixel. Median filter, on the other hand, calculates the local median of then surrounding pixels, whose value is then assigned to the current pixel. Both methods produce sharper and clearer images than linear filters at the expense of increased run time.
 
-\item Worth mentioning is also \textbf{non-local means method} \citep{nonLocalMeans}. It is based on taking a mean value of all pixels of the image, weighted by how similar these pixels are to the target pixel. This technique produces an even sharper and clearer image results as mentioned filters. However, it comes with the expense of additional increased speed.
+We provide a comparison of the above mentioned techniques in~\cref{fig:preprocessDenoising}.
 
-
-\begin{figure}
+\begin{figure}[t]
 \centering
 {\sffamily
 \begin{tabular}{cc}
@@ -335,19 +331,13 @@ Median filter & Non-local means method \\
 \includegraphics[width=.4\linewidth]{img/preprocessing/denoise_nonlocal.png}
 \end{tabular}
 }
-\caption{Comparison of denoising techniques.}
-\label{fig:denoising}
+\caption{Comparison of denoising techniques}
+\label{fig:preprocessDenoising}
 \end{figure}
 
-What combination of techniques to use for the optimal results greatly depends on the input image --- if there is little to no noise, de-noising an image can cause more harm than good. Therefore, it is always important to approximately compute the signal:noise ratio before applying any kind of filters.
+What combination of techniques to use for the optimal results greatly depends on the input image --- if there is little to no noise, denoising an image can cause more harm than good. Therefore, it is always important to approximately compute the signal:noise ratio before applying any kind of filters.
 
-\xxx{Je toto dalej vobec potrebne? Mozno by som napisala len nieco ako ze toto zratat je fakt tazke, niektore komplikovane metody na to existuju (citacia), no casto maju blbe vysledky, preto to OCR engines nepouzivaju a promptuju uzivatela to radsej spravit sam}
-
-To calculate this properly is a more complex task than thought. Although simple algorithms have already existed for a few years, they return poor results and most of them are almost not worth using because of the time complexity. They are mostly based on comparison - testing the difference between each pixel and its neighbors for various threshold numbers based on the dynamic range and calculating deviation, picking "windows" of different sizes and calculating their means and deviation, based on which we decide whether the center pixel is corrupted or not and so on\ldots
-
-For a more complex (and sufficient) solution, we have to run many more mathematical calculations on the input image \citep{noiseDetection}. These calculations require a lot of knowledge in the field of probability and statistics, specifically probability distribution. The basic idea for these noise recognition algorithms is \emph{separating frequencies}. This is usually done by dividing the image into blocks and running a transformation (for example a \emph{discrete cosine transformation}) on each of the blocks. The frequency components are then grouped by increasing frequency. Then, the extraction of statistical features (such as kurtosis, mean, standard deviation) is performed.
-
-Noise is most likely to be found on higher frequencies and we use this observation along with our computed statistical features to determine the thresholding on higher frequencies. If the threshold of the input image is greater, the image is determined to be noise-free. 
+Determining the presence of noise is a complex task. Although simple heuristic algorithms (based on finding differences between adjacent pixels) have been tested for these purposes, they rendered poor results and had a visibly high execution time. Therefore, more complex solutions requiring knowledge in the field of probability and statistics, specifically probability distribution, have been tested~\citep{noiseDetection}. These are based on the idea of separating frequencies, and render quite satisfactory results. However, as these methods might still fail at specific images, the user is advised to determine the presence of noise manually.
 
 \subsection{Scanning border reduction}
 
@@ -374,21 +364,30 @@ Another approach is the one mentioned by \citet{marginalNoiseEdge}. It is based 
 
 \section{Text detection process}
 
-Nowadays, two approaches are proposed for text detection in OCR. The first one is an approach based on heuristics --- page segmentation, line and element detection and only after that, character detection, which is based on different approximations and sometimes naive algorithms. The second one is an approach that is widely used and researched today --- and that is the use of neural networks.
+There exist two main approaches for text detection in OCR. The first one is an approach based on heuristics. It includes techniques of page segmentation, line and element detection and character detection, which are based on different approximations and sometimes naive algorithms. The second one is an approach that is widely used and researched today --- and that is the use of neural networks.
 
-In this paper, we will be concentrating on the heuristics approach of the OCR problem, as we use it in our implementation. However, neural network recognition is nowadays an approach returning \xxx{?? spravne?} promising results and also deserves a mention.
+In this paper, we will be concentrating on the heuristics approach of the OCR problem, as we use it in our implementation. However, neural network recognition is a promising field of study and also deserves a mention.
 
-A lot of OCR engines differ in the way their heuristic approaches work. They all agree on one thing, though, and that is the succession of steps that need to be implemented. Firstly, a \emph{page segmentation} has to be performed. This divides the given page into multiple segments that are easier to process when determining the elements of the image. Now, the recognition algorithm could simply take place. However, most of the existing OCR engines (like Tesseract) "pre-process" the output of page segmentation. They use steps like \emph{representation} and \emph{feature extraction}, which are based on simplifying the extracted elements of image documents. This contributes to better results of the OCR, and, last but not least, helps to improve the speed of the algorithm.
+Although OCR engines greatly differ in the way their heuristic approaches work, they all contain the following steps:
+\begin{enumerate}
+    \item \emph{Page segmentation} --- logical and topological division of the page into multiple smaller segments
+    \item \emph{Representation and feature extraction} --- simplification of the extracted elements of the image for improvement of the OCR accuracy and execution time
+    \item \emph{Character classification}
+\end{enumerate}
 
-Only after this, the character recognition algorithm is applied.
+We analyze these steps in the following individual subsections.
 
-We will analyze these steps in the following individual subsections.
+\subsection{Page segmentation}
 
-\subsection{Page Segmentation}
+The idea behind the page segmentation process is to obtain page blocks that contain individual characters. This, however, is not always possible due to the errors that occur during this process, which result in either merging or splitting the characters. Therefore, in OCR engines, page segmentation process usually means any kind of logical or topological division of the image into multiple smaller blocks --- which can be either characters, lines or even paragraphs.
 
-In many cases, OCR system heavily depends on the accuracy of page segmentation process \citep{pageSegmentation}. There are three main approaches \citep{segmentationBenchmark} to this problem --- either we start with an image as a whole and recursively divide it into parts until criterion is met, or we start with individual pixels and group them according to similarity of their attributes, or we use a combination of these two methods. Based on these methods, there exist a few concrete algorithms widely used for heuristic page segmentation.
+Page segmentation can be performed in three different ways~\citep{segmentationBenchmark} --- either we start with an image as a whole and recursively divide it into parts until certain criterion is met (top-down), or we start with individual pixels and group them according to similarity of their attributes (bottom-up), or we use a combination of these two methods.
 
-\subsubsection{Page Segmentation Techniques}
+\subsubsection{Page segmentation techniques}
+
+In this section, we present a few concrete algorithms widely used for heuristic page segmentation.
+
+\xxx{co ta tabulka?}
 
 \xxx{TO DO - chcem dat captions tym fboxom, netusim vobec ako}
 
@@ -474,7 +473,7 @@ based on fonts and styles of the characters
 
 divides connected components into a dominant font group and a group with characters from titles or sections heading
 
-performs a near-neighor clustering of components in each group
+performs a near-neighbor clustering of components in each group
 
 determines the skew of the image and text-lines, upon which merges within-line nearest neighbor pairs into text-lines and blocks
 
@@ -523,170 +522,281 @@ nearly parameter free
 \raisebox{-\height}{\includegraphics[width=0.3\textwidth,
 height=60mm]{img/textDetection/segm_textline.png}}}\\
 \bottomrule
-\caption{Page Segmentation Algorithms}
-\label{tab:page_seg_algorithms}
+\caption{Page segmentation algorithms}
+\label{tab:segmentationOverview}
 \end{longtable}
 
-\subsubsection{Tesseract page segmentation}
+\subsubsection{Tesseract page segmentation} \label{sectionTessPageSegm}
 
-Another slightly different segmentation technique was proposed by \citet{tesseractSegmentationTab}. This method is based on detecting so-called \emph{tab-stops}.
+Another slightly different segmentation technique was proposed by~\citet{tesseractSegmentationTab}. This method is based on detecting so-called \emph{tab-stops}.
 
-\emph{Tab-stops} are used in word processors to enable correct and eye pleasing alignment of text, and are present in the document as margins, column edges, indentations. All of them are placed at fixed x-positions at which edges or centers of text lines are vertically aligned. This process has multiple steps. Firstly, it preprocesses the document image for connected components. By grouping these connected components into vertical lines and examining their vertical alignment, tab-lines are then detected, which mark the text-lines with their beginning and end. Based on these tab-lines, connected components of the page layout analysis are then grouped into \emph{column partitions}, which do not cross any tab-lines and are of the same type. In the end, a few of the column partitions can be merged or divided into segmented blocks, based on different types of fonts or line spacing. 
+\emph{Tab-stops} are used in word processors to enable correct and eye pleasing alignment of text, and are present in the document as margins, column edges, indentations. All of them are placed at fixed x-positions at which edges or centers of text lines are vertically aligned.
 
-This method is implemented and used by the Tesseract engine, with the preprocessing help of the Leptonica library. It claims to yield satisfactory results, given the input document is properly preprocessed.
+The process of page segmentation by tab-stops has multiple steps. It begins by searching the document image for connected components. By grouping these connected components into vertical lines and examining their vertical alignment, tab-lines are then detected. Based on these tab-lines, connected components of the page layout analysis are then grouped into \emph{column partitions}, which do not cross any tab-lines and are of the same type. In the end, a few of the column partitions can be merged or divided into segmented blocks, based on different types of fonts or line spacing. 
 
-As our implementation uses the Tesseract engine for symbol recognition, this is also the method of page segmentation that it uses.
+This method is implemented and used by the Tesseract engine, with the preprocessing help of the Leptonica library. It claims to yield satisfactory results (presented in~\cref{fig:segmentationTesseract}, given the input document is properly preprocessed.
 
 \begin{figure}
     \noindent
-	\makebox[\textwidth]{\includegraphics[width=20em]
-	{../img/textDetection/segm_tabstop.pdf}}
-	\caption{Tesseract Engine Segmentation}
-	\label{fig:mff}
+	\makebox[\textwidth]{\includegraphics[width=20em]{img/textDetection/segm_tabstop.pdf}}
+	\caption{Tesseract engine segmentation}
+	\label{fig:segmentationTesseract}
 \end{figure}
 
 There exist many other segmentation methods that approach this problem differently. For example, with segmentation of scanned books that mostly have Manhattan layout, a simple deskewing and horizontal and vertical cuts should suffice. Also, algorithms focusing on recipe or ticket analysis already know what the approximate layout of the received image will be. They can therefore simplify these complicated algorithms for their purposes.
 
 \subsection{Representation and feature extraction}
 
-Upon extracting elements by page segmentation, we are left with an unnecessary amount of information. We could feed all of them into a recognizer. This would, however, decrease accuracy of recognition and significantly increase its time complexity. For these reasons, a set of features is extracted for each element that distinguishes it from other element classes while keeping characteristic differences. There exist various different features, generally divided into local features, which are usually geometric (like number of endpoints of each character, convex or concave parts, branches etc.), and global features, which are usually topological (connectivity, number of profiles, number of holes\ldots). The set of features that will represent each characters needs to be picked carefully, so that they define the shape of a character precisely a uniquely but are also the smallest set possible to prevent increased memory usage and time complexity.
+Upon extracting elements by page segmentation, we are left with an unnecessary amount of information. Trying to run a text recognition algorithm on all of it would be significantly time consuming. Additionally, as the character recognition is based on specific features for each symbol, the extra information might not suit the character features of the correct candidate. Therefore, the candidate gets undesirably discarded, which results in decreased accuracy.
 
-There exist three methods for performing feature extraction, described by both \citet{featureExtractionBook} and \citet{featureExtractiontext}. They differ in the ways the features are derived from the character, in reconstructability (whether the image can be reconstructed to its previous version solely from its features), in invariance to transformations and many more. We describe these methods in the following list:
+For these reasons, a set of features is extracted for each element that distinguishes it from other element classes while keeping characteristic differences. There exist various different features, generally divided into local features, which are usually geometric (like number of endpoints of each character, convex or concave parts, branches etc.), and global features, which are usually topological (connectivity, number of profiles, number of holes\ldots). The set of features that will represent each characters needs to be picked carefully, so that they define the shape of a character precisely a uniquely but are also the smallest set possible to prevent increased memory usage and time complexity.
+
+There exist three methods for performing feature extraction, described by both~\citet{featureExtractionBook} and~\citet{featureExtractiontext}. They differ in the ways the features are derived from the character, in reconstructability (whether the image can be reconstructed to its previous version solely from its features), in invariance to transformations and many more. We describe these methods in the following list:
 
 \begin{itemize}
 
-\item \textbf{Global transformation and series expansion} \todo{proc bold?} \xxx{nejak som chcela dat nadpis tomu itemu a toto vyzera ze to tak zvyraznuje, mam dat emph?}:
+\item \emph{Global transformation and series expansion}
 
-These include methods like Fourier or Gabor transform, Fourier Descriptor, Wavelets, Moments and Karhunen-Loeve expansion, and are based on the representation of continuous signals by a linear combination of simpler functions. The coefficients of the linear combination provide a compact encoding known as transformation or series expansion. Therefore, deformations like translation and rotations are invariant under global transformation and series expansion. However, the downside of this approach is the time complexity, as this method requires a number of non-trivial computations {\xxx{calculations?}}.
+These include methods like Fourier or Gabor transform, Fourier Descriptor, Wavelets, Moments and Karhunen-Loeve expansion, and are based on the representation of continuous signals by a linear combination of simpler functions. The coefficients of the linear combination provide a compact encoding known as transformation or series expansion. Therefore, deformations like translation and rotations are invariant under these methods. However, the downside of these approaches is the time complexity, as these methods require a number of non-trivial computations.
 
-\item \textbf{Statistical representation}
+\item \emph{Statistical representation}
 
-Unlike transforms, these features are based on the statistical distribution of points in the element. They provide high speed and low complexity and also take care of different font and style variations to some extend. Methods based on this representation are e.g. \emph{zoning} (where the frame containing the character is split into different zones, which are then analyzed for densities of points and strokes), \emph{crossings and distances} (crossing --- the number of crossings of the character along vertical and horizontal lines; distances --- the distances of character pixels from frame boundaries), and other like projections, characteristic loci etc. 
+Unlike transforms, these features are based on the statistical distribution of points in an element. They provide high speed and low complexity and also take care of different font and style variations to some extend. Methods based on this representation are e.g. \emph{zoning} (where the frame containing the character is split into different zones, which are then analyzed for densities of points and strokes), \emph{crossings and distances} (crossing --- the number of crossings of the character along vertical and horizontal lines; distances --- the distances of character pixels from frame boundaries), and other like projections, characteristic loci etc. We present a few of these techniques in~\cref{fig:featureExtractionStatistical}.
 
 The downside of this approach is the invariance to transforms --- if the character is only slightly skewed, the feature extraction results will greatly differ.
 
-\item \textbf{Geometrical and topological representation}
+\item \emph{Geometrical and topological representation}
 
-These features are based on the basic line type that form a character skeleton, extracting features of the character contour like extreme points, maxima, minima, cross points, line ends, isolated dots, different types of strokes and many more. These feature have high tolerances to distortions and style variations, and their output can be assigned into a feature extraction vector.
+These features are based on the geometrical and topological properties of the individual elements, like basic line types that form a character skeleton. They also include features of the character contour like extreme points, maxima, minima, cross points, line ends, isolated dots, different types of strokes and many more. We present a few of them in~\cref{fig:featureExtractionGeometrical}.
+
+They highly tolerate various distortions and style variations, and their output can be assigned into a feature extraction vector.
 
 \end{itemize}
+
+We present a few sample examples of feature extraction techniques in~\cref{fig:featureExtraction}.
 
 In conclusion, the goal of any representation and feature extraction technique is to create a "skeleton" for each character by selecting the most representative information from the raw data which maximizes the recognition rate with the least amount of elements. 
 
 \begin{figure}[t]
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.30\textwidth}
-\includegraphics[width=\linewidth,height=30mm]{img/textDetection/feature_zoning.png}
-\caption{Zoning} \label{fig:1b}
-\end{subfigure}
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.30\textwidth}
-\includegraphics[width=\linewidth,height=30mm]{img/textDetection/feature_crossing.png}
-\caption{Crossing and distances \citep{crossingAndDistances}} \label{fig:1c}
-\end{subfigure}
-\begin{subfigure}{0.30\textwidth}
-\includegraphics[width=\linewidth,height=30mm]{img/textDetection/features_geometrical.png}
-\caption{Example of a few geometrical and topological features \citep{geometricalFeatures}} \label{fig:1c}
-\end{subfigure}
-\caption{Examples of feature extraction techniques} \label{fig:1}
+\centering
+{\sffamily
+\begin{tabular}{cc}
+Zoning & Crossing and distances~\citep{crossingAndDistances}\\
+\includegraphics[height=6em]{img/textDetection/feature_zoning.png}
+&
+\includegraphics[height=6em]{img/textDetection/feature_crossing.png}
+\end{tabular}
+}
+\caption{Examples of feature extraction techniques}
+\label{fig:featureExtractionStatistical}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.8\linewidth]{img/textDetection/features_geometrical.png}
+\caption{Example of a few geometrical and topological features~\citep{geometricalFeatures}}
+\label{fig:featureExtractionGeometrical}
 \end{figure}
 
 
 \subsection{Character classification}
 \todo{Trosku problem je, ze na relativne jednoduchy metody pripravy textu spotrebujes 15 stranek a o hledani a klasifikaci pismen mas 1 sekci.}
 
-OCR engines widely use the methodologies of pattern recognition, which assign an unknown sample into one of its predefined classes. There exist various approaches dealing with these methods, which are not necessarily independent of each other. Most often than not, OCR engines combine multiple methods to achieve the most accurate results.
+OCR engines widely use the methodologies of pattern recognition, which assign an unknown sample into one of its predefined classes. These approaches are not necessarily independent of each other and OCR engines frequently combine subsets of them to achieve the most accurate results.
 
-One way to approach classification is by \emph{Template Matching} \citep{templateMatching}. It is based on the existence of predefined \emph{templates} --- multiple bitmaps containing characters of the alphabet. Improved version of this method have an extended database of templates, including numbers and special characters. Once a character is detected, it is passed to the algorithm and for every existing template, its similarity ratio is calculated. The template with the greatest ratio is then assumed to be the recognized character. This method has various implementation depending on how the ratio is calculated --- for example cross correlation, normalized correlation or euclidean formula can be used.
+One way to approach classification is by \emph{template matching}~\citep{templateMatching}. It is based on the existence of predefined \emph{templates} --- multiple bitmaps containing characters of the alphabet. Improved version of this method have an extended database of templates, including numbers and special characters. Once a character is detected, it is passed to the algorithm and for every existing template, its similarity ratio is calculated. The template with the greatest ratio is then assumed to be the recognized character. This method has various implementation depending on how the ratio is calculated --- for example, cross correlation, normalized correlation or euclidean formula can be used.
 
-Although the implementation of this method is very simple, even small disfigurements and noise can greatly affect its efficiency. Also, in this case, a feature extraction would be unnecessary as all templates are created manually.
+Although the implementation of this method is very simple, even small disfigurements and noise can greatly affect its efficiency. Also, in this case, a feature extraction would be unnecessary as all templates are created manually. We present this technique in~\cref{fig:characterClassTemplate}.
 
 \begin{figure}[t]
     \noindent
 	\makebox[\textwidth]{\includegraphics[width=30em]
 	{img/characterClassification/templates.png}}
-	\caption{Examples of template matching technique as described by \citet{Ning1993AnIO}}
-	\label{fig:mff}
+	\caption{Examples of template matching technique as described by~\citet{Ning1993AnIO}}
+	\label{fig:characterClassTemplate}
 \end{figure}
 
-Another approach is by using \emph{statistical techniques}~\citep{characterClassification} that also make use of the previous steps mentioned in this thesis. They are based on statistical modeling of the data. To determine the output, extraction of the features from input image (such as size, shape, intensity) is first performed. Then, with the help of statistical decision functions, these features are compared to the statistical model. The problem with these algorithms is that they have no information about whole-part relations. 
+Another approach is by using \emph{statistical techniques}~\citep{characterClassification}, like Bayes classifier, Hidden Markov Modeling or Nearest Neighbor. These techniques are based on feature extraction for each character. To classify an unknown character, its extracted features are compared to the features of training data with the help of statistical decision function. 
 
-\begin{figure}[H]
-\begin{subfigure}{0.30\textwidth}
+The problem with these algorithms is that they have no information about whole-part relations. We present the possible extracted features for these techniques in~\cref{fig:characterClassificationStatis}.
+
+\begin{figure}[t]
+\centering
+{\sffamily
+\begin{tabular}{ccc}
+Existence and number & Number of & Number of \\
+of end points & vertical lines & horizontal lines \\
 \includegraphics[height=10em]{img/characterClassification/statis_endPoint.jpg}
-\caption{Existence and number of end points} \label{fig:1b}
-\end{subfigure}
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.30\textwidth}
+&
 \includegraphics[height=10em]{img/characterClassification/statis_vertical.jpg}
-\caption{Number of vertical lines} \label{fig:1c}
-\end{subfigure}
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.30\textwidth}
-\includegraphics[height=10em]{img/characterClassification/statis_horizontal.jpg}
-\caption{Number of horizontal lines} \label{fig:1c}
-\end{subfigure}
-\caption{A few of the possible extracted features in statistical techniques \citep{vithlani2015structural}} \label{fig:1}
+&
+\includegraphics[height=10em]{img/characterClassification/statis_horizontal.jpg} \\
+\end{tabular}
+}
+\caption{A few of the possible extracted features in statistical techniques~\citep{vithlani2015structural}}
+\label{fig:characterClassificationStatis}
 \end{figure}
 
-For this reason, a newer approach has been tested out over the past few years - \emph{machine learning} \citep{characterClassification}.
+For this reason, a newer approach has been tested out over the past few years --- \emph{machine learning}~\citep{characterClassification}.
 
-\emph{Machine Learning} \citep{sebastiani2002machine} is a method of data analysis based on artificial intelligence. Over time, it builds models of "training data". Based on them, it makes decisions and predictions on its input. 
+\emph{Machine Learning}~\citep{sebastiani2002machine} is a method of data analysis based on artificial intelligence. Over time, it builds models of "training data". Based on them, it makes decisions and predictions on its input. 
 
-In the case of character classification, training data is created by passing various characters into the engine and also providing it with the correct output. In this way, the engine learns how different characters should look and applies this knowledge to its input.
+In the case of character classification, training data is created by passing various characters into the engine along with their correct output. In this way, the engine learns how different characters should look and applies this knowledge to its input.
 
-This method is for example used in a one of the simplest machine learning algorithms, and that is the \emph{KNN Classification Algorithm}, or K-Nearest Neighbor algorithm. The input image is compared to the training data and chooses its K nearest objects (objects that are the most similar). After that, the image is classified with being assigned to the class most common among its K nearest neighbors.
+This method is for example used in a one of the simplest machine learning algorithms, and that is the \emph{KNN classification algorithm} (or K-Nearest neighbor algorithm), which we present in~\cref{fig:characterClassKNN}. The input image is compared to the training data and chooses its K nearest objects (objects that are the most similar). After that, the image is classified with being assigned to the class most common among its K nearest neighbors.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.7\linewidth]{img/characterClassification/knn.pdf}
-\caption{KNN algorithm: with k=3, the algorithm will assign the new element to class A; wth k=7 to class B } \label{fig:1a}
+\caption{KNN algorithm: with k=3, the algorithm will assign the new element to class A; with k=7 to class B } \label{fig:characterClassKNN}
 \end{figure}
 
-More complex methods include the \emph{Support Vector Machine algorithm} (SVM). This approach divides the data received into two classes --- training and testing data. The goal of SVM technique is to deliver a model that predicts the output of the test set.
+More complex methods include the \emph{Support Vector Machine algorithm} (SVM). This approach divides its received data into two classes --- training and testing data. The goal of SVM technique is to deliver a model that predicts the output of the test set.
 
-The learning is done by a \emph{SVM kernel}. The kernel is, briefly speaking, a combination of mathematical function that takes two inputs and returns an information about how similar they are. Other than kernel functions, there are other parameters that tune the output of the SVM algorithm --- \emph{margin} parameter tells the engine the separation of line to the closest class points, \emph{gamma} parameter decides how far the influence of a single training example reaches and \emph{regularization} parameter controls the misclassification of elements.
+The learning is done by a \emph{SVM kernel}. The kernel is, briefly speaking, a combination of mathematical function that takes two inputs and returns an information about how similar they are. Other than kernel functions, there are other parameters that tune the output of the SVM algorithm, presented in~\cref{fig:characterClassSVM} --- \emph{margin} parameter tells the engine the separation of line to the closest class points, \emph{gamma} parameter decides how far the influence of a single training example reaches and \emph{regularization} parameter controls the misclassification of elements.
 
-\begin{figure}[H]
+\begin{figure}[t]
 \centering
 \includegraphics[width=0.7\linewidth]{img/characterClassification/svm.jpg}
-\caption{The process of determination of classes in SVM algorithm \citep{svmAlgorithm}} \label{fig:1a}
+\caption{The process of determination of classes in SVM algorithm~\citep{svmAlgorithm}}
+\label{fig:characterClassSVM}
 \end{figure}
 
-Many experiments have been executed in the field of machine learning for character classification. However, none of them can guarantee the accuracy of different approaches, as they all greatly depend on the training data. The more training data the machine can get, the more accurate it is. 
+Many experiments have been executed in the field of machine learning for character classification. However, none of them can guarantee the accuracy of different approaches, as they all greatly depend on the training data. The more training data is provided to the machine, the more accurate its recognition is. 
 
 \section{Available OCR software}
 
-Over the past few years, the demand for reliable OCR engines has risen, which lead to many new implementations and improvements of the already existing ones.
+OCR engines greatly differ not only in the accuracy of their recognition, but also in the features that they provide. Although OCR engines focusing only on text recognition exist, most of the modern software contains recognition of other document elements, like images, forms, tables and many more. Further differences include the presence of preprocessing options, support for various file extensions, recognition of different fonts, including handwritten documents, and many more. Furthermore, there exist OCR engines specialized in processing only specific types of images, such as automatic number plate recognition engines or ticket validation engines.
 
-In this section, we present the overview of the most popular OCR engines. We also 
+In~\cref{tab:availableSoftware}, we present the most popular and widely used free OCR engines. Commercial software used for the purposes of OCR, such as ABBYY FineReader, Readiris and OmniPage, also deserves a mention. However, although some of these engines produced overall better results than the free software, it is unusable for the purposes of this thesis.
 
-Most people take the expression "optical character recognition" to mean solely text recognition. This term, however, has a wider meaning - it also includes the recognition of other document elements, like images, forms, tables and many more.
+\begin{table}[t]
+{\small
+\begin{tabular}{p{4.6em}p{2em}p{3em}p{4.8em}p{7em}p{7em}}
+\toprule
+\textbf{Name} & \textbf{Year} & \textbf{Code} & \textbf{Languages} & \textbf{Features} & \textbf{Notes}\\
+\midrule
+Tesseract & 1985 & C++, C & 100+ & 
+layout analysis
 
-There exist few OCR engines that provide all the features an OCR software should have - such as different types of preprocessing, support for all file extensions, recognition of different fonts, including handwritten documents. This is not needed in most cases. For example, customers using OCR for ticket validation do not need to process handwriting or different fonts, and customers trying to achieve automatic number plate recognition do not need to process tables or forms or any other elements.
+detection of different elements
 
-For this purpose, a lot of OCR engines focusing entirely on one or more cases were implemented, as it is less complicated, time consuming and does the job. However, all of these existing OCR engines, no matter how difficult, have one thing in common - they all have to recognize text elements to some extent.
+right-to-left processing
 
-It this chapter, we will be concerned with the most popular and widely used OCR engines that focus (among other things) on word and character recognition. We will also discuss engines used for the preprocessing part of the algorithm.
+&
+
+both neural networks and heuristics
+
+command line interface
+
+\\
+Ocrad & 2003 & C++ & Latin alphabet &  
+layout analyser
+
+command line interface
+&
+can read only 3 different formats
+\\
+GOCR & 2000 & C & 20+ &
+
+translates barcodes
+
+command line interface
+
+&
+failure at heterogeneous fonts
+
+\\
+CuneiForm & 1996 & C, C++ & 28 & 
+
+used for scanned documents
+
+batch conversion
+
+& 
+results almost always need postprocessing
+
+\\
+OCRopus & 2007 & Python & Latin script & 
+
+engages neural networks
+
+can be improved by training
+
+\\
+
+\bottomrule
+\end{tabular}
+}
+\caption{Overview of available OCR software}
+\label{tab:availableSoftware}
+\end{table}
 
 \subsection{Tesseract}
 
-Originally developed by Hewlett-Packard Company around 1990 \citep{TesseractGIT}, Tesseract is one of the most robust and accurate open-source OCR engines. When it was firstly developed, Tesseract could only accept TIFF images containing simple one-column text in English language. Since then, it has undergone a lot of improvements and added many features. As of today, Tesseract supports multi-columned documents (via its page-layout analysis), claims to support over 100 languages (including right-to-left text such as Arabic or Hebrew), works on different input and output image formats (with the help of Leptonica \citep{LeptonicaLIB} library) and is available for Windows, Linux and even Mac OS. In its latest version (4.0.0), Tesseract also added a new neural network (specifically a LSTM network) focused on line recognition. 
+Originally developed by Hewlett-Packard Company around 1990~\citep{TesseractGIT}, Tesseract is one of the most robust and accurate open-source OCR engines. When it was firstly developed, Tesseract could only accept TIFF images containing simple one-column text in English language. Since then, it has undergone a lot of improvements and added many features. As of today, Tesseract supports multi-columned documents (via its page-layout analysis), claims to support over 100 languages (including right-to-left text such as Arabic or Hebrew), works on different input and output image formats (with the help of Leptonica~\citep{LeptonicaLIB} library) and is available for Windows, Linux and even Mac OS. In its latest version (4.0.0), Tesseract also added a new neural network (specifically a LSTM network) focused on line recognition. 
 
-Tesseract does not have a GUI and works as a command line program. It is used mostly for development purposes and provides an OCR engine (libtesseract) that gives developers a chance to create their own applications using tesseract API. Also, Tesseract contains no preprocessing algorithms. It advises users preprocess the input images themselves \citep{TesseractQual}.
+Tesseract does not have a GUI and works as a command line program. It is used mostly for development purposes and provides an OCR engine (libtesseract) that gives developers a chance to create their own applications using tesseract API. Also, Tesseract contains no preprocessing algorithms. It advises users preprocess the input images themselves~\citep{TesseractQual}.
 
 This is the reason why many wrappers and other 3rd party projects using Tesseract have been created. These projects mostly focus on creating GUIs for Tesseract or adding preprocessing algorithms to make the Tesseract engine more user-friendly. Although Tesseract is still in the process of development, it plans on doing no such thing and its future work consists mainly on focusing on LSTM networks.
 
-Tesseract is one of the few OCR open-source engines. That is why it is so widely used for development and research purposes. However, for quick, everyday and user-friendly purposes, this is not the choice to go with.
+Tesseract is one of the few OCR open-source engines. Based on our observation, it provides the most features and in general cases, provides the best accuracy of element recognition amongst all the other open-source OCR engines. Moreover, we found its documentation, information accessible about individual functions and even examples of use cases well-arranged and easy to understand.
 
-\subsection{OpenCV}
+This is the reason why we use the recognition and features of this engine in our implementation.
 
-OpenCV is an open source computer vision and machine learning software library. It claims to have more than 2500 optimized algorithms used for face detection and recognition, 3D object manipulation, photography editing (like red eye removal), tracking of moving objects or camera movements and other image processing functions \citep{OpenCV}.
+\subsubsection{Tesseract character recognition}
 
-On contrary to Tesseract, OpenCV is a user-friendly library. It is widely used as a framework for creating OCR applications and contains a lot of preprocessing functions. These can be then passed to the recognition algorithm, which makes the whole process of recognition easier and simpler. However, its main area of expertise is not OCR and definitely not document manipulation. For recognition, it mostly applies the \emph{template matching} technique. This technique is simple and easy to implement and works very well on ticket validation, credit card recognition or car plate recognition. Although these are all areas that OpenCV is widely used for with great success rate, the outputs from text document OCRs are poor [ref? to find]. It does not even have a library specialized for OCR.
+In this section, we present an overview of the way Tesseract (and therefore, we) detects various lines containing text (\emph{textlines}) and symbols. Thoroughly analyzed by~\citet{smith2007overview}, this algorithm has the following steps:
 
-The reason for mentioning OpenCV is exactly for its vast variety of preprocessing options. There are many projects that incorporate the work of OpenCV and Tesseract to achieve the most accurate and, most importantly, user-friendly results. Although OpenCV is mostly used via its Python interface, it also has a C++ and Java interfaces which can connect with Tesseract either directly via its C++ API, or through a wrapper like PyTesseract.
+\begin{enumerate}
+    \item \emph{Page layout analysis}
+    
+    Already discussed in~\cref{sectionTessPageSegm}, page layout analysis is the first and one of the most crucial steps in an OCR algorithm. Line detection relies on this step to provide meaningful text regions.
+    
+    \item \emph{Line finding}
+     
+     Upon obtaining text regions, heuristics like height filter and median filter are used to estimate the height of characters and remove noise, punctuation and other obstacles. The filtered so-called \emph{blobs} are then merged into lines by their y-coordinate and position.
+     
+     The problem that occurs in this step is the sloping of the blobs when the lines are skewed. Tesseract tries to solve it by sorting the blobs by their x-axis --- therefore, firstly unique lines will be created, and then other blobs will be added to these lines while tracking the slope across the page.
+     
+     Once the blobs are assigned to lines, they are merged based on heuristic criterion.
+     
+     \item \emph{Baseline fitting}
+    
+    The next step is to find a baseline for each line, as shown in~\cref{fig:textRecTesseractBaseline}. These baselines are fitted using a quadratic spline, as curved baselines can also be present.
+    
+    \item \emph{Character chopping}
+    
+    Upon determining lines, Tesseract tries to chop the existing words into characters. This is done pretty easily when handling fixed-pitch text --- Tesseract simply chops the word into individual characters by the determined pitch. Complications arise with the presence of non-fixed-pitch text~\cref{fig:textRecTesseractSpacing}. In this case, Tesseract tries to determine the size of a character by measuring the gaps between baseline and the upper boundary of the characters. In case it is unsure of its decision, then the final decision can be made after word recognition.
+    
+    \item \emph{Word recognition}
+    
+    This step is applied only to non-fixed-pitch text, as the fixed-pitch is already properly segmented into words. As the results from the previous step might have been unsatisfactory with a few missing chops, this step proceeds to further chop blobs according to various heuristics. Firstly, candidate chop points are found from concave vertices of a polygonal approximation of the outline. Based on heuristics, a few of these candidate chops are then performed, with the number of them being higher than the actual chops needed. Therefore, broken characters (characters that have been chopped more times than they should have) are repaired by an \emph{associator} that already has knowledge of existing characters. It uses this knowledge to find the best-first combination of chopped blobs to merge into candidate characters.
+    
+    \item \emph{Character classification}
+    
+    The last thing on the list is the actual character classification. Earliest versions of Tesseract used a static character classifier based on topological features. However, this approach was not robust to damaged characters in real-life images. This was solved by extracting multiple small features of fixed length from the unknown and merging them to match more robust features of a character, as presented in~\cref{fig:textRecTesseractChars}.
+    
+    Classification itself is then performed by matching the characters to a training data set and outputting the character that has the greatest number of similar features (where the \emph{greatest number} computation is based on heuristics).
+    
+\end{enumerate}
 
- However, these programs have almost no value for developers (except for comparison studies), whose work is still either concentrated on improving and expanding the Tesseract engine, or based on Tesseract's robust library.
- 
- 
+\begin{figure}[t]
+\minipage{\textwidth}
+    \centering
+    \includegraphics[width=0.7\linewidth]{img/textDetection/tesseractBaseline.png}
+    \caption{An example of a fitted baseline(dark blue) along with helper lines used for baseline fitting and later, character chopping~\citep{smith2007overview}}
+    \label{fig:textRecTesseractBaseline}
+\endminipage\hfill
+\minipage{0.45\textwidth}
+    \includegraphics[width=\linewidth]{img/textDetection/tesseractSpacing.png}
+    \caption{Non-fixed pitch text spacing issues~\citep{smith2007overview}}
+    \label{fig:textRecTesseractSpacing}
+\endminipage\hfill
+\minipage{0.45\textwidth}
+    \includegraphics[width=\linewidth]{img/textDetection/tesseractCharacters.png}
+    \caption{Left: original letter h; middle: broken character; right: merging of multiple smaller features~\citep{smith2007overview}}
+    \label{fig:textRecTesseractChars}
+\endminipage
+\label{fig:textRecTesseract}
+\end{figure}

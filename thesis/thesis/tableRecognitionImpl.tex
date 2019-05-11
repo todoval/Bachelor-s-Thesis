@@ -30,44 +30,6 @@ The actual table recognition is executed in a \emph{process} file along with a \
 
 This is also the place where the already mentioned Tesseract engine is integrated and called. In our algorithm, as well as the Tesseract table detection algorithm, we use the already implemented Tesseract line and symbol detection. Therefore, our algorithm relies greatly on the functioning of the Tesseract engine. 
 
-\subsubsection{Tesseract Symbol Detection}
-
-\xxx{Na chvilu odbocime od temy? ako to poviem? alebo kam to dat?}
-We will (odbocime od temy) in this section and present and overview of the way Tesseract (and therefore, we) detects various textlines and symbols. Thoroughly analyzed by \citet{smith2007overview}, this algorithm has the following steps:
-
-\begin{enumerate}
-    \item \emph{Page layout analysis}
-    
-    Already discussed in \xxx{taggnut sekciu}, page layout analysis is the first and one of the most crucial steps to an OCR algorithm. Line detection relies on this step to provide meaningful text regions.
-    
-    \item \emph{Line Finding}
-     
-     Upon obtaining text regions, heuristics like height filter and median filter are used to estimate the height of characters and remove noise, punctuation and other \xxx{problems??}. The filtered so-called \emph{blobs} are then merged into lines by their y-coordinate and position.
-     
-     The problem that occurs in this step is the sloping of the blobs when the lines are skewed. Tesseract tries to solve it by sorting the blobs by their x-axis --- therefore, firstly unique lines will be created, and then other blobs will be added to these lines while tracking the slope across the page.
-     
-     Once the blobs are assigned to lines, they are merged based on heuristic criterion.
-     
-     \item \emph{Baseline Fitting}
-    
-    The next step is to find a baseline for each line. These baselines are fitted using a quadratic spline, as curved baselines can also be present.
-    
-    \item \emph{Character chopping}
-    
-    Upon determining lines, Tesseract tries to chop the existing words into characters. This is done pretty easily when handling fixed-pitch text --- Tesseract simply chops the word into individual characters by the determined pitch. With non-fixed-pitch text, Tesseract tries to determine the size of a character by measuring the gaps between baseline and the upper boundary of the characters. In case it is unsure of its decision, then the final decision can be made after word recognition.
-    
-    \item \emph{Word recognition}
-    
-    This step is applied only to non-fixed-pitch text, as the fixed-pitch is already properly segmented into words. As the results from the previous step might have been unsatisfactory with a few missing chops, this step proceeds to further chop blobs according to various heuristics. Firstly, candidate chop points are found from concave vertices of a polygonal approximation of the outline. Based on heuristics, a few of these candidate chops are then performed, with the number of them being higher than the actual chops needed. Therefore, broken characters (characters that have been chopped more times than they should have) are repaired by an \emph{associator} that already has knowledge of existing characters. It uses this knowledge to find the best-first combination of chopped blobs to merge into candidate characters.
-    
-    \item \emph{Character classification}
-    
-    The last thing on the list is the actual character classification. The earliest versions of Tesseract used a static character classifier based on topological features. However, this approach was not robust to damaged characters in real-life images. This was solved by extracting multiple small features of fixed length from the unknown and merging them to match more robust features of a character.
-    
-    Classification itself is then performed by matching the characters to a training data set and outputting the character that has the greatest number of similar features (where the \emph{greatest number} computation is based on heuristics).
-    
-\end{enumerate}
-
 
 \subsubsection{Algorithm implementation}
 
