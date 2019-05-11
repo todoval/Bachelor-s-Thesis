@@ -16,7 +16,7 @@ In this chapter, we also present an overview of some of the most popular optical
 
 Text recognition algorithms are most likely deemed to fail when the image presented is of low quality. This is because, similarly to the human eye, the software expects a significant difference between the characters and the background, expects parts of the images that represent the same character to look the same and is accustomed to working with aligned and properly straightened images.
 
-In their paper, \citet{preprocessAll} describe the following major difficulties that complicate the text recognition process:
+In their paper,~\citet{preprocessAll} describe the following major difficulties that complicate the text recognition process:
 
 \begin{description}
 \item[Font face variability] Nowadays, a multitude of different fonts and styles is used in the documents. This includes different headers and footers, headings and body text, along with bold, italics and underlined characters, not to even mention differently colored fonts and even custom-made fonts. To hold the information about each and every one would be unsustainable for any OCR software, and, in case of custom-made fonts, even impossible, as there is currently no database of all existing fonts. Therefore, the OCR software needs to make assumptions and use heuristics to match its expectation of the character shape with the actual symbol it recognized.
@@ -37,69 +37,55 @@ Many of the existing OCR engines already come with some kind of built-in preproc
 
 This is why the best practice is to firstly preprocess the image and then pass the result to the OCR algorithm.
 
-In this section, we will discuss the most important image transformation that we can perform to improve the results of the OCR. 
+In this section, we will discuss the most important image transformations that we can perform to improve the results of the OCR. 
 
 \subsection{Scaling}
 
 OCR usually benefits from a properly scaled image with good resolution. It contains more detailed information that can be used to interpret text, which leads to higher accuracy of the result. This can be specifically applied to the case of resolution and bit-depth.
 
-Many popular OCR engines (e.g. Tesseract \citep{TesseractQual}, ABBYY FineReader \citep{ABBYYdpi}) encourage their users to use 300dpi images. Their reason for that is pretty simple --- it is the point where they gain the most accuracy without sacrificing speed and file size \citep{preprocessAll}. Another reason for the use of 300dpi is the fact that most OCR engines are trained to this resolution. Some engines (like the already mentioned ABBYY FineReader \citep{ABBYYdpi}), no matter what resolution you give them will actually sample up or down to get to 300dpi. 
+Many popular OCR engines (e.g. Tesseract~\cite{TesseractQual}, ABBYY FineReader~\cite{ABBYYdpi}) encourage their users to use 300 dpi images. Their reason for that is pretty simple --- it is the point where they gain the most accuracy without sacrificing speed and file size~\cite{preprocessAll}. Another reason for the use of 300 dpi is the fact that most OCR engines are trained to this resolution. Some engines (like the already mentioned ABBYY FineReader~\cite{ABBYYdpi}), no matter what resolution you give them will actually sample up or down to get to 300 dpi. 
 
-Obtaining a 300dpi scan using currently available hardware is simple enough. If the user has already provided us with an image of a different resolution, our next steps depend on what the resolution is.
+Obtaining a 300 dpi scan using currently available hardware is simple enough. However, if the user has already provided us with an image of a different resolution, our next step is to either upscale (if the dpi of the input image was lower) or downscale (if the dpi of the input image was higher) the image. In both cases, a technique called \emph{interpolation} is used. 
 
-\subsubsection{Upscaling}
+Interpolation works by using known data to estimate values at unknown points. It specifically approximates the resulting pixel's color and intensity based on the values at surrounding pixels. When downscaling, this technique therefore computes one color value for each set of pixels, which are the color values of the pixels in the new image. When upscaling, it computes color values of the new pixels by approximating the values of the old pixels around them.
 
-Simply scaling the image would leave the result pixelated, blurred and not sharp enough. The most affected parts would be the diagonal edges of elements. They would appear jagged (\emph{aliased}), which gives the image overall a poor quality. To minimize this unwanted effect, a technique called \emph{interpolation} is used.
-
-Interpolation works by using known data to estimate values at unknown points. It specifically approximates the resulting pixel's color and intensity based on the values at surrounding pixels. It therefore already includes the process of \emph{anti-aliasing} (process used to minimize aliases), as it is based on the same technique.
+This technique tries to minimize the aliasing effect of the resulting image --- so the scaled picture does not appear visibly pixelated and it's edges are not jagged.
 
 Interpolation algorithms can be grouped into two categories: \emph{adaptive} and \emph{non-adaptive}.
 
 \emph{Adaptive methods} change the way they treat various pixels depending on what they are interpolating, specifically smooth texture vs. sharp edges. They are primarily designed to minimize the presence of interpolation artifacts in regions where they are most apparent, and they differ by the way they detect edges.
 
-\emph{Non-adaptive} methods, on the other hand, treat all pixels equally. Their complexity depends on the number of adjacent pixels during interpolation, which is also the criterion by which the existing methods are classified~\cite{interpolation}.
+\emph{Non-adaptive} methods, on the other hand, treat all pixels equally. Their complexity depends on the number of adjacent pixels during interpolation, which is also the criterion by which the existing methods are classified~\cite{interpolation}. We present these methods in~\cref{fig:preprocessInterpolation}.
 
-\begin{figure}[H]
+\begin{figure}[t]
 \centering
-\includegraphics[width=0.3\linewidth]{img/preprocessing/interp_orig.pdf}
-\caption{Original Image} \label{fig:1a}
-\end{figure}
-
-\begin{figure}[H]
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing/interp_nn.pdf}
-\caption{Nearest-neighbor Interpolation (1 pixel)} \label{fig:1a}
-\end{subfigure}
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing/interp_bili.pdf}
-\caption{Bilinear Interpolation($2\times2$ pixels)} \label{fig:1b}
-\end{subfigure}
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing/interp_bicubic.pdf}
-\caption{Bicubic Interpolation($4\times4$ pixels)} \label{fig:1c}
-\end{subfigure}
-\caption{Non-adaptive methods of Interpolation} \label{fig:1}
+{\sffamily
+\begin{tabular}{cc}
+Original & Nearest-neighbor Interpolation\
+ & (1 pixel) \\
+\includegraphics[width=.4\linewidth]{img/preprocessing/interp_orig.png}
+&
+\includegraphics[width=.4\linewidth]{img/preprocessing/interp_nn.png}
+\vspace{1em} \\
+Bilinear Interpolation & Bicubic Interpolation \\
+($2\times2$ pixels) & ($4\times4$ pixels) \\
+\includegraphics[width=.4\linewidth]{img/preprocessing/interp_bili.png}
+&
+\includegraphics[width=.4\linewidth]{img/preprocessing/interp_bicubic.png}
+\end{tabular}
+}
+\caption{Non-adaptive methods of Interpolation}
+\xxx{ten 1 pixel chcem mat pod nearest-neighbor}
+\label{fig:preprocessInterpolation}
 \end{figure}
 
 There also exist higher order interpolations, such as \emph{Spline}, \emph{Sinc}, \emph{Lanczos} or \emph{Discrete Wavelet Transforms}~\cite{interpolation}. These consider more surrounding pixels and calculate the resulting value through more complex functions, like transforms or sampling functions. The results are more accurate than those of simple calculations at the cost of significantly more time. For the purposes of OCR, such complex and time-consuming functions are not desirable, as we are not yet working with any rotations and distortions and just need to resize the existing image.
 
 For the best quality/time ratio, the popular decision in most cases is \emph{Bicubic Interpolation}. Although \emph{Neareast Neighbor} and \emph{Bilinear} methods are extremely fast, the results were found to be poor~\cite{interpolationComp}.
 
-\subsubsection{Downscaling}
-
-In case the user supplies an image with resolution higher than 300dpi, we need to solve the exact opposite problem as previously - decrease the number of pixels and decide what will the values of the new ones be. The easiest approach would be to "pick every nth pixel", but the same problems as previously arise --- blurring, aliasing, pixelation\ldots
-
-The simplest and most widely used approaches are very similar to what is already explained above. To calculate the value of the resulting pixel, we choose a number of surrounding pixels. We calculate their weighted average and assign this value to the unknown pixel. As previously, the 4x4 neighborhood turned out to have the best quality/time ratio.
-
-
-Many of these methods produce even better results, but, as mentioned before, most preprocessing engines still stick to the simpler "reversed Bicubic Interpolation" in a successful attempt to speed up the algorithm.
-
 \subsection{Binarization}
 
-To recognize characters on the background of an image, an OCR software must distinguish the background pixels from the actual pixels that belong to the characters. The software must therefore divide all the existing pixels of the image into two groups --- a background group and a symbols group. To determine the boundary between them is a complex task when it comes to colored images, as we need to process the whole RGB information of each pixel. However, when it comes to grayscale images, we obtain only one value, and, when it comes to monochrome one images, the process of finding a boundary is trivial - white pixels represent the background, while black pixels represent the symbols.
+To recognize characters in an image, an OCR software must distinguish the background pixels from the actual pixels that belong to the characters. The software must therefore divide all the existing pixels of the image into two groups --- a background group and a symbols group. To determine the boundary between them is a complex task when it comes to colored images, as we need to process the whole RGB information of each pixel. However, when it comes to grayscale images, we obtain only one value. Moreover, monochrome one images contain pixels of only two values --- black and white --- which make the process of finding a boundary trivial.
 
 This is why it is beneficial for images to undergo the process of binarization, which converts images into their monochrome one form.
 
@@ -107,46 +93,47 @@ Many binarization algorithms work under the assumption that the input image is a
 
 \subsubsection{Grayscale conversion}
 
-\emph{Grayscale conversion} is the process of computing and assigning the grey value for each colored pixel from its attributes. There exist a few different approaches to this problem. The simplest one is the \emph{averaging approach}, which assigns each pixel the average of its R, G and B value. However, this does not really reflect the way human eye perceives colors. Our perception of colors is non-uniform --- green color is perceived more strongly than red, and red more strongly than blue. For this reason, a correction formula (often called \emph{luma}~\cite{grayscaleConv}) that weights each color component differently is used. 
+\emph{Grayscale conversion} is the process of computing and assigning a gray value for each colored pixel from its attributes. There exist a few different approaches to this problem. The simplest one is the \emph{averaging approach}, which assigns each pixel the average of its R, G and B value. However, this does not really reflect the way human eye perceives colors. Our perception of colors is non-uniform --- green color is perceived more strongly than red, and red more strongly than blue. For this reason, a correction formula (often called \emph{luma}~\cite{grayscaleConv}) that weights each color component differently is used. We present these techniques in~\cref{fig:preprocessGrayscale}.
 
-Another way to approach grayscale conversion is to represents the color based on its HSL values and convert it to its least saturated variant.
+Another way to approach grayscale conversion is to represent the color based on its HSL values and convert it to its least saturated variant.
 
 As decribed by~\citet{grayscaleCadik}, these exist many more algorithms approaching this problem. Most of them require more complicated computations and try to preserve attributes of the image that may be lost during the process --- like contrast or luminance.
 
 \begin{figure}[t]
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing/grayscale_orig.jpg}
-\caption{Original Image} \label{fig:1a}
-\end{subfigure}
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing/grayscale_avg.png}
-\caption{Averaging Technique} \label{fig:1b}
-\end{subfigure}
-\hspace*{\fill} % separation between the subfigures
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing/grayscale_luma.png}
-\caption{Luma Correction}\label{fig:1c}
-\end{subfigure}
-\caption{Comparison of grayscale techniques} \label{fig:1}
+\centering
+{\sffamily
+\begin{tabular}{ccc}
+Original & Averaging technique & Luma correction \\
+\includegraphics[width=.28\linewidth]{img/preprocessing/grayscale_orig.jpg}
+&
+\includegraphics[width=.28\linewidth]{img/preprocessing/grayscale_avg.png}
+&
+\includegraphics[width=.28\linewidth]{img/preprocessing/grayscale_luma.png}
+\end{tabular}
+}
+\caption{Comparison of grayscale techniques}
+\label{fig:preprocessGrayscale}
 \end{figure}
 
 \subsubsection{Threshold-based binarization}
-Once the image is in grayscale mode, the next step is to binarize it. Binarization methods work on the basis of a \emph{threshold} --- a set value that a pixel is compared with. If it is greater than the threshold, it is assumed to be white, otherwise, it is colored black. Various binarization methods differ in the way that this threshold is calculated and used.
+Once the image is in grayscale mode, the next step is to binarize it. Binarization methods work on the basis of a \emph{threshold} --- a set value that a pixel is compared to. If it is greater than the threshold, it is assumed to be white, otherwise, it is colored black. Various binarization methods differ in the way that this threshold is calculated and used.
 
-he simplest approach to binarization is \emph{global thresholding} \citep{globalThresh}. It works by choosing a threshold value and iterating over the whole image, comparing the value of each pixel to this threshold. If it is greater, the pixel in resulting image will be black, otherwise white. As the brightness and contrast of different images vary, it is impossible to choose a threshold suitable for all images.
+The simplest approach to binarization is \emph{global thresholding}~\citep{globalThresh}. It works by choosing a threshold value and iterating over the whole image, comparing the value of each pixel to this threshold. If it is greater, the pixel in the resulting image will be black, otherwise white. However, as the brightness and contrast of different images vary, it is impossible to choose a threshold suitable for all images.
 
-More complex methods that aim to correct the problems of simple thresholding exist; these include e.g. the following:
+More complex methods that aim to correct the problems of global thresholding exist. Some of these include:
 \begin{itemize}
-\item Otsu's method for global threshold estimation
-\item Local-thresholding methods,~\citep{localOtherBin}:
+\item Otsu's method for global threshold estimation~\citep{otsu}
+\item Local-thresholding methods~\citep{localOtherBin}:
 \begin{itemize}
 \item Niblack method
 \item Bernsen method
-\item Sauvola adaptive thresholding
+\item Sauvola method
 \end{itemize}
 \end{itemize}
+
+Otsu's method statistically computes a global threshold by a dynamical classification of image pixels into background and foreground pixels. Although simple and easy to implement, but, as any global method, it is inherently unable to fix high variance or uneven spots in an image background. Local-thresholding methods aim to solve this issue by allowing different threshold values in different parts of the image. They differ in the way the existing thresholds are computed --- for example, Niblack's method~\citep{adaptiveBin} uses mean and standard deviation of surrounding pixels for each pixel, Sauvola Method improves it by checking for blank regions and Bernsen's method by optimizing Niblack's computations. 
+
+Visual differences between the mentioned methods are displayed in~\cref{fig:preprocessBinarization}. Comprehensive reviews of other, more complex methods are available~\citep{localOtherBin}.
 
 \begin{figure}
 \centering
@@ -160,85 +147,42 @@ Sauvola Binarization \\
 \includegraphics[width=.3\linewidth]{img/preprocessing/bin_sauvola.png}
 \end{tabular}
 }
-\caption{Comparison of binarization method outpus on an unevenly lit image.}
-\label{fig:thresholds}
+\caption{Comparison of binarization method output on an unevenly lit image}
+\label{fig:preprocessBinarization}
 \end{figure}
-
-Otsu's method aims to correct the global thresholding problem by statistically optimizing the global threshold value~\citep{otsu}. This is done by dynamically classifying the image pixels into background and foreground accordingly to the threshold, and choosing the threshold such that the variance of pixel values in each group is minimized, while the variance between group is maximized. While simple and easy to implement, it is inherently unable to fix high variance or uneven spots in image background.
-
-Local thresholding methods solve the problem with uneven background brightness by allowing different threshold values in different parts of image. Niblack's method~\citep{adaptiveBin} determines the threshold of every pixel by using the mean and standard deviation of surrounding pixels (similarly as with deconvolution matrix filters). While that works for regions that contain text, the approach amplifies the low-variance noise in blank regions of the image. Sauvola Method~\citep{adaptiveBin} improves the algorithm by using the dynamic range of pixel values in larger neighborhood to aid decision whether the current region is blank or not. Bernsen's~\citep{adaptiveBin} method is similar to that of Niblack, but the threshold is set to the mean value between the lowest- and highest-value pixel in the local neighborhood; which is computationally efficient, and produces less artifacts in blank regions.
-
-Visual differences between the mentioned methods are displayed in~\cref{fig:thresholds}. Comprehensive reviews of other, more complex methods are available~\citep{localOtherBin}.
 
 \subsection{Contrast enhancement}
 
-Another important factor that results in low-quality images is low contrast. Even human eye has a harder time recognizing images 
-with this element, and the same stands for OCR engines, as low contrast often results in possible blending of the edges during recognition.
+Another important factor that results in low-quality images is low contrast. Even human eye has a harder time recognizing images with this element. The same stands for OCR engines, as low contrast often results in possible blending of edges during recognition.
 
-An image \emph{histogram} is used to improve this aspect. It is an accurate representation of the distribution of data and, in case of image histograms, it represents the tonal distribution of an image --- x-asis in histogram stands for all available tonal levels, and y-axis represents the number of pixels for each tonal level. In colored (RGB) images, the histogram is displayed by the terms of three seperate histograms --- one for each color component.
+An image \emph{histogram} is used to improve this aspect. A histogram is an accurate representation of the distribution of data and, in case of image histograms, it represents the tonal distribution of an image --- x-axis stands for all available tonal levels, and y-axis represents the number of pixels for each tonal level. In colored (RGB) images, the histogram is displayed by the terms of three separate histograms --- one for each color component.
 
-In a histogram, contrast of the current color component is represented as distribution of pixel luminance values. By spreading out the most frequent intensity values of the histogram, the contrast of the image increases.
+Contrast of the current color component is represented as distribution of pixel luminance values. By spreading out the most frequent intensity values of the histogram, the contrast of the image increases(~\cref{fig:preprocessContrastComparison}).
 
-\begin{figure}[H]
+\begin{figure}[t]
 \centering
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing//histogram_low.png}
-\caption{Low contrast image histogram} \label{fig:1a}
-\end{subfigure}
+\includegraphics[width=0.4\linewidth]{img/preprocessing//histogram_low.png}
 \qquad
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing/histogram_high.png}
-\caption{High contrast image histogram} \label{fig:1b}
-\end{subfigure}
+\includegraphics[width=0.4\linewidth]{img/preprocessing/histogram_high.png}
+\caption{Image histogram. Left: low contrast image histogram, right: high contrast image histogram.}
+\label{fig:preprocessContrastComparison}
 \end{figure}
 
-In \xxx{taggni tabulku}, we briefly explain the basis of a few of the most popular methods of histogram spreading. However, many more complex and complicated techniques already exist, including CLAHE, Dynamic Stochastic Resonance and generic transforms, such as Fourier, Discrete Cosine, and Wavelet~\cite{contrastOther}.
+To expand the original digital values of histogram into a new distribution, different histogram spreading methods use functions of different forms. These can be either linear or non-linear, which leads to the categorization of histogram spreading methods into either \emph{linear stretching} methods or \emph{non-linear stretching} methods~\citep{linearNonStretch}.
 
-\begin{longtable}{p{10em}p{10em}p{10em}}
-\textbf{Linear Stretching} & \textbf{Non-linear Stretching} & 
-\textbf{Histogram Equalization}\\
-\midrule
+Both types of methods have their advantages and disadvantages. Although linear methods are easier to implement, non-linear methods were shown to have given better performance~\citep{chandpa1comparative} and overall better results. Linear methods still produce satisfactory results on remotely sensed images with Gaussian or near-Gaussian histograms, and in contrary to non-linear methods, objects in the original scene do not lose their correct brightness value.
 
-- linearly expands the original digital values of the histogram into a new distribution
+For contrast enhancement of the text, a non-linear technique called \emph{histogram equalization}~\citep{histogramEQ} is used. Is is based on transforms that depend on the probability distribution function of the histogram. Although it produces unrealistic and over-enhanced effects in photographs, the over-processing actually suits the text data. We present the effects of this widely used method in~\cref{preprocessHistogramEqualization}.
 
-- includes various methods \citep{linearNonStretch}
+Many other more complex and complicated techniques of contrast enhancement exist. These were presented by~\citet{contrastOther} and contain techniques like CLAHE, Dynamic Stochastic Resonance and generic transforms, such as Fourier, Discrete Cosine, and Wavelet. For complex text recognition cases, CLAHE method can be used with satisfactory results.
 
-- best applied to remotely sensed images with Gaussian or near-Gaussian histograms
-
-&
-
-- done by functions with non-linear form \citep{linearNonStretch}
-
-- great disadvantage --- objects in the original scene lose their correct brightness value
-
-&
-
-- one of the most popular methods \citep{histogramEQ}
-
-- based on transforms that depend on the probability distribution function of the histogram
-
-- unrealistic and over-enhanced effects in photographs
-
-- widely used for scientific images
-\\
-\bottomrule
-\caption{Methods of contrast enhancement}
-\end{longtable}
-
-For text image enhancement, the most popular choice is histogram equalization, or, in more complex cases, CLAHE. However, as always, different images require different processing techniques.
-
-\begin{figure}[H]
+\begin{figure}[t]
 \centering
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing/contrast_low.png}
-\caption{Before} \label{fig:1a}
-\end{subfigure}
+\includegraphics[width=0.4\linewidth]{img/preprocessing/contrast_low.png}
 \qquad
-\begin{subfigure}{0.31\textwidth}
-\includegraphics[width=\linewidth]{img/preprocessing/contrast_high.png}
-\caption{After}
-\end{subfigure}
-\caption{Histogram Equalization}
+\includegraphics[width=0.4\linewidth]{img/preprocessing/contrast_high.png}
+\caption{Histogram equalization. Left: original image, right: processed image.}
+\label{fig:preprocessHistogramEqualization}
 \end{figure}
 
 
@@ -246,85 +190,99 @@ For text image enhancement, the most popular choice is histogram equalization, o
 
 Skewed images are probably the most common problem that many OCR engines struggle with. They usually appear when an image is scanned or photographed crookedly. 
 
-One of the steps of OCR algorithms is \emph{page segmentation}. It is the process that decomposes a document image into elements. This division is based on vertically and horizontally aligned characters, spaces and other elements. We will discuss this topic thoroughly in the following chapter. For now, the important thing to know is that skewed images pass misaligned data to the OCR algorithm. This causes more errors and ultimately leads to poorer results.
+One of the steps of OCR algorithms is \emph{page segmentation}. It is the process that decomposes a document image into elements. This division is based on vertically and horizontally aligned characters, spaces and other artifacts. We will discuss this topic thoroughly in the following chapter. For now, the important thing to know is that skewed images pass misaligned data to the OCR algorithm. This causes more errors and ultimately leads to poorer results.
 
-There are different approaches that deal with this problem. All of these methods work (for more accurate results) after binarization of the image and generally assume the skew angle to be no more than 15$^{\circ}$. Algorithms that work on greater skew angles also exist\citep{skewAngleDetection}. They are not as widely used, though, as most of the time, correction needs to be done on scanned documents --- which are mostly only slightly tweaked.
+There are different approaches that deal with this problem. All of these methods work (for more accurate results) after binarization of the image and generally assume the skew angle to be no more than 15$^{\circ}$. Algorithms that work on greater skew angles also exist~\citep{skewAngleDetection}. They are not as widely used, though, as most of the time, correction needs to be done on scanned documents --- which are mostly only slightly tweaked.
 
-In the \xxx{taggnut tabulku} table, we provide an overview of a few of the most effective deskewing algorithms \citep{skewBestTechniques}. However, worth noting are also other methods like \emph{Fourier} \citep{fourierTransform}, \emph{Wavelet Decomposition}, \emph{Radon Transform}, \emph{PCP}, \emph{one-pass} or \emph{multi-pass} skew correction, \emph{morphology algorithms}\ldots.. 
+The most effective and popular algorithms include the following~\citep{skewBestTechniques}:
+\begin{itemize}
+    \item Hough Transform
+    \item Projection Profile method
+    \item Cross Correlation
+    \item Connected Component Clustering (or \emph{Nearest Neighbor Clustering})~\citep{skewClustering}
+\end{itemize}
+However, worth noting are also other methods like \emph{Fourier}~\citep{fourierTransform}, Wavelet Decomposition, Radon Transform, PCP, one-pass or multi-pass skew correction, morphology algorithms\ldots.. 
 
-\begin{longtable}{p{19em}p{19em}}
-\textbf{Hough Transform} & \textbf{Projection Profile}\\
+The above mentioned methods differ in the way they determine the skew of the image. Hough transform applies feature extraction to the image and assigns the skew of the line with the most number of pixels to the document. Projection profile method rotates the image and finds the skew where its histogram along horizontal scan lines has the most peaks and valleys, while the cross correlation method uses this method and applies it to multiple vertical segments. Moreover, connected component clustering method is based on finding the coherency between connected components of the image and determining their common skew. We present the advantages and disadvantages of these methods in~\cref{tab:preprocessSkewProsCons}.
+
+\begin{table}[t]
+{\small
+\begin{tabular}{p{5em}p{13em}p{13em}}
+\toprule
+\textbf{Method} & \textbf{Advantages} & \textbf{Disadvantages} \\
 \midrule
-
-- applies feature extraction technique called \emph{Hough Transform} \citep{houghTransform} on different straight lines
-
-- finds the line with the most number of pixels
-
-- assigns the skew of the line to the document
-
+Hough Transform
+&
 - highly effective
+&
+- time consuming
 
-- time consuming (therefore applied only on a set of chosen points, not whole image)
+- cannot obtain data from graphics in an image, therefore ineffective at their presence
 
-- cannot choose points from graphical data present in the image, as Hough Transforms counts only with aligned pixels
+\\
+Projection Profile method
+&
+- easy to implement
+
+- works well on images with skew under 10$^{\circ}$
+&
+
+- fails at the presence of graphics
+
+- computationally expensive
+
+\\
+Cross Correlation
+&
+
+- better time complexity than projection profile method
+
+- needs less data with no loss in accuracy
 
 &
 
-- creates a histogram of black pixels along horizontal scan lines
+- works on text areas only
 
-- horizontally aligned images have histogram peaks at text line position
+- fails at the presence of graphics
 
-- rotates the image to find the one with most peaks and valleys in histogram, which is then declared to be deskewed
-
-- works on text areas only, fails at the presence of graphics
-
-\end{longtable}
-
-\xxx{narvat tieto tabulky nejak spolu?}
-
-\begin{longtable}{p{19em}p{19em}}
-\textbf{Cross Correlation} & \textbf{Connected Component Clustering}\\
-\midrule
-
-- similar to \emph{Projection Profile} method
-
-- selects a number of vertical segments from the image and performs Projection Profile algorithm
-
-- compares the results and estimates the final skew angle
-
-- works on text areas only, fails at the presence of graphics
-
-- needs to process less data than Projection Profile with no loss in accuracy
+\\
+Connected Component Clustering
 &
 
-- or \emph{Nearest Neighbor Clustering} \citep{skewClustering}
+- satisfactory results for skew up to 20$^{\circ}$
 
-- based on finding coherency between connected components of the image
+- generally work well in non-text areas
 
-- either compute the skew of every component (using their bottom line) and compare results
+&
 
-- or group components by neighbours and create a group histogram for examination
+- low quality images deem the method to fail
 
-- or other \ldots
+- clustering algorithm needs to be picked carefully to avoid errors
 
-\end{longtable}
+\\
+\bottomrule
+\end{tabular}
+}
+\caption{The advantages and disadvantages of different deskewing methods}
+\label{tab:preprocessSkewProsCons}
+\end{table}
 
-\begin{figure}
+\begin{figure}[t]
 \centering
 \includegraphics[height=0.25\textheight]{img/preprocessing/deskew_orig.jpg}
 \qquad
 \includegraphics[height=0.25\textheight]{img/preprocessing/deskew_new.jpg}
 \caption{Image deskewing illustrated. Left: original image, right: deskewed image.}
-\label{fig:deskewing}
+\label{fig:preprocessDeskewing}
 \end{figure}
 
 \subsection{Noise reduction}
 
 Image noise is an usually unwanted random variation of brightness or color information in images, reminding film grain in digital cameras. It is often caused by the sensor of a scanner or a digital camera attempting to record small amounts of light. 
 
-For OCR engines, processing noise can be quite tricky. Its presence is especially crucial during binarization and edge detection. These processes are based on the differences between the "outside" of the element and its "inside". When noise is present, it can disrupt these borders, which can often cause the failure of recognition.
+For OCR engines, processing noise can be quite tricky. Its presence is especially crucial during binarization and edge detection. These processes are based on the differences between the "outside" of the element and its "inside". When noise is present, it can disrupt these borders, which can often cause the failure of recognition. We present the different types of existing noise in~\cref{tab:preprocessNoiseTypes}.
 
-\begin{table}[p]
+\begin{table}[t]
 {\small
 \begin{tabular}{p{8em}p{12em}l}
 \toprule
@@ -349,21 +307,18 @@ E.g.~\emph{anisotropic} or \emph{periodic} noise, often found in old photographs
 \bottomrule
 \end{tabular}
 }
-\caption{Different types of noise.}
-\label{tab:types_of_noise}
+\caption{Different types of noise}
+\label{tab:preprocessNoiseTypes}
 \end{table}
 
-There exist various approaches dealing with noise reduction. These include different types of filtering or comparison methods to firstly detect which pixels were corrupted by noise and then determining their value in the output image.
+When performing noise reduction, common image processing filters are used~\citep{denoisingTechniques}. These can be categorized as either \emph{linear} or \emph{non-linear}, depending on their linearity relationships.
 
-\begin{description}
+Linear filtering, such as \emph{mean filtering}, \emph{Gaussian filtering} or \emph{Wiener filtering}, is a filtering in which the value of an output pixel is a linear combination of the values of the pixels in the input pixel's neighborhood. When used for noise reduction, they work on averaging the color values of neighbour pixels, so they can help assure an averaged view of the contrast along regions of different color. This, however, rather than correcting the color of the affected pixel, results in creating an area with an average (and incorrect) color. This blurs the edges and smooths out other fine details. They are still widely used, though, as they require only a small amount of computations, which leads to increased speed and easy and simple implementations.
 
-\item One of the most commonly used techniques, found also in image editing software like Adobe Photoshop or GIMP, are \textbf{linear filters} \citep{denoisingTechniques}, like \emph{mean filter}, \emph{Gaussian filter} or \emph{Wiener filter}. They work on averaging the color values of neighbour pixels, so they can help assure an averaged view of the contrast along regions of different color. This, however, rather than correcting the color of the affected pixel, results in creating an area with an average (and incorrect) color. This blurs the edges and smooths out other fine details. They are still widely used, though, as they require only a small amount of computations, which leads to increased speed and easy and simple implementations.
-
-\item Other filters used for image denoising include \textbf{non-linear filters} \citep{denoisingTechniques}. The most popular of them is \emph{median filter}. It works similarly like a mean filter, but for each pixel, instead of replacing its value with a mean of surrounding pixels, it calculates the median. In comparison with linear filters, it provides considerably sharper images and in cases preserves the edges. The downside is the increased run time, and with high level of noise, results are almost the same as with linear filters. However, it is highly effective on salt and pepper noise.
+Non-linear filtering, on the other hand, renders an output which is not a linear function of its input. In noise reduction, one of the most popular filter in this category is a \emph{median filter}. It works similarly to a mean filter, but for each pixel, instead of replacing its value with a mean of surrounding pixels, it calculates the median. In comparison to linear filters, it provides considerably sharper images and in most cases preserves the edges. The downside is the increased run time, and with high level of noise, results are almost the same as with linear filters. However, it is highly effective on salt and pepper noise.
 
 \item Worth mentioning is also \textbf{non-local means method} \citep{nonLocalMeans}. It is based on taking a mean value of all pixels of the image, weighted by how similar these pixels are to the target pixel. This technique produces an even sharper and clearer image results as mentioned filters. However, it comes with the expense of additional increased speed.
 
-\end{description}
 
 \begin{figure}
 \centering
@@ -398,10 +353,11 @@ Noise is most likely to be found on higher frequencies and we use this observati
 
 Scanned documents often have visible dark borders (\emph{marginal noise}). These are created either during scanning (due to the presence of neighbouring pages) or are an unwanted result of the binarization process.
 
-Similarly to noise reduction, running this step could only be harmful if there is no marginal noise present. Therefore, the algorithm has to have two steps --- \emph{marginal noise detection} and, if successful, \emph{marginal noise reduction}.
+As performing a scanning border removal might be harmful in case there was no marginal noise present, this process has two steps --- marginal noise detection and, if successful, marginal noise reduction.
 
-Marginal noise is present as a dark connected component of the page. This is a fact that most detection algorithms take advantage of. Firstly, they extract the connected components of the page. This can be done by a \emph{black filter} (a moving rectangular window that calculates the ratio of black pixels on border \citep{marginalNoiseWindow}). After obtaining the connected components, different heuristics are used --- most based on removing the connected components near the edges. In the end, usually a "cleanup" is performed (like \emph{white filter} \citep{marginalNoiseWindow}) for removal of all unnecessary elements around the borders (an unwanted text from the neighbour page, noisy components in the corners\ldots).
-The results of this algorithm depend greatly on the values of thresholds, margings and other hardcoded parameters. Different images work well under different values. This is why the cleanup part's parameters are usually dependant of the results of previous parts.
+Marginal noise is present as a dark connected component of the page. This is a fact that most detection algorithms take advantage of. Firstly, they extract the connected components of the page. This can be done for example by a \emph{black filter} (a moving rectangular window that calculates the ratio of black pixels on border~\citep{marginalNoiseWindow}). After obtaining the connected components, different heuristics are used --- most based on removing the connected components near the edges. In the end, usually a "cleanup" is performed (like \emph{white filter}~\citep{marginalNoiseWindow}) for removal of all unnecessary elements around the borders (an unwanted text from the neighbour page, noisy components in the corners\ldots).
+
+The results of this algorithm depend greatly on the values of thresholds, margins and other hard coded parameters. This is why the cleanup part's parameters are usually dependant on the results of previous parts of this process.
 
 Another approach is the one mentioned by \citet{marginalNoiseEdge}. It is based on edge density calculations, and the fact that text areas have generally a much lower density than edge areas. An edge detector (in this case, \emph{sobel}) is used for examining vertical marginal noise, and later horizontal marginal noise. It returns the positions of the margins. Anything beyond these positions is detected as an unwanted noise, and can be therefore removed by filters or other removal algorithms.
 
@@ -701,9 +657,9 @@ Many experiments have been executed in the field of machine learning for charact
 
 \section{Available OCR software}
 
-\todo{Tahle kapitola ted nerika nic informativniho a do teoretickyho uvodu je uprimne dost zbytecna, myslim ze by bylo vhodnejsi ji presunout k implementaci (tam navic bude po ruce kdyz budes vysvetlovat proc to stavis na tesseractu) a nahradit nejakou vic comprehensive tabulkou ktera napr. nejak prehledne porovnava vlastnosti tech jednotlivych implementaci.}
+Over the past few years, the demand for reliable OCR engines has risen, which lead to many new implementations and improvements of the already existing ones.
 
-\xxx{Over the past few years, OCR has become a part of our everyday lives.}\todo{nein} The demand for a reliable OCR engines has therefore risen, which lead to many new implementations or improvements of the already existing ones.
+In this section, we present the overview of the most popular OCR engines. We also 
 
 Most people take the expression "optical character recognition" to mean solely text recognition. This term, however, has a wider meaning - it also includes the recognition of other document elements, like images, forms, tables and many more.
 

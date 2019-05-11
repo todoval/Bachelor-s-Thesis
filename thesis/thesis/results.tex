@@ -25,13 +25,13 @@ The results from our test were as follows:
 \label{table:forward-inverted}
 \end{table}
 
-The initialization of textlines, however, is tricky. In most of the cases, its time complexity does not exceed 20\%. However, a few images, usually those containing full-page tables, sometimes spent even more time analyzing textlines than with the actual recognition.
+The initialization of textlines, however, is tricky. In most cases, its time complexity does not exceed 20\%. However, a few images, usually those containing full-page tables, sometimes spent even more time analyzing textlines than with the actual recognition.
 
 In the following sections, we will discuss the options of reducing this time complexity in favor of the accuracy of results. This includes the discussion about the effects of the quality of an image on the results and time complexity, as well as the amount of text in an image on the time complexity.
 
 \section{Effects of the amount of text}
 
-In this section, we provide an overview of the effects of the number of recognized symbols and textlines on the runtime of our algorithm. As we already mentioned, the time complexity of our \emph{init\_textlines} function, which iterates over all the symbols and textlines is $O(m*n^2)$. Therefore, the greater the amount of textlines and symbols, the more time this function will consume. However, Tesseract recognition also greatly depends on the amount of textlines and symbols it eventually finds. We tested these dependencies on a subset of 18 of the already mentioned images. We presented all of them in various (about 15) different resolutions, ranging from 25 to 800 dpi, to our recognition system. 
+In this section, we provide an overview of the effects of the number of recognized symbols and textlines on the execution time of our algorithm. As we already mentioned, the time complexity of our \emph{init\_textlines} function, which iterates over all the symbols and textlines is $O(m*n^2)$. Therefore, the greater the amount of textlines and symbols, the more time this function will consume. However, Tesseract recognition also greatly depends on the amount of textlines and symbols it eventually finds. We tested these dependencies on a subset of 18 of the already mentioned images. We presented all of them in various (about 15) different resolutions, ranging from 25 to 800 dpi, to our recognition system. 
 This gave us a pretty \xxx{pokryva vela, roznorody, mixed?} set of different images. We used the results from the tests to present the mentioned dependencies in \xxx{graphs}.
 
 By observing the testing results and utilizing the graphs \xxx{taggni}, we may conclude the following statements:
@@ -59,42 +59,42 @@ By observing the testing results and utilizing the graphs \xxx{taggni}, we may c
 \centering
 \includegraphics[height=20em]{img/results/symbolsTimeInit.png}
 \caption{The dependency of the number of recognized textlines on the time of execution of the \emph{init\_textlines()} function}
-\label{fig:dpiSpeed}
+\label{fig:symbolsTimeInit}
 \end{figure}
 
 \begin{figure}
 \centering
 \includegraphics[height=20em]{img/results/textlinesTimeInit.png}
 \caption{The dependency of the number of recognized textlines on the time of execution of the \emph{init\_textlines()} function}
-\label{fig:dpiSpeed}
+\label{fig:textlinesTimeInit}
 \end{figure}
 
 \begin{figure}
 \centering
 \includegraphics[height=20em]{img/results/symbolsTimeTesseract.png}
 \caption{The dependency of the number of recognized textlines on the time of execution of Tesseract recognition}
-\label{fig:dpiSpeed}
+\label{fig:symbolsTimeTess}
 \end{figure}
 
 \begin{figure}
 \centering
 \includegraphics[height=20em]{img/results/textlinesTimeTesseract.png}
 \caption{The dependency of the number of recognized textlines on the time of execution of Tesseract recognition}
-\label{fig:dpiSpeed}
+\label{fig:textlinesTimeTess}
 \end{figure}
 
 \begin{figure}
 \centering
 \includegraphics[height=20em]{img/results/symbolsTimeAll.png}
 \caption{The dependency of the number of recognized symbols on the overall time of execution}
-\label{fig:dpiSpeed}
+\label{fig:symbolsTime}
 \end{figure}
 
 \begin{figure}
 \centering
 \includegraphics[height=20em]{img/results/textlinesTimeAll.png}
 \caption{The dependency of the number of recognized textlines on the overall time of execution}
-\label{fig:dpiSpeed}
+\label{fig:textlinesTime}
 \end{figure}
 
 \section{Effects of image resolution}
