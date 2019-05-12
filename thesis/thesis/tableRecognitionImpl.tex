@@ -76,7 +76,7 @@ Empty lines & Table textline \\
 \label{fig:deletionOfLines}
 \end{figure}
 
-\item \emph{Column detection}
+\item \emph{Column detection} \label{columnDetection}
 
 Upon obtaining individual textlines, we try to determine their segmentation into columns by analyzing the symbols they contain. This is done for each line individually. Firstly, we merge symbols into words. After that, we merge words into columns (\cref{fig:implem3}). Although we could simply just merge symbols into columns and ignore the whole processing of words, this would leave us with no information about spaces between individual words and would therefore lead to merging of text.
 
