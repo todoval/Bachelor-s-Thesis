@@ -2,16 +2,23 @@
 
 This chapter gives us an overview of procedures and tools used to create a table recognition software. 
 
-The project is written in C++ and compilable using CMake (tested on MSVC 2017 and GNU 8). We chose CMake for its cross-platform support and its ability to download external dependencies (e.g. Tesseract, Leptonica). 
+The project is written in C++ and compilable using CMake (tested on MSVC 2017 and GNU 8). We chose CMake for its cross-platform support and its ability to work with external dependencies (e.g. Tesseract, Leptonica). 
 
-The implementation is divided into two main parts --- \emph{preprocessing}, which prepares the input images for recognition, and \emph{tabular OCR}, which applies our heuristic algorithm for table recognition. Both parts use the features of the Leptonica library and tabular OCR utilizes the character and textline recognition of the Tesseract engine.
+The implementation is divided into two main parts --- \emph{preprocessing}, which prepares the input images for recognition, and \emph{tabular OCR}, which applies our heuristic algorithm for table recognition. Both parts use the features of the Leptonica library and tabular OCR utilizes the character and textline recognition of the Tesseract engine. The image processing in the program is schematized in~\cref{fig:programFlow}.
+
+\begin{figure}
+    \centering
+	\includegraphics[width=1.0\linewidth]{img/implementation/programFlow.pdf}
+	\caption{Program flow diagram}
+	\label{fig:programFlow}
+\end{figure}
 
 \section{Preprocessing}
 
 The preprocessing part is basically a wrapper around the Leptonica library. Based on the input arguments of our software, the preprocessor calls relevant Leptonica's methods with specified parameters. Not all of the Leptonica's preprocessing features are currently supported in our implementation. However, it is a simple task to add the rest of them. Currently supported methods are the following:
 
 \begin{itemize}
-    \item Contrast enhancement
+    \item Contrast enhancement \todo{rict jakej presnej algorithmus a refni se na popis v chap1}
     \item Greyscale conversion
     \item Binarization
     \item Deskewing
@@ -21,16 +28,19 @@ The initial idea for preprocessing was to provide more complex functions which a
 
 \section{Tabular OCR}
 
-After the preprocessing part is done, the preprocessed image is passed to the tabular OCR for table recognition. The individual steps of our heuristic table recognition algorithm are executed in the main \emph{process\_image()} function.
+After the preprocessing part is done, the preprocessed image is passed to the tabular OCR for table recognition. The individual steps of our heuristic table recognition algorithm are executed in the main \xxx{\texttt{process\_image}} function.
 
 In this section, we analyze this algorithm step-by-step and overview the functions used.
 
 Our algorithm is based on the already mentioned Tesseract symbol and textline recognition and moreover on whitespace detection. Upon detecting whitespaces between individual symbols, we try to heuristically estimate the whitespaces between words and, furthermore, columns, for each textline of the image. Once we have all the textlines separated into columns, we try to merge consecutive lines with similar column layout into a table.  
 
-Following are the individual steps of the algorithm (visualized in~\cref{fig:implemTableRecogniton}):
+Following individual steps of the algorithm are visualized in~\cref{fig:implemTableRecogniton}:
 
+\xxx{moc seznam}
 \begin{enumerate}
 \item \emph{Textline initialization}
+
+\xxx{bylo by fajn mit nekde jednoznacnou definici textline}
 
 The whole process begins with the detection of individual characters and their merging into textlines (\cref{fig:implem1}). These textlines are then used during the whole process of the algorithm, and are later searched for words, columns etc.
 
@@ -38,7 +48,7 @@ For the purposes of the character recognition, we use the Tesseract engine. We i
 
 The symbols and lines obtained from Tesseract are represented as simple boxes (with the symbols also containing a textual information). To gain a more detailed information about individual textlines, we therefore iterate over all the lines and symbols and assign symbols into their lines. The result of this function is therefore a list of all textlines containing the information about their individual symbols, like positioning and their actual value in UTF8.
 
-This function runs in $O(m*n^2)$. The initial idea for this implementation was to firstly sort both the symbols and lines by their y coordinates (which is simply $O(\log n)$ and  $O(\log m)$). The assignment of individual symbols into their lines would then be performed by simply iterating symbols and jumping to another line once the current symbol does not fit in the current line, with the iteration therefore having a $O(m*n)$ time complexity. This would present a significant execution time improvement.
+This function runs in $O(m\cdot n^2)$. The initial idea for this implementation was to firstly sort both the symbols and lines by their y coordinates (which is simply $O(\log n)$ and  $O(\log m)$). The assignment of individual symbols into their lines would then be performed by simply iterating symbols and jumping to another line once the current symbol does not fit in the current line, with the iteration therefore having a $O(m\cdot n)$ time complexity. This would present a significant execution time improvement.
 
 However, a problem occurred when iterating symbols. By default, Tesseract's recognition creates a lot of false positives, including noise recognized as dots, white spaces, and, most importantly, horizontal and vertical lines, like footer or header separators, underlinings of words, table borders etc. These false positives disrupt the reading order of the document, which is a factor that this approach relies on.
 
@@ -62,7 +72,7 @@ We present both cases in~\cref{fig:deletionOfLines}.
 
 Once this step of the algorithm is done, we are left only with lines that contain symbols and can be a part of the table.
 
-\begin{figure}[t]
+\begin{figure}
 \centering
 {\sffamily
 \begin{tabular}{cc}
@@ -89,7 +99,7 @@ and a visualized merge of our algorithm according to them:
 
 \texttt{1 1 1 2 2 2 3 3 3 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 5 5 15 15 15 17 17 17 18 134 235;}
 
-\begin{figure}[t]
+\begin{figure}
 \centering
 {\sffamily
 \begin{tabular}{c}
@@ -109,7 +119,8 @@ It is quite obvious that the word whitespace will therefore be around 5-6 in all
 
 So how do we determine whether the difference is too great? For both word and column whitespaces, we calculate a so-called \emph{multiplicator factor} and use it according to the next code snippet that is used for the determination of the word whitespace:
 
-\begin{code}
+\xxx{udelat z toho figure}
+{\small \begin{verbatim}
 for (it; it != all_spaces.end() - 1; it++)
 {
   // get multiplication factor of current space
@@ -120,7 +131,7 @@ for (it; it != all_spaces.end() - 1; it++)
     // code to execute once the whitespace is found
   }
 }
-\end{code}
+\end{verbatim}}
 
 From the results of the detection of spaces between individual symbols, we observed that the greater the current space is, the less the multiplication factor should be. Based on this, we have tried many different values and curves for the determination of the multiplication factor. First observations from these attempts led to the estimation that the best curve to use would be logarithmic. However, the current implementation seemed to worked well enough and was therefore left as it is.
 
@@ -132,7 +143,7 @@ The determination of whitespaces was probably the most difficult part of the alg
 
 Another initial idea was to simply determine the size of the column space by a constant, e.g. word\_whitespace*constant = column\_whitespace. Surprisingly, the results of this approach were comparable to those of the current implementation. However, it was deemed to fail when it came to small fonts or full-page tables, and had no room for improvement in contrast with the current approach.
 
-\item \emph{Table creation}
+\item \emph{\xxx{Merging column into tables}}
 
 Once we have the information about columns for each textline, we can start searching for tables. The table detection algorithm is performed by a simple $O(n)$ algorithm by iterating the textlines from top to bottom and merging two consecutive textlines with a similar column layout into a table.
 
@@ -142,11 +153,12 @@ Merge of the textlines is done by merging columns that have been detected to ove
 
 Once we have at least two merged textlines, we use this new merged line as a current textline. Therefore, when creating a table, we append new lines to the already merged ones. At the end of this algorithm, our current table is therefore represented as a textline with the information about its columns (and a list of textlines that are in the current table).
 
-\begin{algorithm}[t]
+\begin{algorithm}[p]
 \caption{Are textlines in same table}
+{\scriptsize
 \label{alg:tableMerge}
 \begin{algorithmic}
-\State $iter\_first$ represents the current place we are when iterating over columns of first line
+\Require iter\_first \Comment represents the current place we are when iterating over columns of first line
 \State $iter\_second$ represents the current place we are when iterating over columns of second line
 \While{true}
 \If {either $iter\_first$ or $iter\_second$ is at the end of their line}
@@ -165,10 +177,10 @@ Once we have at least two merged textlines, we use this new merged line as a cur
 \State $iter\_first \gets iter\_first+1$
 \State $iter\_second \gets iter\_second+1$
 \EndWhile
-\end{algorithmic}
+\end{algorithmic}}
 \end{algorithm}
 
-\item \emph{Output creation}
+\item \emph{\xxx{Output}}
 
 What we focus on when creating an output are table cells. We create them by simply overlaying rows and columns and saving their common areas as cells. The problem arises with the existence of multi-line rows, that is, rows that often span over multiple textlines. In our implementation, a simple constant-based algorithm is added to recognize at least some of them and therefore merge multiple textlines into one row.
 
@@ -176,13 +188,15 @@ Once we obtain the cells, the only thing left is to create a user-friendly repre
 
 The first option is a simple image output. Recognized cells are therefore bordered by colored boxes (\cref{fig:implem4}) in the original input image and saved in a PNG file.
 
-The other option is a json structure of the recognized cells, which also contains text within each cell. The json has the following structure:
+The other option is a json structure of the recognized cells, which also contains text within each cell. The JSON structure is demonstrated in~\cref{fig:jsonout}.
 
+\begin{figure}[p]
 \lstset{
     string=[s]{"}{"},
     stringstyle=\color{blue},
     comment=[l]{:},
     commentstyle=\color{black},
+    basicstyle=\scriptsize
 }
 \begin{lstlisting}
 {"all_tables": {
@@ -214,43 +228,37 @@ The other option is a json structure of the recognized cells, which also contain
   other tables
 }
 \end{lstlisting}
+\caption{XXX}
+\label{fig:jsonout}
+\end{figure}
 
 By default, both output options are selected and therefore two files are saved in the newly created \emph{results} directory inside the build directory.
 
 \end{enumerate}
 
-We present the whole process of the implementation, starting from the moment command line arguments are being processed to the last processed image in~\cref{fig:programFlow}.
-
-\begin{figure}[t]
+\begin{figure}[p]
 \begin{subfigure}{0.45\textwidth}
 \includegraphics[width=\linewidth]{img/implementation/implem1.png}
-\caption{Individual textlines (blue) and their symbols (red)}
+\caption{\xxx{Input:} Individual textlines (blue) and their symbols (red)}
 \label{fig:implem1}
 \end{subfigure}
 \qquad
 \begin{subfigure}{0.45\textwidth}
 \includegraphics[width=\linewidth]{img/implementation/implem2.png}
-\caption{Unnecessary lines}
+\caption{Unnecessary lines \xxx{what happened?}}
 \label{fig:implem2}
 \end{subfigure}
 \begin{subfigure}{0.45\textwidth}
 \includegraphics[width=\linewidth]{img/implementation/implem3.png}
-\caption{Textlines merged into columns}
+\caption{Textlines \xxx{were?} merged into columns}
 \label{fig:implem3}
 \end{subfigure}
 \qquad
 \begin{subfigure}{0.45\textwidth}
 \includegraphics[width=\linewidth]{img/implementation/implem4.png}
-\caption{The resulting cells}
+\caption{\xxx{Result: tables with cells.}}
 \label{fig:implem4}
 \end{subfigure}
 \caption{The process of table recognition}
 \label{fig:implemTableRecogniton}
-\end{figure}
-
-\begin{figure}[t]
-    \centering
-	\includegraphics[width=1.0\linewidth]{img/implementation/programFlow.pdf}
-	\caption{Program flow diagram}
-	\label{fig:programFlow}
 \end{figure}

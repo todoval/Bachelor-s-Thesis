@@ -22,28 +22,26 @@ Common difficulties faced by text recognition algorithms have been reviewed by~\
 
 \end{description}
 
-These difficulties motivate the common OCR implementations to work with optimistic assumptions about documents, for example that the document has only one column, that it is not handwritten, that its lines are horizontally aligned\ldots
+These difficulties motivate the common OCR implementations to work with optimistic assumptions about documents, for example that the document has only one column, that it is not handwritten, that its lines are horizontally aligned, etc.
 
-Several image processing techniques are used to eliminate the effects of most of
-these obstacles. These techniques try to preserve as much document information as possible in quick and simple ways. Moreover, they attempt to increase the performance of OCR engines. We cover them thoroughly in the next preprocessing section.
-
-Only once these techniques are applied to the input image is it passed to the text recognition process. Therefore, ideally, the only obstacles left for text recognition process to solve are font-faced problems.
+Several existing image processing techniques may be used used to eliminate the effects of most of
+these obstacles. \xxx{These techniques try to preserve as much document information as possible in quick and simple ways. Moreover, they attempt to increase the performance of OCR engines.} We cover them thoroughly in the next preprocessing section.
 
 \section{Preprocessing for OCR}
 
-Many of the existing OCR engines already come with some kind of built-in preprocessing filter. Their problem is that they most likely do not match the exact image case and are usually very simple.
-
-This is why the best practice is to firstly preprocess the image and then pass the result to the OCR algorithm.
-
-In this section, we will discuss the most important image transformations that we can perform to improve the results of the OCR. 
+Many of the existing OCR engines are equipeed with several simple built-in preprocessing methods. It is, however, often beneficial to preprocess the image using specialized or customizable tools in order to obtain better input for the OCR. In this section, we will discuss the most effective and commonly used image transformations for that purpose.
 
 \subsection{Scaling}
+
+\xxx{Co je skalovani}
+
+\xxx{Proc je to vhodny}
 
 Most common methods of character recognition demand a large set of training data. Classification of newly recognized characters is then performed by comparing them to this training data.
 
 Many popular OCR engines (e.g. Tesseract~\cite{TesseractQual}, ABBYY FineReader~\cite{ABBYYdpi}) encourage their users to use 300 dpi images. Their reason for that is pretty simple --- most of their training data were obtained from 300 dpi images, as this resolution was high enough for a clear recognition of character features, but also low enough to maintain a reasonable execution time of the algorithm. Therefore, the resolution of 300 dpi is where their recognition obtains the most accuracy~\cite{preprocessAll}. 
 
-Obtaining a 300 dpi scan using currently available hardware is simple enough. However, if the user has already provided us with an image of a different resolution, our next step is to either upscale (if the dpi of the input image was lower) or downscale (if the dpi of the input image was higher) the image. In both cases, a technique called \emph{interpolation} is used. 
+Obtaining a 300 dpi scan using currently available hardware is simple enough. However, if the user has already provided us with an image of a different resolution, our next step is to either upscale (if the dpi of the input image was lower) or downscale (if the dpi of the input image was higher) the image. In both cases, \xxx{a technique called \emph{interpolation}} is used. 
 
 Interpolation works by using known data to estimate values at unknown points. It specifically approximates the resulting pixel's color and intensity based on the values at surrounding pixels. When downscaling, this technique therefore computes one color value for each set of pixels, which are the color values of the pixels in the new image. When upscaling, it computes color values of the new pixels by approximating the values of the old pixels around them.
 
@@ -76,9 +74,10 @@ Bilinear Interpolation & Bicubic Interpolation \\
 \label{fig:preprocessInterpolation}
 \end{figure}
 
+\todo{min emphu}
 There also exist higher order interpolations, such as \emph{Spline}, \emph{Sinc}, \emph{Lanczos} or \emph{Discrete Wavelet Transforms}~\cite{interpolation}. These consider more surrounding pixels and calculate the resulting value through more complex functions, like transforms or sampling functions. The results are more accurate than those of simple calculations at the cost of significantly more time. For the purposes of OCR, such complex and time-consuming functions are not desirable, as we are not yet working with any rotations and distortions and just need to resize the existing image.
 
-For the best quality/time ratio, the popular decision in most cases is \emph{Bicubic Interpolation}. Although \emph{Neareast Neighbor} and \emph{Bilinear} methods are extremely fast, the results were found to be poor~\cite{interpolationComp}.
+\xxx{Despite of that?} For the best \xxx{quality/time} ratio, the popular decision in most cases is \emph{Bicubic Interpolation}. Although \emph{Neareast Neighbor} and \emph{Bilinear} methods are extremely fast, the results were found to be poor~\cite{interpolationComp}.
 
 \subsection{Binarization}
 
@@ -86,7 +85,7 @@ To recognize characters in an image, an OCR software must distinguish the backgr
 
 This is why it is beneficial for images to undergo the process of binarization, which converts images into their monochrome one form.
 
-Many binarization algorithms work under the assumption that the input image is already in grayscale. If not, they firstly transform the image to grayscale, then apply the binarization techniques.
+Many binarization algorithms work under the assumption that the input image is already in grayscale\xxx{. If not, they firstly transform the image to grayscale, then apply the binarization techniques}.
 
 \subsubsection{Grayscale conversion}
 
@@ -150,6 +149,8 @@ Sauvola Binarization \\
 
 \subsection{Contrast enhancement}
 
+\xxx{mozna prohodit s binarizaci?}
+
 Another important factor that results in low-quality images is low contrast. Even human eye has a harder time recognizing images with this element. The same stands for OCR engines, as low contrast often results in possible blending of edges during recognition.
 
 An image \emph{histogram} is used to improve this aspect. A histogram is an accurate representation of the distribution of data and, in case of image histograms, it represents the tonal distribution of an image --- x-axis stands for all available tonal levels, and y-axis represents the number of pixels for each tonal level. In colored (RGB) images, the histogram is displayed by the terms of three separate histograms --- one for each color component.
@@ -198,17 +199,18 @@ The most effective and popular algorithms include the following~\citep{skewBestT
     \item Cross Correlation
     \item Connected Component Clustering (or \emph{Nearest Neighbor Clustering})~\citep{skewClustering}
 \end{itemize}
-However, worth noting are also other methods like \emph{Fourier}~\citep{fourierTransform}, Wavelet Decomposition, Radon Transform, PCP, one-pass or multi-pass skew correction, morphology algorithms\ldots.. 
-
+However, worth noting are also other methods like \emph{Fourier}~\citep{fourierTransform}, Wavelet Decomposition, Radon Transform, PCP, one-pass or multi-pass skew correction, morphology algorithms, etc.
+.
 The above mentioned methods differ in the way they determine the skew of the image. Hough transform applies feature extraction to the image and assigns the skew of the line with the most number of pixels to the document. Projection profile method rotates the image and finds the skew where its histogram along horizontal scan lines has the most peaks and valleys, while the cross correlation method uses this method and applies it to multiple vertical segments. Moreover, connected component clustering method is based on finding the coherency between connected components of the image and determining their common skew. We present the advantages and disadvantages of these methods in~\cref{tab:preprocessSkewProsCons}.
 
 \begin{table}[t]
-{\small
+\xxx{Predelat na sloupce: time consumption (high/low), output (good/bad), max skew (10,20), prezije grafiku (jo/ne/mozna)}
+{\footnotesize
 \begin{tabular}{p{5em}p{13em}p{13em}}
 \toprule
 \textbf{Method} & \textbf{Advantages} & \textbf{Disadvantages} \\
 \midrule
-Hough Transform
+Hough Transform\xxx{~cite}
 &
 - highly effective
 &
@@ -264,7 +266,7 @@ Connected Component Clustering
 \label{tab:preprocessSkewProsCons}
 \end{table}
 
-\begin{figure}[t]
+\begin{figure}
 \centering
 \includegraphics[height=0.25\textheight]{img/preprocessing/deskew_orig.jpg}
 \qquad
@@ -279,7 +281,7 @@ Image noise is an usually unwanted random variation of brightness or color infor
 
 For OCR engines, processing noise can be quite tricky. Its presence is especially crucial during binarization and edge detection. These processes are based on the differences between the "outside" of the element and its "inside". When noise is present, it can disrupt these borders, which can often cause the failure of recognition. We present the different types of existing noise in~\cref{tab:preprocessNoiseTypes}.
 
-\begin{table}[t]
+\begin{table}
 {\small
 \begin{tabular}{p{8em}p{12em}l}
 \toprule
@@ -316,7 +318,7 @@ When performing noise reduction, common image processing filters are used~\citep
 
 We provide a comparison of the above mentioned techniques in~\cref{fig:preprocessDenoising}.
 
-\begin{figure}[t]
+\begin{figure}
 \centering
 {\sffamily
 \begin{tabular}{cc}
@@ -364,6 +366,8 @@ Another approach is the one mentioned by \citet{marginalNoiseEdge}. It is based 
 
 \section{Text detection process}
 
+\xxx{co je ukol, vstup a vystup}
+
 There exist two main approaches for text detection in OCR. The first one is an approach based on heuristics. It includes techniques of page segmentation, line and element detection and character detection, which are based on different approximations and sometimes naive algorithms. The second one is an approach that is widely used and researched today --- and that is the use of neural networks.
 
 In this paper, we will be concentrating on the heuristics approach of the OCR problem, as we use it in our implementation. However, neural network recognition is a promising field of study and also deserves a mention.
@@ -371,7 +375,7 @@ In this paper, we will be concentrating on the heuristics approach of the OCR pr
 Although OCR engines greatly differ in the way their heuristic approaches work, they all contain the following steps:
 \begin{enumerate}
     \item \emph{Page segmentation} --- logical and topological division of the page into multiple smaller segments
-    \item \emph{Representation and feature extraction} --- simplification of the extracted elements of the image for improvement of the OCR accuracy and execution time
+    \item \emph{\xxx{Representation and} feature extraction} --- simplification of the extracted elements of the image for improvement of the OCR accuracy and execution time
     \item \emph{Character classification}
 \end{enumerate}
 
@@ -391,8 +395,8 @@ In this section, we present a few concrete algorithms widely used for heuristic 
 
 \xxx{TO DO - chcem dat captions tym fboxom, netusim vobec ako}
 
-\clearpage
 
+\xxx{TODO: tohle uplne vynechat a zredukovat na jednu vetu se seznamem nazvu a citacema. Nechat jen tesseract.}
 \begin{longtable}{p{7em}p{13em}c}
 \toprule
 \textbf{Page} & \textbf{Description} & \textbf{Image} \\
@@ -545,7 +549,7 @@ This method is implemented and used by the Tesseract engine, with the preprocess
 
 There exist many other segmentation methods that approach this problem differently. For example, with segmentation of scanned books that mostly have Manhattan layout, a simple deskewing and horizontal and vertical cuts should suffice. Also, algorithms focusing on recipe or ticket analysis already know what the approximate layout of the received image will be. They can therefore simplify these complicated algorithms for their purposes.
 
-\subsection{Representation and feature extraction}
+\subsection{\xxx{Representation and }Feature extraction}
 
 Upon extracting elements by page segmentation, we are left with an unnecessary amount of information. Trying to run a text recognition algorithm on all of it would be significantly time consuming. Additionally, as the character recognition is based on specific features for each symbol, the extra information might not suit the character features of the correct candidate. Therefore, the candidate gets undesirably discarded, which results in decreased accuracy.
 
@@ -594,7 +598,7 @@ Zoning & Crossing and distances~\citep{crossingAndDistances}\\
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.8\linewidth]{img/textDetection/features_geometrical.png}
-\caption{Example of a few geometrical and topological features~\citep{geometricalFeatures}}
+\caption{Examples of several geometrical and topological features. \xxx{Vsude dat referenci na to odkud je obrazek.} (Image by~\citet{geometricalFeatures}.)}
 \label{fig:featureExtractionGeometrical}
 \end{figure}
 
@@ -604,6 +608,7 @@ Zoning & Crossing and distances~\citep{crossingAndDistances}\\
 
 OCR engines widely use the methodologies of pattern recognition, which assign an unknown sample into one of its predefined classes. These approaches are not necessarily independent of each other and OCR engines frequently combine subsets of them to achieve the most accurate results.
 
+\xxx{Tohle je implicitni seznam}
 One way to approach classification is by \emph{template matching}~\citep{templateMatching}. It is based on the existence of predefined \emph{templates} --- multiple bitmaps containing characters of the alphabet. Improved version of this method have an extended database of templates, including numbers and special characters. Once a character is detected, it is passed to the algorithm and for every existing template, its similarity ratio is calculated. The template with the greatest ratio is then assumed to be the recognized character. This method has various implementation depending on how the ratio is calculated --- for example, cross correlation, normalized correlation or euclidean formula can be used.
 
 Although the implementation of this method is very simple, even small disfigurements and noise can greatly affect its efficiency. Also, in this case, a feature extraction would be unnecessary as all templates are created manually. We present this technique in~\cref{fig:characterClassTemplate}.
@@ -639,7 +644,7 @@ of end points & vertical lines & horizontal lines \\
 
 For this reason, a newer approach has been tested out over the past few years --- \emph{machine learning}~\citep{characterClassification}.
 
-\emph{Machine Learning}~\citep{sebastiani2002machine} is a method of data analysis based on artificial intelligence. Over time, it builds models of "training data". Based on them, it makes decisions and predictions on its input. 
+\xxx{Techniques inspired by machine learning, e.g. .....} \emph{Machine Learning}~\citep{sebastiani2002machine} is a method of data analysis based on artificial intelligence. Over time, it builds models of "training data". Based on them, it makes decisions and predictions on its input. 
 
 In the case of character classification, training data is created by passing various characters into the engine along with their correct output. In this way, the engine learns how different characters should look and applies this knowledge to its input.
 
@@ -787,7 +792,7 @@ In this section, we present an overview of the way Tesseract (and therefore, we)
     \includegraphics[width=0.7\linewidth]{img/textDetection/tesseractBaseline.png}
     \caption{An example of a fitted baseline(dark blue) along with helper lines used for baseline fitting and later, character chopping~\citep{smith2007overview}}
     \label{fig:textRecTesseractBaseline}
-\endminipage\hfill
+\endminipage\\
 \minipage{0.45\textwidth}
     \includegraphics[width=\linewidth]{img/textDetection/tesseractSpacing.png}
     \caption{Non-fixed pitch text spacing issues~\citep{smith2007overview}}
@@ -798,5 +803,4 @@ In this section, we present an overview of the way Tesseract (and therefore, we)
     \caption{Left: original letter h; middle: broken character; right: merging of multiple smaller features~\citep{smith2007overview}}
     \label{fig:textRecTesseractChars}
 \endminipage
-\label{fig:textRecTesseract}
 \end{figure}

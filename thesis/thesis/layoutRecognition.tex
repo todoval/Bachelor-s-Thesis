@@ -8,7 +8,7 @@ The extraction of table structures from a page poses various difficulties. Compl
 
 In the previous chapter, we already covered the basics of geometric layout analysis, which is the same process as \emph{page segmentation}. The output of this process is a data structure containing the information about the detected elements. Depending on the configuration of the analysis, the resulting elements can be of various types, such as characters, words, text lines, or even tables and forms. A logical layout analysis is the applied on these elements.
 
-\emph{Logical layout analysis} is used to determine the reading order of the image document. It adopts the idea of \emph{labels}, which provide an information about the semantic order and type of individual documents elements. For example, a label might be just a number indicating the reading order of the element (as presented in~\cref{fig:readingOrderExample}), or it could contain more complex information, such as "table header", "page footer", "image caption"\ldots
+\emph{Logical layout analysis} is used to determine the reading order of the image document. It adopts the idea of \emph{labels}, which provide an information about the semantic order and type of individual documents elements. For example, a label might be just a number indicating the reading order of the element (as presented in~\cref{fig:readingOrderExample}), or it could contain more complex information, such as ``table header'', ``page footer'', ``image caption''\xxx{uvozovky}, etc.
 
 The result of logical layout analysis is therefore often in a form of mapping of each element to its corresponding label. However, the determination of correct labels is sometimes hard even for human perception, as presented in~\cref{fig:readingOrderProblems}. With various differently aligned columns with different font sizes, or with image captions appearing on different sides of the image in every document, people often determine which elements belong together only according to their intuition (e.g. when reading about a recent earthquake, caption saying “Rescued puppy” probably belongs to the picture of a dog instead of a flooded beach, although in can be placed right in the middle of these two images).
 
@@ -127,32 +127,33 @@ Another problem with tablefind is that currently, there exist no simple command 
 
 We will further present the results of this algorithm in~\cref{resultsTableFind}, where we compare them to our algorithm.
    
-\begin{figure}[t]
-\hspace*{\fill} 
-\begin{subfigure}{0.31\textwidth}
+\begin{figure}
+\centering
+\begin{subfigure}{0.30\textwidth}
 \includegraphics[width=\linewidth]{img/tableDetection/tableDetectionColumns.pdf}
 \caption{Column layout}
 \label{fig:tessTableDet1}
 \end{subfigure}
-\hspace*{\fill}
-\begin{subfigure}{0.31\textwidth}
+\quad
+\begin{subfigure}{0.30\textwidth}
 \includegraphics[width=\linewidth]{img/tableDetection/tableDetectionPartitions.pdf}
 \caption{Column partitions}
 \label{fig:tessTableDet2}
 \end{subfigure}
-\hspace*{\fill} 
-\begin{subfigure}{0.31\textwidth}
+\quad
+\begin{subfigure}{0.30\textwidth}
 \includegraphics[width=\linewidth]{img/tableDetection/tableDetectionCandidate.pdf}
 \caption{Candidate table partitions}
 \label{fig:tessTableDet3}
 \end{subfigure}
-\hspace*{\fill}
-\begin{subfigure}{0.31\textwidth}
+\\
+\begin{subfigure}{0.30\textwidth}
 \includegraphics[width=\linewidth]{img/tableDetection/tableDetectionTabCols.pdf}
 \caption{Table columns}
 \label{fig:tessTableDet4}
 \end{subfigure}
-\begin{subfigure}{0.31\textwidth}
+\quad
+\begin{subfigure}{0.30\textwidth}
 \includegraphics[width=\linewidth]{img/tableDetection/tableDetectionResult.pdf}
 \caption{Detected table regions}
 \label{fig:tessTableDet5}
@@ -167,6 +168,7 @@ Besides Tesseract, there exist heuristic approaches presented for table detectio
 
 Presented as one of the first table detection algorithms by~\citet{TRecs}, the \emph{T-Recs} table recognition system is based on a bottom-up approach of clustering word bounding boxes and building a "segmentation graph". This results in creating different regions of page. These are then evaluated according to certain criterion. If they satisfy them, the region is determined to be a table. Although widely used in the past, this techniques has a few setbacks. T-Recs is controlled by a set of numerical parameters, which result in different results of table detection depending on the layout that is given. These parameters need to be set manually. Moreover, it yields unsatisfactory results on multi-column documents.
 
+\todo{implicitni seznam}
 Another algorithm was described by~\citet{MediumTable}. In single-column documents, a page can be easily segmented into individual text-lines. The table detection problem is then perceived as an optimization problem, where the start and end text-lines belonging to a table are identified by optimizing some quality function. However, this approach fails on multi-column documents, or on documents having more than one table.
 
 \citet{tableDetectCesarini} describes another approach based on the document being hierarchically represented by a structure similar to a MXY tree. The presence of a table is determined by searching the tree for parallel lines, which contain white spaces and other perpendicular lines between them. Located tables can be merged on the basis of proximity and similarity criteria. However, this approach fails if no lines in tables are present --- which is usually the case of many tables.
