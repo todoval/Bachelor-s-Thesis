@@ -585,6 +585,7 @@ void page::init_api(image &img)
 {
 	if (api->Init(NULL, "eng", tesseract::OcrEngineMode::OEM_TESSERACT_ONLY))
 	{
+		// fatal error
 		std::cerr << "Failed to initialize tesseract!" << std::endl;
 		exit(1);
 	}

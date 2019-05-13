@@ -14,6 +14,13 @@ int main(int argc, char* argv[]) {
 		
 	std::experimental::filesystem::create_directory("results");
 
+	if (filenames.empty())
+	{
+		std::cerr << "Warning: no input files specified" << std::endl;
+		output_help();
+		exit(1);
+	}
+
 	for (auto name : filenames)
 	{
 		// if the file was a directory, create a subdirectory

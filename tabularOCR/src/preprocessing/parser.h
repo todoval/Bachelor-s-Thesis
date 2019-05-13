@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <map>
+#include <iomanip> 
 #include <experimental/filesystem>
 
 #ifdef _WIN32
@@ -22,14 +23,6 @@ using json = nlohmann::json;
 
 namespace tabular_ocr
 {
-
-	/* prepinace
-	greyscale: -g, --greyscale, parametre:
-	binarize: -b, --binarize, parametre:
-	skew correction: -sk, --deskew, parametre:
-	enhance: -e, --enhance,
-	*/
-
 	struct pixDestroy_wrap {
 		void operator()(struct Pix* p) { pixDestroy(&p); }
 	};
@@ -74,14 +67,17 @@ namespace tabular_ocr
 	// returns a vector of all names of files that are in the given directory
 	std::vector<std::string> get_filenames_from_dir(const std::string& directory);
 
-	// ends the whole program and throws a parsing error
-	void handle_parsing_error();
-
 	// returns a filename from a given full input path
 	std::string get_filename(const std::string & input_path);
 
 	// returns a filename with its parent directory from a given full input path
 	std::string get_filename_with_dir(const std::string & input_path);
+
+	// returns true if a file on the given input path exists
+	bool file_exists(const std::string & input_path);
+
+	// returns true if the format is one of the formats recognized by the Tesseract engine
+	bool is_file_format_valid(const std::string & input_path);
 
 	// creates subdirectory of the results directory
 	void create_results_subdirectory(const std::string & name);
@@ -89,4 +85,10 @@ namespace tabular_ocr
 	void save_img_result(const std::string & name, const image & img);
 
 	void save_json_result(const std::string & name, const json & json_form);
+
+	// checks whether the file is valid and should be processed
+	bool check_file(const std::string & name);
+
+	// output the -help and ends the whole program
+	void output_help();
 }

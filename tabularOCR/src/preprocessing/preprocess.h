@@ -28,6 +28,7 @@ namespace tabular_ocr
 			void deskew();
 		};
 
+		// is thrown solely when an error in the implementation is encountered
 		void handle_preprocessing_error();
 	}
 }

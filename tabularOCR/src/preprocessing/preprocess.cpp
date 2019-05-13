@@ -2,8 +2,8 @@
 
 	void tabular_ocr::preprocessing::handle_preprocessing_error()
 	{
-
-		std::cout << "Wrong preprocessing parameters";
+		std::cerr << "Fatal error: wrong preprocessing parameters";
+		exit(1);
 	}
 
 	tabular_ocr::preprocessing::preprocessor::preprocessor(image img_p, config cfg_p)
@@ -79,7 +79,7 @@
 		else if (cfg.gs_method == greyscale_method::NONE_G)
 			return;
 		else
-			handle_parsing_error();
+			handle_preprocessing_error();
 	}
 
 	void tabular_ocr::preprocessing::preprocessor::deskew()
