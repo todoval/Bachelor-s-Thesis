@@ -182,8 +182,8 @@ std::vector<boxed_string> page::merge_lines(const std::vector<boxed_string> & fi
 	int height = get_char_height(second, img_preprocessed->w) + get_y_axis(second) - y;
 
 	// used to keep track of already merged columns from second line
-	std::vector<int> second_line_indices;
-	for (int i = 0; i < second.size(); i++)
+	std::vector<size_t> second_line_indices;
+	for (size_t i = 0; i < second.size(); i++)
 		second_line_indices.push_back(i);
 
 	// go over the first vector and either add from given map or at only this box into the new vector
@@ -360,7 +360,7 @@ int page::get_row_whitespace(const std::vector<textline> lines)
 	for (size_t i = 0; i < lines.size() - 1; i++)
 		whitespaces.push_back(lines[i + 1].box.y - (lines[i].box.h + lines[i].box.y));
 	std::sort(whitespaces.begin(), whitespaces.end());
-	std::pair<int, int> whitespace = { 0,0 }; // whitespace and its multiplicator
+	std::pair<int, double> whitespace = { 0,0 }; // whitespace and its multiplicator
 	for (size_t i = 0; i < whitespaces.size() - 1; i++)
 	{
 		if (whitespaces[i] == 0)
@@ -606,7 +606,7 @@ void page::init_textlines()
 	{
 		Boxa * ba = api->GetComponentImages(tesseract::RIL_TEXTLINE, false, NULL, NULL);
 		textline_arr.reserve(ba->n);
-		for(size_t i=0;i<ba->n;++i) {
+		for(auto i=0;i<ba->n;++i) {
 			textline_arr.emplace_back(ba->box[i]);
 		}
 		boxaDestroy(&ba);

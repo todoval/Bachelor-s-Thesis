@@ -24,12 +24,12 @@ using namespace tabular_ocr;
 		bool parse_files = false;
 
 		// processing the help option
-		if (argc == 1 && (argv[0] == "-h" || argv[0] == "--help"))
+		if (argc == 2 && (std::string(argv[1]) == "-h" || std::string(argv[1]) == "--help"))
 		{
 			output_help();
 			exit(0);
 		}
-		for (size_t i = 1; i < argc; i++)
+		for (int i = 1; i < argc; i++)
 		{
 			std::string arg = argv[i];
 
