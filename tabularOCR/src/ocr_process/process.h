@@ -219,6 +219,9 @@ namespace tabular_ocr
 
 			// sets borders to all the cells in the given table
 			void set_cell_borders(const table & table);
+
+			// ends the initialized Tesseract api
+			void end_api();
 		};
 
 	}

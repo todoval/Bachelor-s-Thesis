@@ -387,6 +387,14 @@ void page::set_cell_borders(const table & table)
 		set_border(cell.box, 255, 0, 0);
 }
 
+void tabular_ocr::ocr::page::end_api()
+{
+	// end and clear api to avoid memory leaks
+	api->End();
+	api->ClearPersistentCache();
+	api->Clear();
+}
+
 void page::init_table(table & curr_table, std::vector<boxed_string> & merged_cols)
 {
 	if (!curr_table.textlines.empty() && merged_cols.size() > 1)
@@ -591,7 +599,7 @@ void page::init_api(image &img)
 	}
 	api->SetPageSegMode(tesseract::PageSegMode::PSM_AUTO);
 	api->SetImage(img.get());
-//	api->SetVariable("user_defined_dpi", "72");
+	//	api->SetVariable("user_defined_dpi", "72");
 	api->Recognize(0);
 }
 
@@ -730,6 +738,12 @@ void page::process_image()
 		img_old = image(pixCopy(nullptr, rem_img.get()));
 	}
 
+	if (img_old.get() == NULL)
+	{
+		std::cerr << "Error: input image size too big" << std::endl;
+		end_api();
+		exit(1);
+	}
 
 	// initializes the textlines vector - adds symbols and fonts to the existing textlines
 	init_textlines();
@@ -745,10 +759,7 @@ void page::process_image()
 
 	create_tables_from_cols();
 
-	// end and clear api to avoid memory leaks
-	api->End();
-	api->ClearPersistentCache();
-	api->Clear();
+	end_api();
 }
 
 cell::cell()
@@ -774,9 +785,7 @@ json page::to_json()
 {
 	json table_list = json::array();
 	for (auto & table : all_tables)
-	{
 		table_list.push_back(table.to_json());
-	}
 	return table_list;
 }
 
