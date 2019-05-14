@@ -1,22 +1,23 @@
 \chapter*{Introduction}
 \addcontentsline{toc}{chapter}{Introduction}
-s
 
-Odstavec 1: obecny pohled na problematiku, k cemu je OCR a kde se pouziva. Digitalizace.
+Digitalization of documents has become a demand in this century. All kinds of administrative, school and press documents are being processed to a scalable, more accessible digital form. 
 
-Odstavec 2: Kde je problem, OCR funguje, ale na tabulky dost selhava
+To achieve this, we use a so-called \emph{optical character recognition} (OCR). OCR engines are used to recognize individual elements of a scanned document and output them in a desired format, e.g. text, searchable PDF, etc.
 
-Odstavec 3: Co s tim dela tahle prace --- ...Thes goal of this thesis...
+OCR algorithms oriented on specific input document layouts (for example tickets, passports, car plates) work sufficiently. A more generically focused OCR engines tend to have problems with complex layout structures, which might be difficult to comprehend even for a human perception. One of these structures are tables.
 
-Odstavec 4: Proc jsou vysledky prace fajn. Funguje to lip (duvody)? jo. Pujde to k necemu pouzit novymu? (nejspis jo ale chtelo by to zlepsit tesseract.
+Table recognition algorithms are hard to generalize due to various aspects, such as diverse or even missing borders, different cell sizes, multi-column and multi-row cells, element alignments, etc. 
+
+The main goal of this thesis is to research possible OCR techniques and apply this knowledge to recognize table elements on top of character recognition. Additional aim is to create a portable table structure (JSON).
+
+Upon meeting specific input conditions, the resulting JSON structures provide a convenient overview of the tables inside a document in many of the tested cases. Better results would be achieved with more accurate character recognition provided by external open-source software used by this thesis (Tesseract~\cite{TesseractGIT}).
 
 \subsection*{Related work}
 
-odstavec: Kdo vsechno se zabejva OCR (scholar)
+There exist a lot of other OCR engines which provide similar features as Tesseract. Under existing open-source OCR software are, for example, CuneiForm, GOCR, Ocrad or OCRopus. They all support basic character recognition, with slight differences in the number of recognized languages, types of symbols, provided features, accuracy of results and in the general focus of the recognition (e.g. scanned documents, barcode detection). Although they all produce satisfactory results, none of them provides the user with table recognition.
 
-Jaky softwary fungujou, OCR je dost
+Table recognition is a problem addressed by algorithms presented by~\citet{tableDetHeterogeneous}, \citet{TRecs}, \citet{MediumTable}, \citet{pdf2table} and many more. However, most of the implementations are either outdated, are not open-source lincensed, or do not provide sufficient results.
 
-Specializace na tabulky existuje, ale implementovana neni (scholar --- neni neco popsanyho?)
-
-\paragraph{Layout of this thesis.} In Chapter 1, we review the... After last chapter, we conclude with a brief overview of possible future improvements.
+\paragraph{Layout of this thesis} This thesis is structured as follows: In Chapter 1, we review the obstacles that complicate character recognition and present ways of their elimination. Moreover, we present techniques of heuristic text recognition. In Chapter 2, we describe the individual steps of existing table recognition algorithms. Chapter 3 describes the implementation of our software, including our heuristic algorithm used for table detection and recognition. Performance measurements, results and possible implementation improvements are presented in Chapter 4. After the last chapter, we conclude with a brief overview of possible future work.
 

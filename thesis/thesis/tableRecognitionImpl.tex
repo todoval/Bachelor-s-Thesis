@@ -2,7 +2,7 @@
 
 This chapter gives us an overview of procedures and tools used to create a table recognition software. 
 
-The project is written in C++ and compilable using CMake (tested on MSVC 2017 and GNU 8). We chose CMake for its cross-platform support and its ability to work with external dependencies (e.g. Tesseract, Leptonica). 
+The project is written in C++ and compilable using CMake (tested on MSVC 2017 and G++ 7.4). We chose CMake for its cross-platform support and its ability to work with external dependencies (e.g. Tesseract, Leptonica). 
 
 The implementation is divided into two main parts --- \emph{preprocessing}, which prepares the input images for recognition, and \emph{tabular OCR}, which applies our heuristic algorithm for table recognition. Both parts use the features of the Leptonica library and tabular OCR utilizes the character and textline recognition of the Tesseract engine. The image processing in the program is schematized in~\cref{fig:programFlow}.
 

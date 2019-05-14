@@ -29,7 +29,7 @@ these obstacles. \xxx{These techniques try to preserve as much document informat
 
 \section{Preprocessing for OCR}
 
-Many of the existing OCR engines are equipeed with several simple built-in preprocessing methods. It is, however, often beneficial to preprocess the image using specialized or customizable tools in order to obtain better input for the OCR. In this section, we will discuss the most effective and commonly used image transformations for that purpose.
+Many of the existing OCR engines are equiped with several simple built-in preprocessing methods. It is, however, often beneficial to preprocess the image using specialized or customizable tools in order to obtain better input for the OCR. In this section, we will discuss the most effective and commonly used image transformations for that purpose.
 
 \subsection{Scaling}
 
@@ -57,13 +57,13 @@ Interpolation algorithms can be grouped into two categories: \emph{adaptive} and
 \centering
 {\sffamily
 \begin{tabular}{cc}
-Original & Nearest-neighbor Interpolation\\
+Original & Nearest-neighbor interpolation\\
  & (1 pixel) \\
 \includegraphics[width=.4\linewidth]{img/preprocessing/interp_orig.png}
 &
 \includegraphics[width=.4\linewidth]{img/preprocessing/interp_nn.png}
 \vspace{1em} \\
-Bilinear Interpolation & Bicubic Interpolation \\
+Bilinear interpolation & Bicubic interpolation \\
 ($2\times2$ pixels) & ($4\times4$ pixels) \\
 \includegraphics[width=.4\linewidth]{img/preprocessing/interp_bili.png}
 &
@@ -75,7 +75,7 @@ Bilinear Interpolation & Bicubic Interpolation \\
 \end{figure}
 
 \todo{min emphu}
-There also exist higher order interpolations, such as \emph{Spline}, \emph{Sinc}, \emph{Lanczos} or \emph{Discrete Wavelet Transforms}~\cite{interpolation}. These consider more surrounding pixels and calculate the resulting value through more complex functions, like transforms or sampling functions. The results are more accurate than those of simple calculations at the cost of significantly more time. For the purposes of OCR, such complex and time-consuming functions are not desirable, as we are not yet working with any rotations and distortions and just need to resize the existing image.
+There also exist higher order interpolations, such as Spline, Sinc, Lanczos or Discrete Wavelet Transforms~\cite{interpolation}. These consider more surrounding pixels and calculate the resulting value through more complex functions, like transforms or sampling functions. The results are more accurate than those of simple calculations at the cost of significantly more time. For the purposes of OCR, such complex and time-consuming functions are not desirable, as we are not yet working with any rotations and distortions and just need to resize the existing image.
 
 \xxx{Despite of that?} For the best \xxx{quality/time} ratio, the popular decision in most cases is \emph{Bicubic Interpolation}. Although \emph{Neareast Neighbor} and \emph{Bilinear} methods are extremely fast, the results were found to be poor~\cite{interpolationComp}.
 
