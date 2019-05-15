@@ -228,7 +228,7 @@ using namespace tabular_ocr;
 
 	void tabular_ocr::output_help()
 	{
-		std::cerr << "Usage: tabularOCR [-options] filenames" << std::endl <<
+		std::cerr << "Usage: tabularOCR.exe [-options] filenames" << std::endl <<
 			"where options include:" << std::endl <<
 			"\t" << "(-e | --enhance) [SIMPLE | GAMMA | EQUALIZATION]" << std::endl <<
 			"\t\t" << "enhance the contrast of the image before processing" << std::endl <<
