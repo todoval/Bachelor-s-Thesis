@@ -31,7 +31,7 @@ these obstacles in the attempt to increase the performance of OCR engines. We co
 
 Many of the existing OCR engines are equipped with several simple built-in preprocessing methods. It is, however, often beneficial to preprocess the image using specialized or customizable tools in order to obtain better input for the OCR. In this section, we will discuss the most effective and commonly used image transformations for that purpose.
 
-\subsection{Scaling}
+\subsection{Scaling} \label{scaling}
 
 In computer graphics, scaling refers to the process of resizing a digital image while maintaining its data. The purpose of this method is to provide an input of a specific size or resolution to OCR engines. For example, OCR engines likes Tesseract~\cite{TesseractQual} or ABBYY FineReader~\cite{ABBYYdpi} encourage their users to use 300 dpi images. This is due to the fact that the classification of newly recognized characters requires a large set of training data which they are then compared to. The training data provided to these OCR engines is mostly obtained from 300 dpi images. This resolution was proclaimed to be high enough for a clear recognition of character features, but also low enough to maintain a reasonable execution time of the algorithm. 
 

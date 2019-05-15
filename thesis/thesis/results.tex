@@ -33,103 +33,97 @@ By observing the testing results and utilizing the above mentioned graphs, we ma
 
     \item \emph{The time of the Tesseract recognition greatly depends on the number of symbols, not so much on textlines.}
     
-    The recognition of symbols and textlines greatly depends on one another and is executed at the same time~\cref{tesseractCharacterRecognition}. However, what Tesseract focuses on during this process is the merging and recognition of the individual characters. The creation of individual textlines is only very simple and depends on the number of symbols in each textline. Therefore, the dependencies in graph~\cref{fig:textlinesTimeTess} could be completely different and the graph does not contain any meaningful information.
-    
-    \item \emph{The overall time of the execution of our algorithm \xxx{does not grow exponentially} presnou slozitost? with more text. (Empiricky, i s tesseractem se to chova zhruba $\mathcal{O}(n^{2.1234})$)}
-    
-    Although it might look like that at first, upon running our recognition system on various different images, the resulting curve representing the dependency between the number of recognized symbols and time of execution resembles a linear curve better than an exponential curve. This is due to the fact that the time of the Tesseract recognition does not depend on the number of symbols exponentially --- the more the symbols, the easier it becomes for Tesseract overtime to recognize them.
+    The recognition of symbols and textlines is performed concurrently~\cref{tesseractCharacterRecognition}. However, what Tesseract focuses on during this process is the merging and recognition of the individual characters, while the textlines are only a side product. Therefore, the dependencies in graph~\cref{fig:textlinesTimeTess} could be completely different and the graph does not contain any meaningful information.
     
 \end{itemize}
 
-\begin{figure}
-\centering
-\includegraphics[height=20em]{img/results/symbolsTimeInit.png}
-\caption{The dependency of the number of recognized textlines on the time of execution of the \texttt{init\_textlines} function}
-\label{fig:symbolsTimeInit}
-\end{figure}
-
-\begin{figure}
-\centering
-\includegraphics[height=20em]{img/results/symbolsTimeTesseract.png}
-\caption{The dependency of the number of recognized textlines on the time of execution of Tesseract recognition}
-\label{fig:symbolsTimeTess}
-\end{figure}
-
-\begin{figure}
-\centering
-\includegraphics[height=20em]{img/results/symbolsTimeAll.png}
-\caption{The dependency of the number of recognized symbols on the overall time of execution}
-\label{fig:symbolsTime}
-\end{figure}
-
-\begin{figure}
-\centering
-\includegraphics[height=20em]{img/results/textlinesTimeInit.png}
-\caption{The dependency of the number of recognized textlines on the time of execution of the \texttt{init\_textlines} function}
-\label{fig:textlinesTimeInit}
-\end{figure}
-
-\begin{figure}
-\centering
-\includegraphics[height=20em]{img/results/textlinesTimeTesseract.png}
-\caption{The dependency of the number of recognized textlines on the time of execution of Tesseract recognition}
-\label{fig:textlinesTimeTess}
-\end{figure}
-
-\begin{figure}
-\centering
-\includegraphics[height=20em]{img/results/textlinesTimeAll.png}
-\caption{The dependency of the number of recognized textlines on the overall time of execution}
-\label{fig:textlinesTime}
+\begin{figure}[t]
+\minipage{0.45\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{img/results/symbolsTimeInit.png}
+    \caption{The time of execution of the \texttt{init\_textlines} function with respect to the number of recognized textlines.}
+    \label{fig:symbolsTimeInit}
+\endminipage\hfill
+\minipage{0.45\textwidth}
+    \includegraphics[width=\linewidth]{img/results/symbolsTimeTesseract.png}
+    \caption{The time of execution of Tesseract recognition with respect to the number of recognized textlines.}
+    \label{fig:symbolsTimeTess}
+\endminipage\\
+\minipage{0.45\textwidth}
+    \includegraphics[width=\linewidth]{img/results/symbolsTimeAll.png}
+    \caption{The overall time of execution with respect to the number of recognized symbols.}
+    \label{fig:symbolsTime}
+\endminipage\hfill 
+\minipage{0.45\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{img/results/textlinesTimeInit.png}
+    \caption{The time of execution of the \texttt{init\_textlines} function with respect to the number of recognized textlines.}
+    \label{fig:textlinesTimeInit}
+\endminipage\\
+\minipage{0.45\textwidth}
+    \includegraphics[width=\linewidth]{img/results/textlinesTimeTesseract.png}
+    \caption{The time of execution of Tesseract recognition with respect to the number of recognized textlines.}
+    \label{fig:textlinesTimeTess}
+\endminipage\hfill
+\minipage{0.45\textwidth}
+    \includegraphics[width=\linewidth]{img/results/textlinesTimeAll.png}
+    \caption{The overall time of execution with respect to the number of recognized textlines.}
+    \label{fig:textlinesTime}
+\endminipage
+\label{resultsTextEffects}
 \end{figure}
 
 \section{Effects of image resolution}
 
-The quality of the input image greatly affects Tesseract's recognition system and therefore our recognition system. Tesseract advises its users to use at least 300 dpi images, as it claims that lower resolution images are more likely to fail at recognition to a greater extent. In this section, we tested the effects of image resolution on both the speed of the algorithm and the accuracy of Tesseract (by which we understand the number of recognized symbols and textlines, as Tesseract outputs barely any false positives). For these purposes, we used the same different resolution images as in~\cref{resultsEffectsOfText}.
+The quality of the input image greatly affects Tesseract's recognition system and therefore our recognition system. Tesseract advises its users to use at least 300 dpi images, as it claims that lower resolution images are more likely to fail at recognition to a greater extent. In this section, we tested the effects of image resolution on both the speed of the algorithm (presented in~\cref{fig:dpiTessTime,fig:dpiInitTime,fig:dpiAllTime}) and the accuracy of Tesseract (by which we understand the number of recognized symbols and textlines, as Tesseract outputs barely any false positives, presented in~\cref{fig:dpiSymbols,fig:dpiTextlines}). For these purposes, we used the same different resolution images as in~\cref{resultsEffectsOfText}.
 
 \subsection{Effects on time complexity}
 
-From the observation of the results in~\cref{fig:dpiInitTime}, it is evident that the DPI of the image does not have a direct effect on the \texttt{init\_textlines} function. This is because the time complexity of this function is directly dependent on the number of symbols and textlines. As a higher DPI image does not necessarily mean that more symbols and textlines will be present in the image (due to false positives, incorrect splits between textlines in lower resolution images, splitting of characters and more), the dependencies presented in~\cref{fig:dpiInitTime} could greatly vary. However, when it comes to Tesseract recognition~\cref{fig:dpiTessTime}, we can clearly see that its execution time increases with increased DPI. The exception to this is when the image has around 300 dpi, where the execution time suddenly decreases. This is due to the fact that most of the Tesseract training data are of a 300 dpi resolution.
+From the observation of the results in~\cref{fig:dpiInitTime}, it is evident that the DPI of the image does not have a direct effect on the \texttt{init\_textlines} function. This is because the time complexity of this function is directly dependent on the number of symbols and textlines. As a higher DPI image does not necessarily mean that more symbols and textlines will be present in the image (due to false positives, incorrect splits between textlines in lower resolution images, splitting of characters and more), the dependencies presented in~\cref{fig:dpiInitTime} could greatly vary.
 
-This implies that the overall time complexity~\cref{fig:dpiAllTime} of our algorithm will also be dependent on the DPI of the image, with the best results obtained at the DPI of around 300. Although the recognition time is exponentially lower with the dpi under 150, the results from images with this resolution are useless, as they produce many undetected characters.
+However, when it comes to Tesseract recognition, presented in~\cref{fig:dpiTessTime}, we can clearly see that its execution time increases with increased DPI. The exception to this is when the image has around 300 dpi, where the execution time suddenly decreases. This is due to the fact that most of the Tesseract training data are of a 300 dpi resolution (\cref{scaling}).
 
-\begin{figure}
-\centering
-\includegraphics[height=20em]{img/results/dpiTimeTesseract.png}
-\caption{The dependency of the DPI of the given image on the time of Tesseract recognition}
-\label{fig:dpiTessTime}
-\end{figure}
+This implies that the overall time complexity of our algorithm will also be dependent on the DPI of the image, with the best results obtained at the DPI of around 300 (shown in~\cref{fig:dpiAllTime}). Although the recognition time is exponentially lower with the dpi under 150, the results from images with this resolution are useless, as they produce many undetected characters.
 
-\begin{figure}
-\centering
-\includegraphics[height=20em]{img/results/dpiTimeInit.png}
-\caption{The dependency of the DPI of the given image on the \texttt{init\_textlines} function}
-\label{fig:dpiInitTime}
-\end{figure}
-
-\begin{figure}
-\centering
-\includegraphics[height=20em]{img/results/dpiTimeAll.png}
-\caption{The dependency of the DPI of the given image on the overall time of our algorithm}
-\label{fig:dpiAllTime}
+\begin{figure}[t]
+\minipage{0.45\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{img/results/dpiTimeTesseract.png}
+    \caption{The time of Tesseract recognition with respect to the DPI of the given image (different lines = different images).}
+    \label{fig:dpiTessTime}
+    \label{fig:textlinesTimeInit}
+\endminipage\hfill
+\minipage{0.45\textwidth}
+    \includegraphics[width=\linewidth]{img/results/dpiTimeInit.png}
+    \caption{The time of execution of the \texttt{init\_textlines} function with respect to the DPI of the given image (different lines = different images).}
+    \label{fig:dpiInitTime}
+\endminipage\\
+\minipage{\textwidth}
+    \includegraphics[width=\linewidth]{img/results/dpiTimeAll.png}
+    \caption{The overall time of execution with respect to the DPI of the given image (different lines = different images).}
+    \label{fig:dpiAllTime}
+\endminipage
+\label{resultsDPITime}
 \end{figure}
 
 \subsection{Effects on Tesseract accuracy}
 
-From the observation of the results in~\cref{fig:dpiSymbols}, we can clearly see that the number of detected symbols rises rapidly up to the DPI of around 300. However, once we increase the DPI of the image above the value of 300, the recognition system barely recognizes any new characters. Sometimes, at increasingly higher resolutions, the recognition even decreases in accuracy. This leads us to the assumption that the 300 dpi resolution is sufficient enough for symbol recognition. As we already mentioned before, the fact that there is an increased amount of textlines does not necessarily mean that the accuracy of Tesseract has increased. Therefore, the effects of DPI on the amount of textlines in an image are unpredictable and the results~\cref{fig:dpiTextlines} do not contain any meaningful information.
+From the observation of the results in~\cref{fig:dpiSymbols}, we can clearly see that the number of detected symbols rises rapidly up to the DPI of around 300. However, once we increase the DPI of the image above the value of 300, the recognition system barely recognizes any new characters. Sometimes, at significantly higher resolutions, the recognition even decreases in accuracy. This leads us to the assumption that the 300 dpi resolution is sufficient enough for symbol recognition.
 
-\begin{figure}
-\centering
-\includegraphics[height=20em]{img/results/dpiSymbols.png}
-\caption{The dependency of the DPI of the given image on the number of recognized symbols}
-\label{fig:dpiSymbols}
-\end{figure}
+As we already mentioned in this chapter, the fact that there is an increased amount of textlines does not necessarily mean that the accuracy of Tesseract has increased. Therefore, the effects of DPI on the amount of textlines in an image are unpredictable and the results presented in~\cref{fig:dpiTextlines} do not contain any meaningful information.
 
-\begin{figure}
-\centering
-\includegraphics[height=20em]{img/results/dpiTextlines.png}
-\caption{The dependency of the DPI of the given image on the number of recognized textlines}
-\label{fig:dpiTextlines}
+\begin{figure}[t]
+\minipage{0.45\textwidth}
+    \includegraphics[width=\linewidth]{img/results/dpiSymbols.png}
+    \caption{The number of recognized symbol with respect to the DPI of the given image (different lines = different images).}
+    \label{fig:dpiSymbols}
+\endminipage\hfill
+\minipage{0.45\textwidth}
+    \includegraphics[width=\linewidth]{img/results/dpiTextlines.png}
+    \caption{The number of recognized textlines with respect to the  DPI of the given image (different lines = different images).}
+    \label{fig:dpiTextlines}
+\endminipage
+\label{resultsDPIAccuracy}
 \end{figure}
 
 \section{Effects of preprocessing}
@@ -142,7 +136,7 @@ As mentioned multiple times in the previous chapters, preprocessing is a crucial
 \includegraphics[width=15em]{img/results/im1_noPreproc.png}
 \includegraphics[width=15em]{img/results/im1_Preproc.png}
 
-\caption{The effects of preprocessing on Tesseract recognition. Left: Tesseract does not recognize most of the symbols of the original image because of low contrast. Right: Upon applying a simple luma greyscale conversion and increasing contrast, Tesseract renders notably better results.}
+\caption{The effects of preprocessing on Tesseract recognition. Left: Tesseract does not recognize most of the symbols of the original image because of low contrast. Right: Upon applying a simple luma greyscale conversion and increasing contrast, Tesseract outputs notably better results.}
 \label{fig:preprocessEffectsGS}
 \end{figure}
 
@@ -156,39 +150,35 @@ As mentioned multiple times in the previous chapters, preprocessing is a crucial
 \label{fig:preprocessEffectsAdapt}
 \end{figure}
 
-\section{Comparison to Tesseract's tablefind} \label{resultsTableFind}
+\section{Comparison to Tesseract's TableFind} \label{resultsTableFind}
 
-We already mentioned Tesseract's tablefind algorithm in~\cref{tableFind}. It uses heuristic algorithms to find tables from the segmentation Tesseract already offers. It also contains a simple recognition class that tries to analyze the found table for rows, columns and cells. It is a bottom-down approach, in comparison to our algorithm, which starts from the individual characters and builds up a table.
+We already mentioned Tesseract's TableFind algorithm in~\cref{tableFind}. It uses heuristic algorithms to find tables from the segmentation Tesseract already offers. It also contains a simple recognition class that tries to analyze the found table for rows, columns and cells. It is a bottom-down approach, in comparison to our algorithm, which starts from the individual characters and builds up a table.
 
-Although this algorithm has a pretty impressive results when finding tables (\emph{table detection}), it does not provide any information about the text in various cells and has no output except for a bounding box around the found table. Therefore, there is almost no support for table recognition. As this was the goal of our implementation, it is difficult to compare its results to ours. Moreover, tablefind is mainly used as a tool for developers. It has no command line interface and GUI and the user needs to understand its API to obtain its results.
+Although this algorithm has a pretty impressive results when finding tables (\emph{table detection}), it does not provide any information about the text in various cells and has no output except for a bounding box around the found table. Therefore, there is almost no support for table recognition. As this was the goal of our implementation, it is difficult to compare its results to ours. Moreover, TableFind is mainly used as a tool for developers. It has no command line interface or GUI and the user needs to understand its API to obtain its results.
 
-The only comparable results that both algorithm produce are the recognized table. We ran both the tablefind and our algorithm on all of the 155 testing files. By observing the results, we concluded the following:
+The only comparable results that both algorithm produce are the recognized table. We executed both TableFind and our algorithm on all of our testing files. By observing the results, we concluded the following:
 \begin{itemize}
-    \item Our algorithm considers noticeably different fonts to probably not belong to the same table, which is often true. Tablefind does not make this assumptions
-    \item In contrast to our algorithm, tablefind often results in oversegmentation (\cref{fig:tableFindComparison_Ours})
-    \item Tablefind achieves better results at full-page tables and heterogeneous page layouts (\cref{fig:tableFindComparison_Tess})
-    \item Tablefind has no support for handling footers and often includes them in a table, in comparison to our algorithm
-    \item Tablefind considers horizontal and vertical lines and therefore renders satisfactory results when it comes to bordered tables
+    \item Our algorithm considers noticeably different fonts to probably not belong to the same table, which is often true. TableFind does not make this assumptions.
+    \item In contrast to our algorithm, TableFind often results in over-segmentation (\cref{fig:tableFindComparison_Ours}).
+    \item TableFind achieves more accurate results than our algorithm on full-page tables and heterogeneous page layouts (\cref{fig:tableFindComparison_Tess}).
+    \item TableFind has no support for handling footers and often includes them in a table, in comparison to our algorithm.
+    \item TableFind considers horizontal and vertical lines and therefore renders satisfactory results when it comes to bordered tables.
 \end{itemize}
 
 \begin{figure}[t]
 \centering
-
-\includegraphics[width=15em]{img/results/tableFind1Tess.jpg}
-\includegraphics[width=15em]{img/results/tableFind1Us.png}
-
-\caption{}
-\label{fig:tableFindComparison_Tess}
+\includegraphics[width=15em]{img/results/tableFind2Tess.jpg}
+\includegraphics[width=15em]{img/results/tableFind2Us.png}
+\caption{Comparison of TableFind algoritm (left) and our algoritm (right). Our algorithm renders better results in case tables are a part of a text document, while TableFind often results in over-segmentation.}
+\label{fig:tableFindComparison_Ours}
 \end{figure}
 
 \begin{figure}[t]
 \centering
-
-\includegraphics[width=15em]{img/results/tableFind2Tess.jpg}
-\includegraphics[width=15em]{img/results/tableFind2Us.png}
-
-\caption{}
-\label{fig:tableFindComparison_Ours}
+\includegraphics[width=15em]{img/results/tableFind1Tess.jpg}
+\includegraphics[width=15em]{img/results/tableFind1Us.png}
+\caption{Comparison of TableFind algoritm (left) and our algoritm (right). TableFind renders notably better results when it comes to full-page tables.}
+\label{fig:tableFindComparison_Tess}
 \end{figure}
 
 \section{Table recognition results}
@@ -204,15 +194,15 @@ In~\cref{fig:sampleResults}, we provide a few sample results of our algorithm. F
     
     \item \emph{Word whitespace detection}
 
-    Although column detection seems to work quite well, word whitespace detection has great room for improvement (~\cref{fig:errorWordWs}). More often than not, the estimated whitespace is greater than the real one, which results in merging of words that should be separated. As already mentioned in~\cref{columnDetection}, the approach with various font categories had better results when it came to the estimation of whitespaces. However, we replaced this approach by the current. This was because of the complications that arose when calculating column whitespace, and because of the increased time complexity of the algorithm, as calculating the font categories involved a number of other iterations of symbols and textlines. However, to increase the accuracy of word whitespace detection, the better practice would be to use the old approach for word whitespace detection, and the new for column whitespace detection. 
+    Although column detection seems to work quite well, word whitespace detection has great room for improvement (~\cref{fig:errorWordWs}). More often than not, the estimated whitespace is greater than the real one, which results in merging of words that should be separated. As already mentioned in~\cref{columnDetection}, the approach with various font categories had better results when it came to the estimation of word whitespaces. However, we replaced this approach by the current. This was because of the complications that arose when calculating column whitespace, and because of the increased time complexity of the algorithm, as calculating the font categories involved a number of other iterations of symbols and textlines. However, to increase the accuracy of word whitespace detection, the better practice would be to use the old approach for word whitespace detection, and the new for column whitespace detection. 
     
     \item \emph{Multi-row columns}
     
-    Clearly visible in~\cref{fig:errorMultiRow}, the detection of multi-rows does not work very effectively. This is because of our constant based algorithm. We could try to improve this by an implementation of a smarter algorithm based on heuristics. For example, one of the possible implementations could try to get all of the gaps between lines in a table and determine the spaces similarly to our whitespace detection. Also, when every third cell's text starts with an upper case letter and all the others start with a lower case, it is a pretty clear indicator of the presence of a multi-row cell.
+    Clearly visible in~\cref{fig:errorMultiRow}, the detection of multi-rows does not work very effectively. This is because of our constant based algorithm. We could try to improve this by an implementation of a smarter algorithm based on heuristics. For example, one of the possible implementations could try to get all of the gaps between lines in a table and determine the spaces similarly to our whitespace detection (\cref{columnDetection}). Also, when every third cell's text starts with an upper case letter and all the others start with a lower case, it is a pretty clear indicator of the presence of a multi-row cell.
     
     \item \emph{Multi-column layouts}
     
-    Our algorithm has no support for multi-column layouts. This results in either merging of tables from different columns into one, or recognizing each table from different column as a single column table, as the whitespace between columns can be quite big compared to other whitespaces. This can be solved by firstly checking whether the page is multi-column (by finding wide whole-page columns that contain no symbols), and then applying our algorithm to each of the recognized columns.
+    Our algorithm has no support for multi-column layouts. This results in either merging of tables from different columns into one, or recognizing each table from different column as a single column table. This can be solved by firstly checking whether the page is multi-column (by finding wide whole-page columns that contain no symbols), and then applying our algorithm to each of the recognized columns.
     
     \item \emph{Different languages support}
     
@@ -222,39 +212,39 @@ In~\cref{fig:sampleResults}, we provide a few sample results of our algorithm. F
     
     \item \emph{Support of only simple table structure}
     
-    Our system does not recognize complicated table structures (\cref{fig:errorTableStructures}). It relies on tables having a simple grid layout. Moreover, the structure of our algorithm was not designed for handling other kinds of layouts  (although our json output file supports them). Therefore, to solve this problem, a lot of serious changes need to be made in our function that merges lines into tables, such as isolating the tables, checking for their headers, segmentation of the tables and maybe even a semantic analysis.  
+    Our system does not recognize complicated table structures (\cref{fig:errorTableStructures}). It relies on tables having a simple grid layout. Moreover, the structure of our algorithm was not designed for handling other kinds of layouts  (although our JSON output file supports them). Therefore, to solve this problem, a lot of serious changes need to be made in our function that merges lines into tables, such as isolating the tables, checking for their headers, adding the support for segmentation of the table and maybe even a semantic analysis.
     
     \item \emph{Other errors}
     
-    There are multiple other errors that need to be fixed. These include unrecognized headers of tables, table splits, recognition of graphics as tables, no support for vertical text and others. We present a few of them in~\cref{fig:errorsOtherSplit,fig:errorsOtherGraphics,fig:errorsOtherHeaders}.
+    Our algorithm encounters multiple other types of errors. These include unrecognized headers of tables, table splits, recognition of graphics as tables, no support for vertical text and others. We present a few of them in~\cref{fig:errorsOtherSplit,fig:errorsOtherGraphics,fig:errorsOtherHeaders}.
     
 \end{itemize}
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=20em]{img/results/errorTableBordered.png}
-\caption{Empty horizontal and vertical lines recognized from the Tesseract textline recognition. In our algorithm, we remove them and in the end, our algorithm determines there is no table present in the image. With the use of these lines, table recognition could significantly improve.}
+\caption{Empty horizontal and vertical lines recognized by the Tesseract textline recognition. In our algorithm, we remove them and in the end, our algorithm determines there is no table present in the image. With the use of these lines, table recognition could significantly improve.}
 \label{fig:errorTableBordered}
 \end{figure}
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=20em]{img/results/errorWordWhitespace.png}
-\caption{Improperly recognized words in a text. The biggest issue is merging multiple words into one.}
+\caption{Improperly recognized words in a text. The biggest issue is that multiple words are often merged into one.}
 \label{fig:errorWordWs}
 \end{figure}
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=20em]{img/results/errorMultiRow.png}
-\caption{Improperly recognized multi-row cells}
+\caption{Improperly recognized multi-row cells.}
 \label{fig:errorMultiRow}
 \end{figure}
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=20em]{img/results/errorStructure.jpg}
-\caption{Complicated table structure}
+\caption{Complicated table structure.}
 \label{fig:errorTableStructures}
 \end{figure}
 
@@ -266,14 +256,14 @@ In~\cref{fig:sampleResults}, we provide a few sample results of our algorithm. F
 \includegraphics[width=15em]{img/results/otherErr1Table.png}
 
 \caption{Table split errors. Although the image contains only one table, two are recognized. Our algorithm assumes that the first table has 6 columns, while the second has only 5 which do not align properly.
-Left: Recognized tables by cells; Right: Borders of the recognized tables}
+Left: recognized tables by cells; right: borders of the recognized tables.}
 \label{fig:errorsOtherSplit}
 \end{figure}
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=15em]{img/results/otherErr2.png}
-\caption{Unrecognized table headers}
+\caption{Unrecognized table headers.}
 \label{fig:errorsOtherHeaders}
 \end{figure}
 
@@ -288,6 +278,8 @@ Left: Recognized tables by cells; Right: Borders of the recognized tables}
 \centering
 \includegraphics[width=15em]{img/results/goodRes1.png}
 \includegraphics[width=15em]{img/results/goodRes2.png}
-\caption{Correct table recognition (our implementation)}
+\caption{Correct table recognition (our implementation).}
 \label{fig:sampleResults}
 \end{figure}
+
+\xxx{vsetky obrazky su na konci, preco?}
