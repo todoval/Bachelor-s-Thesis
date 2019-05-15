@@ -1,49 +1,35 @@
 \chapter{Results}
 
-In this chapter, we analyze the performance of our software and compare its results to those of the Tesseract \xxx{TableFind nebo \textsc{TableFind}} algorithm. For these purposes, we use our own testing set of 155 images containing one or more tables. We deliberately chose images that were not scanned or disrupted in any way, as this would only further disrupt the results of Tesseract recognition, which both our implementantion and Tesseract's tablefind rely on.
+In this chapter, we analyze the performance of our software and compare its results to those of the Tesseract \textsc{TableFind} algorithm. For these purposes, we use our own testing set of over 160 images containing one or more tables. We deliberately chose images that are not scanned or disrupted in any way, as this might negatively affect the results of Tesseract recognition, which both our implementation and Tesseract's TableFind rely on.
 
-\section{Performance measure\xxx{ment}s}
+\section{Performance measurements}
 
-As already mentioned, Tesseract is a \xxx{robust} engine. Its recognition and its functions therefore take a great amount of time, which is also the reason why the time complexity of our implementation is significantly higher.
+As already mentioned, Tesseract is an engine heavy on resources. Its recognition and its functions therefore take a great amount of time, which is also the reason why the time complexity of our implementation is significantly higher.
 
-For comparison, when we run our software on a single image ($1654\times2339$, of size 675~KB), the absolute time of recognition is 11.6~seconds. Tesseract's API initialization takes \xxx{9.6~seconds} of this time (with its \emph{recognize()} function that performs the character and line recognition in 9.2 seconds), and our functions for saving results (which use the calls of Leptonica) take 0.5 seconds. About 1.4 seconds is consumed by our \emph{init\_textlines()} function, which also uses the calls of the Tesseract API. However, this function needs to iterate over all symbols and textlines multiple times, which also adds to the time complexity. The time complexity of the other functions (which is below 0.1 seconds) is therefore negligible compared to the already stated performance measures.
+For comparison, when we run our software on a single image ($1654\times2339$, of size 675~KB), the absolute time of recognition is 11.6~seconds. Tesseract's API initialization takes 9.6~seconds of this time (with its \texttt{recognize} function performing the character and line recognition in 9.2~seconds), and our functions for saving results (which use the calls of Leptonica) take 0.5~seconds. About 1.4~seconds is consumed by our \texttt{init\_textlines} function, which also uses the calls of the Tesseract API. However, this function needs to iterate over all symbols and textlines multiple times, which also adds to the time complexity. The time complexity of the other functions (which is below 0.1~seconds) is therefore negligible.
 
-We ran a performance test on all 155 images to provide a better concept of the amount of time that our software spends on each function. We did not add any preprocessing, as it is a part of the Leptonica library and therefore does not affect the performance of entirely our functions. Furthermore, upon running a few tests on the preprocessor functions, they seemed to barely affect the performance.
+We ran a performance test on all our images to provide a better concept of the amount of time that our software spends on each function. We did not add any preprocessing, as it is a part of the Leptonica library and therefore does not affect the performance of entirely our functions. Furthermore, upon running a few tests on the preprocessor functions, they seemed to barely affect the performance.
 
-\begin{table}[t]
-\xxx{tohle rozmelnit do textu}
-\centering
-\begin{tabular}{ccccc}
-\toprule
-\textbf{All} & \textbf{Tesseract API} & \textbf{Textline initialization} & \textbf{Result saving} & \textbf{Other}\\
-\midrule
-100\% & 65.94\% & 30.26\% & 2.9\% & 0.9\% \\
-\bottomrule
-\end{tabular}
-\caption{Time complexity of individual functions} 
-\label{table:functionsComplexity}
-\end{table}
+The results were as follows: the calls of Tesseract API took 65.94\% of the overall time, our textline initialization 30.26\%, result saving 2.9\% and the other functions solely 0.9\%. However, despite these results, we have observed that time complexity of the textline initialization does not exceed 20\% in most cases. However, a few images, usually those containing full-page tables, spend even more time analyzing textlines than with the actual recognition, which significantly affects the overall results.
 
-Although the results (found at~\cref{table:functionsComplexity}) show that textline initialization takes up about 30\% of the time, we have observed this time complexity to not exceed 20\% in most cases. However, a few images, usually those containing full-page tables, spent even more time analyzing textlines than with the actual recognition..
-
-In the following sections, we will discuss the options of reducing this time complexity in favor of the accuracy of results. This includes the discussion about the effects of the quality of an image on the results and time complexity, as well as the amount of text in an image on the time complexity.
+In the following sections, we will discuss the options of reducing this time complexity in favor of the results accuracy. This includes the discussion about the effects of the quality of an image on the results and time complexity, as well as the effects of the amount of text in an image on the time complexity.
 
 \section{Effects of the amount of text} \label{resultsEffectsOfText}
 
-In this section, we provide an overview of the effects of the number of recognized symbols and textlines on the execution time of our algorithm. As we already mentioned \todo{zovialni, rovnou je lepsi se odkazat}, the time complexity of our \emph{init\_textlines} function, which iterates over all the symbols and textlines is $O(m*n^2)$. Therefore, the greater the amount of textlines and symbols, the more time this function will consume. However, Tesseract recognition also greatly depends on the amount of textlines and symbols it eventually finds. We tested these dependencies on a subset of 18 of the already mentioned images. We presented all of them in various (about 15) different resolutions, ranging from 25 to 800 dpi, to our recognition system. 
+In this section, we provide an overview of the effects of the number of recognized symbols and textlines on the execution time of our algorithm. As we already mentioned in~\cref{textlineInitialization}, the time complexity of our \texttt{init\_textlines} function is $O(m*n^2)$ (where m represents the amount of textlines and n the amount of symbols). Therefore, the greater the amount of textlines and symbols, the more time this function will consume. However, the time complexity of the Tesseract recognition also greatly depends on the amount of textlines and symbols it eventually finds. We tested these dependencies on a subset of 18 of the already mentioned images. We presented all of them in various (about 15) different resolutions, ranging from 25 to 800 dpi, to our recognition system. 
 
-This gave us a reasonably diverse set of different images. We used the results from the tests to present the mentioned dependencies \xxx{in \cref{fig:symbolsTimeInit,fig:symbolsTimeTess,fig:symbolsTime,fig:textlinesTimeInit,fig:textlinesTimeTess,fig:textlinesTime}.}
+This gave us a reasonably diverse set of different images. We used the results from the tests to present the mentioned dependencies in \cref{fig:symbolsTimeInit,fig:symbolsTimeTess,fig:symbolsTime,fig:textlinesTimeInit,fig:textlinesTimeTess,fig:textlinesTime}.
 
 By observing the testing results and utilizing the above mentioned graphs, we may conclude the following statements:
 
 \begin{itemize}
     \item \emph{For our table detection algorithm to detect a table, Tesseract needs to recognize above 800 symbols and 40 textlines.}
     
-    \xxx{Anything below these values means either one of these things --- } If ....., then either the page has so little information and text that there is a little chance that this information might possibly create a table, or the Tesseract recognition system failed to recognize most of the page content, and therefore our table detection algorithm is \xxx{deemed} presumed? to fail.
+    If our algorithm is presented with either smaller amount of symbols or textlines, then either the Tesseract recognition system failed to recognize most of the page content, or the page has so little text information that there is almost no chance of it representing a table. Our table detection algorithm is therefore presumed to fail.
 
-    \item \emph{The time of the execution of our \xxx{init\_textlines()} function grows with the the number of symbols and textlines.}
+    \item \emph{The time of the execution of our \texttt{init\_textlines} function grows with the number of symbols and textlines.}
     
-    As already expected, the time complexity of this function grows exponentially in both the textline and symbol case~\cref{fig:symbolsTimeInit},~\cref{fig:textlinesTimeInit}.
+    As already expected, the time complexity of this function grows exponentially in both the textline and symbol case. We present this dependency in~\cref{fig:symbolsTimeInit} and~\cref{fig:textlinesTimeInit}.
 
     \item \emph{The time of the Tesseract recognition greatly depends on the number of symbols, not so much on textlines.}
     
@@ -58,7 +44,7 @@ By observing the testing results and utilizing the above mentioned graphs, we ma
 \begin{figure}
 \centering
 \includegraphics[height=20em]{img/results/symbolsTimeInit.png}
-\caption{The dependency of the number of recognized textlines on the time of execution of the \emph{init\_textlines()} function}
+\caption{The dependency of the number of recognized textlines on the time of execution of the \texttt{init\_textlines} function}
 \label{fig:symbolsTimeInit}
 \end{figure}
 
@@ -79,7 +65,7 @@ By observing the testing results and utilizing the above mentioned graphs, we ma
 \begin{figure}
 \centering
 \includegraphics[height=20em]{img/results/textlinesTimeInit.png}
-\caption{The dependency of the number of recognized textlines on the time of execution of the \emph{init\_textlines()} function}
+\caption{The dependency of the number of recognized textlines on the time of execution of the \texttt{init\_textlines} function}
 \label{fig:textlinesTimeInit}
 \end{figure}
 
@@ -103,7 +89,7 @@ The quality of the input image greatly affects Tesseract's recognition system an
 
 \subsection{Effects on time complexity}
 
-From the observation of the results in~\cref{fig:dpiInitTime}, it is evident that the DPI of the image does not have a direct effect on the \emph{init\_textlines} function. This is because the time complexity of this function is directly dependent on the number of symbols and textlines. As a higher DPI image does not necessarily mean that more symbols and textlines will be present in the image (due to false positives, incorrect splits between textlines in lower resolution images, splitting of characters and more), the dependencies presented in~\cref{fig:dpiInitTime} could greatly vary. However, when it comes to Tesseract recognition~\cref{fig:dpiTessTime}, we can clearly see that its execution time increases with increased DPI. The exception to this is when the image has around 300 dpi, where the execution time suddenly decreases. This is due to the fact that most of the Tesseract training data are of a 300 dpi resolution.
+From the observation of the results in~\cref{fig:dpiInitTime}, it is evident that the DPI of the image does not have a direct effect on the \texttt{init\_textlines} function. This is because the time complexity of this function is directly dependent on the number of symbols and textlines. As a higher DPI image does not necessarily mean that more symbols and textlines will be present in the image (due to false positives, incorrect splits between textlines in lower resolution images, splitting of characters and more), the dependencies presented in~\cref{fig:dpiInitTime} could greatly vary. However, when it comes to Tesseract recognition~\cref{fig:dpiTessTime}, we can clearly see that its execution time increases with increased DPI. The exception to this is when the image has around 300 dpi, where the execution time suddenly decreases. This is due to the fact that most of the Tesseract training data are of a 300 dpi resolution.
 
 This implies that the overall time complexity~\cref{fig:dpiAllTime} of our algorithm will also be dependent on the DPI of the image, with the best results obtained at the DPI of around 300. Although the recognition time is exponentially lower with the dpi under 150, the results from images with this resolution are useless, as they produce many undetected characters.
 
@@ -117,7 +103,7 @@ This implies that the overall time complexity~\cref{fig:dpiAllTime} of our algor
 \begin{figure}
 \centering
 \includegraphics[height=20em]{img/results/dpiTimeInit.png}
-\caption{The dependency of the DPI of the given image on the \emph{init\_textlines} function}
+\caption{The dependency of the DPI of the given image on the \texttt{init\_textlines} function}
 \label{fig:dpiInitTime}
 \end{figure}
 

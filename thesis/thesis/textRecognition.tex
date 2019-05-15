@@ -70,7 +70,7 @@ Bilinear interpolation & Bicubic interpolation \\
 
 There also exist higher order interpolations, such as Spline, Sinc, Lanczos or Discrete Wavelet Transforms~\cite{interpolation}. These consider more surrounding pixels and calculate the resulting value through more complex functions, like transforms or sampling functions. The results are more accurate than those of simple calculations at the cost of significantly more time. For the purposes of OCR, such complex and time-consuming functions are not desirable, as we are not yet working with any rotations and distortions and just need to resize the existing image. Therefore, the most popular decision for general cases is the use of Bicubic interpolation method~\cite{interpolationComp}.
 
-\subsection{Contrast enhancement}
+\subsection{Contrast enhancement} \label{contrastEnhancemet}
 
 Another important factor that results in low-quality images is low contrast, as it often results in possible blending of edges during recognition.
 
@@ -104,7 +104,7 @@ Many other more complex and complicated techniques of contrast enhancement exist
 \label{fig:preprocessHistogramEqualization}
 \end{figure}
 
-\subsection{Binarization}
+\subsection{Binarization} \label{binarization}
 
 To recognize characters in an image, an OCR software must distinguish the background pixels from the actual pixels that belong to the characters. When it comes to colored images, to determine the boundaries between these two groups might be a complex task due to the need of processing the whole RGB information of each pixel. This can be simplified by converting the image into grayscale mode, where we would need to process only one value, or even monochrome one mode, which would make the recognition algorithm trivial.
 
@@ -112,7 +112,7 @@ This is why it is beneficial for images to undergo the process of binarization, 
 
 Many binarization algorithms work under the assumption that the input image is already in grayscale mode, as it significantly simplifies their process. We therefore start this section by presenting individual techniques of grayscale conversion, and only then focus on the binarization methods.
 
-\subsubsection{Grayscale conversion}
+\subsubsection{Grayscale conversion} \label{grayscaleConversion}
 
 Grayscale conversion is the process of computing and assigning a gray value for each colored pixel from its attributes. There exist a few different approaches to this problem. The simplest one is the averaging approach, which assigns each pixel the average of its R, G and B value. However, human perception of colors is non-uniform --- green color is perceived more strongly than red, and red more strongly than blue. For this reason, a correction formula (often called \emph{luma}~\cite{grayscaleConv}) that weights each color component differently is used. Slight differences in the results of these techniques are demonstrated in~\cref{fig:preprocessGrayscale}.
 
@@ -172,7 +172,7 @@ Sauvola Binarization \\
 \label{fig:preprocessBinarization}
 \end{figure}
 
-\subsection{Deskewing}
+\subsection{Deskewing} \label{deskewing}
 
 Skewed images are probably the most common problem that many OCR engines struggle with. They usually appear when an image is scanned or photographed crookedly.
 
@@ -327,7 +327,7 @@ Although OCR engines greatly differ in the way their heuristic approaches work, 
 
 We analyze these steps in the following individual subsections.
 
-\subsection{Page segmentation}
+\subsection{Page segmentation} \label{pageSegmentation}
 
 The idea behind page segmentation is to divide a page into sections that contain individual characters. This, however, is not always possible due to various errors that may occur during this process, which result in either merging or splitting the characters. Therefore, in OCR engines, page segmentation process usually means any kind of logical or topological division of the image into multiple smaller blocks --- which can be either characters, lines or even paragraphs.
 
