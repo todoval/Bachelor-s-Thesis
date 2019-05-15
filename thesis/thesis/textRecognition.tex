@@ -507,7 +507,7 @@ In the following list, we present an overview of some of the most popular machin
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.7\linewidth]{img/characterClassification/knn.pdf}
-\caption{KNN algorithm: with k=3, the algorithm will assign the new element to class A; with k=7 to class B } \label{fig:characterClassKNN}
+\caption{KNN algorithm: with $k=3$, the algorithm will assign the new element to class A; with $k=7$ to class B.\xxx{neni to obracene?}} \label{fig:characterClassKNN}
 \end{figure}
 
 Although our thesis is focused on the heuristic approach to OCR, the neural networks are worth mentioning due to their growing usage in modern computer science.
@@ -522,58 +522,15 @@ In~\cref{tab:availableSoftware}, we present the most popular and widely used fre
 
 \begin{table}[t]
 {\small
-\begin{tabular}{p{4.6em}p{2em}p{3em}p{4.8em}p{7em}p{7em}}
+\begin{tabular}{p{4.6em}p{2em}p{3em}p{4.8em}cc}
 \toprule
-\textbf{Name} & \textbf{Year} & \textbf{Code} & \textbf{Languages} & \textbf{Features} & \textbf{Notes}\\
+\textbf{Name} & \textbf{Year} & \textbf{Code} & \textbf{Languages} & \textbf{Layout analysis} & \textbf{Neural nets}\\
 \midrule
-Tesseract & 1985 & C++, C & 100+ & 
-layout analysis
-
-detection of different elements
-
-right-to-left processing
-
-&
-
-both neural networks and heuristics
-
-command line interface
-
-\\
-Ocrad & 2003 & C++ & Latin alphabet &  
-layout analyser
-
-command line interface
-&
-can read only 3 different formats
-\\
-GOCR & 2000 & C & 20+ &
-
-translates barcodes
-
-command line interface
-
-&
-failure at heterogeneous fonts
-
-\\
-CuneiForm & 1996 & C, C++ & 28 & 
-
-used for scanned documents
-
-batch conversion
-
-& 
-results almost always need postprocessing
-
-\\
-OCRopus & 2007 & Python & Latin script & 
-
-engages neural networks
-
-can be improved by training
-
-\\
+Tesseract & 1985 & C++, C & 100+ & \textbullet & \textbullet \\
+Ocrad & 2003 & C++ & Latin alphabet &  \textbullet & -- \\
+GOCR & 2000 & C & 20+ & -- & -- \\
+CuneiForm & 1996 & C, C++ & 28 & -- & -- \\
+OCRopus & 2007 & Python & Latin script & -- & \textbullet \\
 
 \bottomrule
 \end{tabular}
