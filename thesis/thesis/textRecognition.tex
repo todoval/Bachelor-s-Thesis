@@ -63,61 +63,62 @@ Bilinear interpolation & Bicubic interpolation \\
 \includegraphics[width=.4\linewidth]{img/preprocessing/interp_bicubic.png}
 \end{tabular}
 }
-\caption{Comparison of the effects of non-adaptive methods of interpolation, as presented by~\citet{prajapati2012evaluation}.}
+\caption{Comparison of results of several non-adaptive interpolation methods. (Image by~\citet{prajapati2012evaluation}.) \xxx{hele, z tohohle obrazku neni nic videt a neni popsany co se tam vlastne stalo, je to upscaling nebo downscaling? Z jakyho rozliseni na jaky? Proc ty obrazky jsou tak zesedly?}}
 \label{fig:preprocessInterpolation}
 \end{figure}
 
-There also exist higher order interpolations, such as Spline, Sinc, Lanczos or Discrete Wavelet Transforms~\cite{interpolation}. These consider more surrounding pixels and calculate the resulting value through more complex functions, like transforms or sampling functions. The results are more accurate than those of simple calculations at the cost of significantly more time. For the purposes of OCR, such complex and time-consuming functions are not desirable, as we are not yet working with any rotations and distortions and just need to resize the existing image. Therefore, the most popular decision for general cases is the use of Bicubic interpolation method~\cite{interpolationComp}.
+\xxx{There also exist}\todo{proc nejsou v predchozi kategorizaci?} higher order interpolations, such as Spline, Sinc, Lanczos or Discrete Wavelet Transforms~\cite{interpolation}. These consider more surrounding pixels and calculate the resulting value through more complex functions, \xxx{like}\todo{`like' znamena neco uplne jinyho; tadyto je `such as'} transforms or sampling functions. The results are more accurate than those of simple calculations at the cost of significantly more time\todo{what kind of time? do I receive more time when running spline interpolation?}. For the purposes of OCR, \xxx{such complex and time-consuming functions are not desirable, as we are not yet working with any rotations and distortions and just need to resize the existing image.}\todo{nahradit necim jednoduchym jako ze `vyhody nejsou tak podstatny aby bylo potreba na ne pocitat tak slozity interpolace'} Therefore, the most popular decision for general cases is the use of Bicubic interpolation method~\cite{interpolationComp}.
 
 \subsection{Contrast enhancement} \label{contrastEnhancemet}
 
-Another important factor that results in low-quality images is low contrast, as it often results in possible blending of edges during recognition.
+\todo{je potreba nejdriv zadefinovat co je kontrast a proc ho potrebujes.}
+\xxx{Another} important factor that results in low-quality images is low contrast\todo{word order!}, as it often results in possible blending of edges during recognition.
 
-An image histogram is used to improve this aspect. A histogram is an accurate representation of the distribution of data and, in case of image histograms, it represents the tonal distribution of an image --- x-axis stands for all available tonal levels, and y-axis represents the number of pixels for each tonal level. In colored (RGB) images, the histogram is displayed by the terms of three separate histograms, one for each color component.
+\xxx{An image histogram is used to improve this aspect.}\todo{no alternatives?} A histogram is an \xxx{accurate} representation of the distribution of data and, in case of image histograms, it represents the tonal distribution of an image --- x-axis stands for all available tonal levels, and y-axis represents the number of pixels for each tonal level. In colored (RGB) images, the histogram is displayed by the terms of three separate histograms, one for each color component.\todo{tenhle odstavec je extremne informal}
 
-Contrast of the current color component is represented as a distribution of pixel luminance values. By spreading out the most frequent intensity values of the histogram, as demonstrated in~\cref{fig:preprocessContrastComparison}, the contrast of the image increases.
+Contrast of the \xxx{current}\todo{current in what process? mozna to chces vynechat, nebo rict proste `a color component'} color component is represented as a distribution of pixel luminance values. By spreading out the most frequent intensity values in the histogram, as shown in~\cref{fig:preprocessContrastComparison}, the contrast of the image increases.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.4\linewidth]{img/preprocessing//histogram_low.png}
 \qquad
 \includegraphics[width=0.4\linewidth]{img/preprocessing/histogram_high.png}
-\caption{Image histogram. Left: low contrast image histogram, right: high contrast image histogram.}
+\caption{Histogram-based comparison of image contrast. Left: low-contrast image histogram, right: high-contrast image histogram. \xxx{Vypada to ze je mas obracene.}}
 \label{fig:preprocessContrastComparison}
 \end{figure}
 
-To expand the original digital values of histogram into a new distribution, different histogram spreading methods use functions of different forms. These can be either linear or non-linear, which leads to the categorization of histogram spreading methods into either \emph{linear stretching} methods or \emph{non-linear stretching} methods~\citep{linearNonStretch}.
+\xxx{To expand the original digital values of histogram into a new distribution, different histogram spreading methods use functions of different forms. These can be either linear or non-linear, which leads to the categorization of histogram spreading methods into either}\todo{vynechat, Histogram stretching methods are categorized as...} \emph{linear stretching} methods or \emph{non-linear stretching} methods~\citep{linearNonStretch}.
 
-Both types of methods have their advantages and disadvantages. Although linear methods are easier to implement and do not cause the objects in the original image to lose their brightness values, non-linear methods were shown to produce better results in general case~\citep{chandpa1comparative}. However, linear methods still deliver satisfactory results on remotely sensed images with Gaussian or near-Gaussian histograms.
+\xxx{Both types of methods have their advantages and disadvantages.}\todo{obvious} Although linear methods are easier to implement and do not cause the objects in the original image to lose their brightness values, non-linear methods were shown to produce better results in general case~\citep{chandpa1comparative}. Despite of that, linear methods still deliver satisfactory results on \xxx{remotely sensed images with Gaussian or near-Gaussian histograms}\todo{co to znamena? aspon to remotely sensed je potreba bud odstranit nebo vysvetlit}.
 
-The most popular choice for contrast enhancement of text is a non-linear technique called \emph{histogram equalization}~\citep{histogramEQ}. Is is based on transforms that depend on the probability distribution function of the histogram. Although it produces unrealistic and over-enhanced effects in photographs, the over-processing actually suits the text data. We demonstrate the effects of this method on textual data in~\cref{fig:preprocessHistogramEqualization}.
+The most popular choice for contrast enhancement for OCR is a non-linear technique called \emph{histogram equalization}~\citep{histogramEQ}. \xxx{Is is based on transforms that depend on the probability distribution function of the histogram.}\todo{moc genericky, bud ukazat matematiku nebo vynechat.} Although it produces unrealistic and over-enhanced effects in photographs, the over-processing actually suits the text data. The typical output of histogram equalization on textual data is displayed in~\cref{fig:preprocessHistogramEqualization}.
 
-Many other more complex and complicated techniques of contrast enhancement exist. These were presented by~\citet{contrastOther} and contain techniques like CLAHE, Dynamic Stochastic Resonance and generic transforms, such as Fourier, Discrete Cosine, and Wavelet. For complex text recognition cases, CLAHE method can be used with satisfactory results.
+\xxx{Many other more complex and complicated techniques of contrast enhancement exist.}\todo{obvious, vsechno jde donekonecna komplikovat.. :D} \xxx{These were presented}\todo{mozna chces prepsat na aktivni, Suganya et al present ...} by~\citet{contrastOther} and contain techniques like CLAHE, Dynamic Stochastic Resonance and generic transforms, such as Fourier, Discrete Cosine, and Wavelet. For complex text recognition cases, CLAHE method can be used with satisfactory results.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.4\linewidth]{img/preprocessing/contrast_low.png}
 \qquad
 \includegraphics[width=0.4\linewidth]{img/preprocessing/contrast_high.png}
-\caption{Histogram equalization. Left: original image, right: processed image.}
+\caption{Results of histogram-based equalization. Left: original image, right: processed image.}
 \label{fig:preprocessHistogramEqualization}
 \end{figure}
 
 \subsection{Binarization} \label{binarization}
 
-To recognize characters in an image, an OCR software must distinguish the background pixels from the actual pixels that belong to the characters. When it comes to colored images, to determine the boundaries between these two groups might be a complex task due to the need of processing the whole RGB information of each pixel. This can be simplified by converting the image into grayscale mode, where we would need to process only one value, or even monochrome one mode, which would make the recognition algorithm trivial.
+To recognize characters in an image, an OCR software must distinguish the background pixels from the actual pixels that belong to the characters. \xxx{When it comes to}\todo{`when it comes to' znamena neco eskalativniho jako `kdyz dojde na lamani chleba' a naznacujes tim ze budou potreba extremni opatreni...coz binarizace obrazku uplne nevyzaduje} colored images, to determine the boundaries between these two groups \xxx{might be} a complex task due to the need of processing the whole RGB information of each pixel. This can be simplified by converting the image into grayscale mode, where we would need to process only one value, or even monochrome one mode, which would make the recognition algorithm trivial.\todo{tady je ta logika uplne obracene; tim ze barevnej obrazek predelas do greyscale muzes ztratit informaci napr. o cervenym textu na zelenym pozadi....}
 
-This is why it is beneficial for images to undergo the process of binarization, which converts images into their monochrome one form.
+\xxx{This is why it is beneficial for images to undergo the process of binarization, which converts images into their monochrome one form.}\todo{Tohle si odporuje s predchozim tvrzenim. Nechces rict neco jako: `Ackoliv by bylo obrazky jednoduchy hodit do greyscale anebo rovnou do black-white podle nejakyho thresholdu, tak to neni uplne vzdycky to co chcem protoze obrazky jsou slozitejsi (hlavne ty barevny).}
 
-Many binarization algorithms work under the assumption that the input image is already in grayscale mode, as it significantly simplifies their process. We therefore start this section by presenting individual techniques of grayscale conversion, and only then focus on the binarization methods.
+\xxx{Many binarization algorithms work under the assumption that the input image is already in grayscale mode, as it significantly simplifies their process. We therefore start this section by presenting individual techniques of grayscale conversion, and only then focus on the binarization methods.}\todo{redundant}
 
 \subsubsection{Grayscale conversion} \label{grayscaleConversion}
 
-Grayscale conversion is the process of computing and assigning a gray value for each colored pixel from its attributes. There exist a few different approaches to this problem. The simplest one is the averaging approach, which assigns each pixel the average of its R, G and B value. However, human perception of colors is non-uniform --- green color is perceived more strongly than red, and red more strongly than blue. For this reason, a correction formula (often called \emph{luma}~\cite{grayscaleConv}) that weights each color component differently is used. Slight differences in the results of these techniques are demonstrated in~\cref{fig:preprocessGrayscale}.
+Grayscale conversion is the process of computing a gray value for each \xxx{colored pixel from its attributes}. \xxx{There exist a few different approaches to this problem.}\todo{obvious} The simplest \xxx{one is}\todo{czenglish} the averaging approach, which assigns each pixel the average of its R, G and B value. However, human perception of colors is non-uniform --- green color is perceived more strongly than red, and red more strongly than blue\todo{to neni ten hlavni problem, problem je ze tim averagingem navic totalne zahodis rozdil mezi cervenejma a zelenejma pixlama, tohleto je vhodny do `additionally...'}. For this reason, a correction formula (often called \emph{luma}~\cite{grayscaleConv}) that weights each color component differently is used. Slight differences in the results of these techniques are demonstrated in~\cref{fig:preprocessGrayscale}.
 
-Another way to approach grayscale conversion is to represent the color based on its HSL values and convert it to its least saturated variant.
+\xxx{Another way}\todo{baf, zas neco dalsiho. Btw tyhle 2 odstavce muzes vklidu sprasknout do tvrzeni jako ze `slozitejsi metody reviewuje Cadik.'} to approach grayscale conversion is to represent the color based on its HSL values and convert it to its least saturated variant.
 
-As described by~\citet{grayscaleCadik}, there exist many more algorithms that approach this problem. Most of them require more complicated computations and try to preserve attributes of the image that may be lost during the process, like contrast or luminance.
+As described by~\citet{grayscaleCadik}, there exist many more algorithms that approach this problem. Most of them require more complicated computation\xxx{s}\todo{czenglish} and try to preserve attributes of the image that may be lost during the process, like contrast or luminance.
 
 \begin{figure}[t]
 \centering
@@ -136,9 +137,9 @@ Original & Averaging technique & Luma correction \\
 \end{figure}
 
 \subsubsection{Threshold-based binarization}
-Upon converting the input image into grayscale, binarization takes place. Binarization methods work on the basis of a \emph{threshold} --- a set value that a pixel is compared to. If it is greater than the threshold, it is assumed to be white, otherwise, it is colored black. Various binarization methods differ in the way that this threshold is calculated and used.
+\xxx{Upon} converting the input image into grayscale, binarization \xxx{takes place}\todo{`takes place' je vhodny napr. pro korunovace a velky verejny slavnosti, tady asi chces rict ze kdyz uz je obrazek v greyscale tak ho muzes konecne prevyst na binarni background a foreground.}. Binarization methods\todo{all of them?} work on the basis of a \emph{threshold} --- a set\todo{mnozina?} value that a pixel is compared to\todo{just compared? tyhle 2 vety je asi vhodny spojit a podstatne zjednodusit}. If it is greater than the threshold, it is assumed to be white\todo{background?}, otherwise, it is colored black\todo{foreground?}. Various binarization methods differ in the way that this threshold is calculated and used.
 
-The simplest approach to binarization is \emph{global thresholding}~\citep{globalThresh}. It works by choosing a threshold value and iterating over the whole image, comparing the value of each pixel to this threshold. If it is greater, the pixel in the resulting image will be black, otherwise white. However, as the brightness and contrast of different images vary, it is impossible to choose a threshold suitable for all images.
+The simplest approach to binarization is \emph{global thresholding}~\citep{globalThresh}\todo{word order!}. It works by choosing a threshold value and iterating over the whole image, comparing the value of each pixel to this threshold. If it is greater\todo{the value or the threshold? navic to rozdeleni na b/w uz mas v predchozim odstavci, netreba opakovat}, the pixel in the resulting image will be black, otherwise white. However, as the brightness and contrast of different images vary, it is generally impossible to choose a threshold suitable for all images.
 
 More complex methods that aim to correct the problems of global thresholding exist. Some of these include:
 \begin{itemize}
@@ -151,7 +152,7 @@ More complex methods that aim to correct the problems of global thresholding exi
 \end{itemize}
 \end{itemize}
 
-Otsu's method statistically computes a global threshold by a dynamical classification of image pixels into background and foreground pixels. Although simple and easy to implement, but, as any global method, it is inherently unable to fix high variance or uneven spots in an image background. Local-thresholding methods aim to solve this issue by allowing different threshold values in different parts of the image. They differ in the way the existing thresholds are computed --- for example, Niblack's method~\citep{adaptiveBin} uses mean and standard deviation of surrounding pixels for each pixel, Sauvola method improves it by checking for blank regions and Bernsen's method by optimizing Niblack's computations. 
+Otsu's method\todo{btw. tadyto je jeden z mala pripadu kdy je sasky genitivni 's OK.} statistically computes a global threshold by a dynamical classification of image pixels into background and foreground pixels. Although simple and easy to implement, but, as any global method, it is inherently unable to fix high variance or uneven spots in an image background. Local-thresholding methods aim to solve this issue by allowing different threshold values in different parts of the image. They differ in the way the existing thresholds are computed --- for example, Niblack's method~\citep{adaptiveBin} uses mean and standard deviation of surrounding pixels for each pixel, Sauvola method improves it by checking for blank regions and Bernsen's method by optimizing Niblack's computations. 
 
 Visual differences between the mentioned methods are displayed in~\cref{fig:preprocessBinarization}. Comprehensive reviews of other, more complex methods are also available~\citep{localOtherBin}.
 
@@ -173,70 +174,69 @@ Sauvola Binarization \\
 
 \subsection{Deskewing} \label{deskewing}
 
-Skewed images are probably the most common problem that many OCR engines struggle with. They usually appear when an image is scanned or photographed crookedly.
+Skewed images are probably the most common problem that many OCR engines struggle with. They usually appear when an image is scanned or photographed \xxx{crookedly}\todo{to zni jako crooked hillary. Myslis `from an angle'?}.
 
-Negative effects of skewed images are most apparent in the first step of OCR algorithms, \emph{page segmentation}. Page segmentation is the process of decomposition of a document image into individual elements. As page segmentation techniques are based on vertically and horizontally aligned characters and horizontal baselines of individual lines, skewed images pass misaligned data to the OCR algorithm. This causes more errors and ultimately leads to poorer results.
+Negative effects of skewed images are most apparent in results of page segmentation (see \todo{sem hod ref na sekci se segmentaci}). Becase page segmentation techniques often rely on vertically and horizontally aligned characters and horizontal baselines of individual lines, skewed images \xxx{pass misaligned data}\todo{ty obrazky to tam nestrkaji, mozna chces jen rict ze ve skewed images je tyhle featury tezsi najit} to the OCR algorithm. \xxx{This causes more errors and ultimately leads to poorer results.}\todo{moc nespecificky, bud upresnit nebo vynechat}
 
-Therefore, to reconstruct the original alignment, rotation and skew of the image, various methods of deskewing are used (~\cref{fig:preprocessDeskewing}). All of these methods work (for more accurate results) after binarization of the image and generally assume the skew angle to be no more than 20$^{\circ}$. Although algorithms that work on greater skew angles also exist~\citep{skewAngleDetection}, they are not as widely used for the purposes of deskewing scanned documents, which are generally only slightly tweaked.
+\xxx{Therefore, to reconstruct the original alignment, rotation and skew of the image, various methods of deskewing are used (~\cref{fig:preprocessDeskewing}).} All of these methods work (for more accurate results) after binarization of the image and generally assume the skew angle to be no more than $20^{\circ}$. Although algorithms that work on greater skew angles also exist~\citep{skewAngleDetection}, they are not as widely used for the purposes of deskewing scanned documents, which are generally only slightly tweaked.
 
 The most effective and popular algorithms include the following~\citep{skewBestTechniques}:
 \begin{itemize}
-    \item Hough transform
-    \item Projection profile method
-    \item Cross correlation
-    \item Connected component clustering (or nearest-neighbor clustering)
+    \item Hough transform~\cite{houghTransform}
+    \item Projection profile method~\cite{skewAngleDetection}
+    \item Cross correlation~\cite{skewAngleDetection}
+    \item Connected component clustering (or nearest-neighbor clustering)~\citep{skewClustering}
 \end{itemize}
-However, worth noting are also other methods like \emph{Fourier}~\citep{fourierTransform}, Wavelet Decomposition, Radon Transform, PCP, one-pass or multi-pass skew correction, morphology algorithms, etc.
+\xxx{However, worth noting}\todo{However znamena ze si to s necim odporuje, worth noting --- proc je nedas do toho seznamu a nemas tam normalne citace?} are also other methods like \emph{Fourier}~\citep{fourierTransform}, Wavelet Decomposition, Radon Transform, PCP, one-pass or multi-pass skew correction, morphology algorithms, etc.
 
-The above mentioned methods differ in the way they determine the skew of the image. Hough transform applies feature extraction to the image and assigns the skew of the line with the most number of pixels to the document. Projection profile method rotates the image and finds the skew where its histogram along horizontal scan lines has the most peaks and valleys, while the cross correlation method uses this method and applies it to multiple vertical segments. Moreover, connected component clustering method is based on finding the coherency between connected components of the image and determining their common skew. We present the overview and comparison of these methods in~\cref{tab:preprocessSkewProsCons}.
-
-\xxx{TODO - sformatovat tuto tabulku}
+\xxx{The mentioned methods mostly differ in the way they determine the skew of the image.}\todo{obvious} Hough transform applies feature extraction to the image and assigns the skew of the line with the most number of pixels to the document. Projection profile method rotates the image and finds the skew where its histogram along horizontal scan lines has the most peaks and valleys, while the cross correlation method uses this method and applies it to multiple vertical segments. Moreover, connected component clustering method is based on finding the coherency between connected components of the image and determining their common skew. We present the overview and comparison of these methods in~\cref{tab:preprocessSkewProsCons}.
 
 \begin{table}[t]
+\renewcommand{\arraystretch}{1.5}
 {\footnotesize
 \begin{tabular}{p{8em}p{7em}p{2.5em}p{6em}p{9em}}
 \toprule
-\textbf{Method} & \textbf{Time consumption} & \textbf{Max skew} & \textbf{Presence of graphics} & \textbf{Setbacks} \\
+\textbf{Method} & \textbf{Performance} & \textbf{Max. skew} & \textbf{Image handling} & \textbf{Setbacks} \\
 \midrule
-Hough transform~\cite{houghTransform}
+Hough transform
 &
-high
+slow
 &
-90$^{\circ}$
+$90^{\circ}$
 &
-lowered effectiveness
+
 &
-large files
+--
 \\
-Projection profile method~\cite{skewAngleDetection}
+Projection profiles
 &
-high
+slow
 &
-10$^{\circ}$
+$10^{\circ}$
 &
-frequent failures
+problematic
 &
-computationally expensive
+--
 \\
-Cross correlation~\cite{skewAngleDetection}
+Cross correlation
 &
-lower to projection profile
+relatively fast
 &
-10$^{\circ}$
+$10^{\circ}$
 &
-frequent failures
+problematic
 &
-heterogeneous documents
+works only on simple documents
 \\
-Connected component clustering~\citep{skewClustering}
+Connected component clustering
 &
-dependant on clustering method
+clustering-dependent
 &
-20$^{\circ}$
+$20^{\circ}$
 &
-generally satisfactory effectiveness
+good
 &
-low quality images
+requires high-quality input
 \\
 \bottomrule
 \end{tabular}
