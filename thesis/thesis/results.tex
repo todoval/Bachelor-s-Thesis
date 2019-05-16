@@ -1,6 +1,6 @@
 \chapter{Results}
 
-In this chapter, we analyze the performance of our software and compare its results to those of the Tesseract \textsc{TableFind} algorithm. For these purposes, we use our own testing set of over 160 images containing one or more tables. We deliberately chose images that are not scanned or disrupted in any way, as this might negatively affect the results of Tesseract recognition, which both our implementation and Tesseract's TableFind rely on.
+In this chapter, we analyze the performance of our software and compare its results to those of the Tesseract \textsc{TableFind} algorithm. For these purposes, we use our own testing set of around 140 images containing one or more tables. We deliberately chose images that are not scanned or disrupted in any way, as this might negatively affect the results of Tesseract recognition, which both our implementation and Tesseract's TableFind rely on.
 
 \section{Performance measurements}
 
@@ -91,7 +91,6 @@ This implies that the overall time complexity of our algorithm will also be depe
     \includegraphics[width=\linewidth]{img/results/dpiTimeTesseract.png}
     \caption{The time of Tesseract recognition with respect to the DPI of the given image (different lines = different images).}
     \label{fig:dpiTessTime}
-    \label{fig:textlinesTimeInit}
 \endminipage\hfill
 \minipage{0.45\textwidth}
     \includegraphics[width=\linewidth]{img/results/dpiTimeInit.png}

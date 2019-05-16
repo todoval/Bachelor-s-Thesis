@@ -1,0 +1,91 @@
+\chapter{Software user guide}
+
+In this appendix, we provide a user guide for compiling and running the project.
+
+The software has been tested on Windows~10 (MSCV 2017) and Ubuntu~18 (G++ 7.4). As we do not provide any binaries, the user must compile the project first.
+
+To compile the project, execute the following steps:\\
+\\
+\textbf{Windows}:
+\begin{enumerate}
+    \item Clone GitHub directory from\\
+    \url{https://github.com/todoval/Bachelor-s-Thesis.git}.
+    \item Download and setup cppan.
+    \item Run cppan in any directory.
+    \item Build the project using CMake (make sure you have installed MSVC~2017 and CMake~3.8).
+    \item Set the environment variable \texttt{TESSDATA\_PREFIX} to \texttt{tabularOCR/tessdata directory}.
+\end{enumerate}
+
+\textbf{Linux}:
+\begin{enumerate}
+    \item Clone GitHub directory from\\
+    \url{https://github.com/todoval/Bachelor-s-Thesis.git}.
+    \item Install the following libraries: libleptonica-dev, libtesseract-dev, libopencv-dev.
+    \item Build the project using CMake (make sure you have installed G++~7.4 and CMake~3.8).
+    \item Set the environment variable \texttt{TESSDATA\_PREFIX} to \texttt{tabularOCR/tessdata directory}.
+\end{enumerate}
+
+Follow these steps to run a sample demo:
+\begin{enumerate}
+    \item Take one of the pictures from our sample images directory at \url{https://drive.google.com/open?id=1cPPQc0H2AYUB7jHM8_6KwlQ05YNOrJdY}, for example \texttt{11-1.jpg}, and copy it to \texttt{your-build-directory/bin/Debug}.
+    \item From this directory, run command:
+        \begin{itemize}
+            \item Windows: \texttt{tabularOCR.exe 11-1.jpg}
+            \item Linux: \texttt{./tabularOCR 11-1.jpg}
+        \end{itemize}
+        In the rest of this user guide, we will be using a unified command call \texttt{tabularOCR}.
+    \item The results can be found in a \\
+    \texttt{your-build-directory/bin/Debug/results} directory as both \texttt{11-1.png} and \texttt{11-1.json}.
+\end{enumerate}
+
+\emph{Note}: The input image does not necessarily have to be in the same directory as the tabularOCR compiled binary. However, in such case, the path to the image must be provided.
+
+It is possible to run the program with several options. The explained usage with complete list of options is as follows:
+
+\begin{verbatim}
+Usage: tabularOCR [-options] (filenames | directory name)
+where options include:
+    (-e | --enhance) (SIMPLE | GAMMA | EQUALIZATION)
+        enhance the contrast of the image before processing
+    (-g | --greyscale) (AVG | MIN | MAX | LUMA)
+        set the image mode to greyscale before processing
+    (-b | --binarize) (OTSU | SAUVOLA)
+        binarize image before processing
+    -p | --preprocess
+        preprocess image with the default preprocessing options
+        before processing
+    -sk | --deskew
+        deskew image before processing
+    --output-json
+        output the result in a json file
+    --output-image
+        output the result in an png file as a bounding box
+        around each cell
+\end{verbatim}
+Examples of usage: 
+\begin{itemize}
+    \item \texttt{tabularOCR -e EQUALIZATION --binarize OTSU 11-1.jpg}
+    
+    This command will perform the table extraction on a binarized \texttt{11-1.jpg} image (with the exact method of binarization being Otsu) with enhanced contrast (with the exact method of contrast enhancement being histogram equalization).
+    
+    \item \texttt{tabularOCR ./image\_directory}
+    
+    This command will process all the images from\\
+    \texttt{your-build-directory/bin/Debug/image\_directory}
+    and save their results into\\
+    \texttt{your-build-directory/bin/Debug/results/image\_directory} directory.
+    
+    \item \texttt{tabularOCR --output-image 11-1.jpg 7-1.jpg 5-1.jpg}
+    
+    This command will process the images \texttt{11-1.jpg}, \texttt{7-1.jpg}, \texttt{5-1.jpg} in the given order and save their results as \texttt{11-1.png}, \texttt{7-1.png} and \texttt{5-1.png} files, excluding JSON output.
+    
+\end{itemize}
+    
+The internal C++ structure of the project is as follows:
+\begin{itemize}
+    \item \texttt{main.cpp} --- used for calling the individual functions of all other files consecutively.
+    \item \texttt{parser} --- contains functions for parsing the input command line arguments, file manipulation and error handling.
+    \item \texttt{preprocess} --- contains the calls of individual preprocessing methods of Leptonica depending on the parser's output.
+    \item \texttt{process} --- the core of the program. Contains the Tesseract API calls and the implementation of table recognition algorithm including various heuristics.
+    \item \texttt{utils} --- contains several helper functions and structures used in the \texttt{process} file.
+\end{itemize}
