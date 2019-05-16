@@ -2,7 +2,7 @@
 
 This chapter gives us an overview of procedures and tools used to create a table recognition software. 
 
-The project is written in C++ and compilable using CMake (tested on MSVC 2017 and G++ 7.4). We chose CMake for its cross-platform support and its ability to work with external dependencies (e.g. Tesseract, Leptonica). 
+The project is written in C++ and compilable using CMake (tested on MSVC~2017 and g++~7.4). We chose CMake for its cross-platform support and its ability to work with external dependencies (e.g. Tesseract, Leptonica). 
 
 The implementation is divided into two main parts --- \emph{preprocessing}, which prepares the input images for recognition, and \emph{tabular OCR}, which applies our heuristic algorithm for table recognition. Both parts use the features of the Leptonica library and tabular OCR utilizes the character and textline recognition of the Tesseract engine. The image processing in the program is schematized in~\cref{fig:programFlow}.
 
@@ -37,7 +37,7 @@ Our algorithm is based on the already mentioned Tesseract symbol and textline re
 Following are the individual steps of the algorithm, also visualized in~\cref{fig:implemTableRecogniton}:
 \begin{enumerate}
 \item \emph{Textline initialization}, which includes the Tesseract recognition process, and from its output obtains all the required information about individual textlines.
-\item \emph{Deletion of unnecessary lines}, which removes textlines with no valuable information (e.g. textlines with no symbols, false negatives).
+\item \emph{Deletion of unnecessary lines}, which removes textlines with no valuable information (e.g. textlines with no symbols, false positives).
 \item \emph{Column detection}, which determines the column segmentation for each existing textlines.
 \item \emph{Column merge into tables}, which merges the existing columns of textlines into a table.
 \item \emph{Output determination}, which processes the information in each recognized table and outputs it in a meaningful structure.
