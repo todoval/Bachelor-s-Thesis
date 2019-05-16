@@ -6,7 +6,7 @@ We begin this chapter by presenting various aspects that impact the quality of t
 	
 \section{Common obstacles of successful text recognition}
 
-Even for human perception, the task of recognizing text in a complex document might become difficult due to various factors. Text recognition engines work similarly or, in specific cases trivial for human perception, even worse.
+Even for human perception, the task of recognizing text in a complex document might become difficult due to various factors. Text recognition engines work similarly or, in some specific cases trivial for human perception, even worse.
 
 Common difficulties faced by text recognition algorithms have been reviewed by~\citet{preprocessAll}. These can be categorized into following major classes:
 
@@ -22,10 +22,9 @@ Common difficulties faced by text recognition algorithms have been reviewed by~\
 
 \end{description}
 
-These difficulties motivate the common OCR implementations to work with optimistic assumptions about documents, for example that the document has only one column, that it is not handwritten, that its lines are horizontally aligned, etc.
+These difficulties motivate the common OCR implementations to work with optimistic assumptions about documents, such as that the document has only one column, that it is not handwritten, and that its lines are horizontally aligned.
 
-Several existing image processing techniques may be used used to eliminate the effects of most of
-these obstacles in the attempt to increase the performance of OCR engines. We cover them thoroughly in the next preprocessing section.
+Several existing image processing techniques may be used used to eliminate the effects of most of these obstacles in the attempt to increase the performance of OCR engines. We review the most important of them in the next section.
 
 \section{Preprocessing for OCR}
 
@@ -33,19 +32,19 @@ Many of the existing OCR engines are equipped with several simple built-in prepr
 
 \subsection{Scaling} \label{scaling}
 
-In computer graphics, scaling refers to the process of resizing a digital image while maintaining its data. The purpose of this method is to provide an input of a specific size or resolution to OCR engines. For example, OCR engines likes Tesseract~\cite{TesseractQual} or ABBYY FineReader~\cite{ABBYYdpi} encourage their users to use 300 dpi images. This is due to the fact that the classification of newly recognized characters requires a large set of training data which they are then compared to. The training data provided to these OCR engines is mostly obtained from 300 dpi images. This resolution was proclaimed to be high enough for a clear recognition of character features, but also low enough to maintain a reasonable execution time of the algorithm. 
+In computer graphics, scaling refers to the process of changing the resolution of a digital image while preserving its data content. In OCR, the purpose of this method is to provide an input of viable size for existing OCR engines. For example, OCR engines likes Tesseract~\cite{TesseractQual} or ABBYY FineReader~\cite{ABBYYdpi} encourage their users to use 300 dpi images --- this is due to the fact that the classification of newly recognized characters requires a large set of training data which they are then compared to; which are, in this case, most often obtained from 300 dpi images. 300 dpi is claimed to be high enough resolution for a clear recognition of character features in common text, but also low enough to maintain a reasonable execution time of the algorithm.
 
-If the user has provided us with an image of a different resolution, the next step is to either upscale (if the dpi of the input image was lower) or downscale (if the dpi of the input image was higher) the image. In both cases, interpolation is used. 
+If the user has provided us with an image of a different resolution, \xxx{the next step}\todo{ceho? jeste nemluvis ani o prvnim stepu a najednou je next} is to either upscale (if the dpi of the input image was lower) or downscale (if the dpi of the input image was higher) the image. In both cases, interpolation is used.\todo{for what? interpolation-based algorithms}
 
-Interpolation works by using known data to estimate values at unknown points. It specifically approximates the resulting pixel's color and intensity based on the values at surrounding pixels. When downscaling, this technique therefore computes one color value for each set of pixels, which are the color values of the pixels in the new image. When upscaling, it computes color values of the new pixels by approximating the values of the old pixels around them.
+Interpolation \xxx{works by}\todo{tohle neni works by ale input+output} using known data to estimate values at unknown points. It specifically approximates the \xxx{resulting pixel's}\todo{apostrofovy possesives neni mozny pouzivat} color and intensity based on the values at surrounding pixels. When downscaling, this technique therefore computes one color value for each set of pixels, which are the color values of the pixels in the new image. When upscaling, it computes color values of the new pixels by approximating the values of the old pixels around them.
 
-This technique tries to minimize the aliasing effect of the resulting image, so the scaled picture does not appear visibly pixelated and its edges are not jagged.
+This technique\todo{je to technique, algorithm nebo interpolation? Mozna chces tohle prilepit k predchozimu odstavci, ze Interpolation algorithm attempt to... Mimochodem je extremne vhodny odstranit tak 80\% vyskytu `technique' necim konkretnejsim} tries to minimize the aliasing effect of the resulting image, so the scaled picture does not appear visibly pixelated and its edges are not jagged.
 
-Interpolation algorithms can be grouped into two categories: adaptive and non-adaptive.
+Existing interpolation algorithms can be grouped into two categories: adaptive and non-adaptive.
 
-Adaptive methods change the way they treat various pixels depending on what they are interpolating, specifically smooth texture vs. sharp edges. They are primarily designed to minimize the presence of interpolation artifacts in regions where they are most apparent.
+Adaptive methods change the way they treat various pixels depending on what they are interpolating, \xxx{specifically smooth texture vs. sharp edges}. They are primarily designed to minimize the presence of interpolation artifacts in regions where they are most apparent.
 
-Non-adaptive methods, on the other hand, treat all pixels equally. Their complexity depends on the number of adjacent pixels during interpolation, which is also the criterion by which the existing methods are classified~\cite{interpolation}. We present these methods in~\cref{fig:preprocessInterpolation}.
+Non-adaptive methods, on the other hand, treat all pixels equally. Their complexity depends on the number of adjacent pixels during interpolation\todo{adjacent pixelu je vzdycky 8, mozna chces rict ze podle toho jak velkej pixel neighborhood zpracovavaji}, which is also the criterion \todo{distinction?} \xxx{by} which the existing methods are classified~\cite{interpolation}. We \xxx{present}\todo{present ma naznak obdarovavani, tohle je Several of the methods are detailed in ...} these methods in~\cref{fig:preprocessInterpolation}.
 
 \begin{figure}[t]
 \centering
