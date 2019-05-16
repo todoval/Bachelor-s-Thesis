@@ -1,2 +1,12 @@
 \chapter*{Conclusion}
 \addcontentsline{toc}{chapter}{Conclusion}
+
+In this thesis, we explored and reviewed the existing approaches for optical character recognition, and focused on applying its results to the problem of table recognition.
+
+As a main result of the thesis, we have developed a software package that combines the OCR functionality available in the Tesseract library with several methods of image preprocessing, and a newly developed heuristic-based algorithm that aims to improve the available possibilities of table extraction from scanned documents.
+
+We have compared the results obtained from running this combination on a simple testing data set to the results from the TableFind algorithm of Tesseract. While both implementations required similar computational resources for processing the data, our implementation produced more accurate results for more complicated types of table layouts, especially on tables without available border separators, and in cases where the table layout depends e.g.~on subtle differences in cell formatting. Additionally, we have assessed how the resolution and information content of the input image affects the time complexity and output quality of the algorithms.
+
+Despite the improvements in table recognition capabilities, we have observed that the outcome of the recognition still mainly depends on the quality of the input image, and is mostly improved by correct preprocessing.
+
+In the future, we plan to improve the main deficiencies of the whole pipeline, primarily the mentioned preprocessing and several open problems with table recognition summarized in~\cref{sec:future}. From the observed results, we believe that after applying the preprocessing improvements, the table recognition system will produce results of excellent quality.
