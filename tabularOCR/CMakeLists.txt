@@ -9,10 +9,9 @@ set(output_dir ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${output_dir})
 
 if (MSVC)
-    #on windows please use the cppan to create .cppan directory
+    #on windows use the cppan to create .cppan directory
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
-    #add_subdirectory(.cppan)
     find_package(CPPAN REQUIRED)
     cppan_add_package(
         pvt.cppan.demo.google.tesseract.libtesseract

@@ -21,8 +21,6 @@ namespace tabular_ocr
 			std::vector<boxed_string> symbols;
 			std::vector<boxed_string> columns;
 
-			textline();
-
 			bool operator==(const textline & other) const
 			{
 				return (other.col_ws == col_ws && other.word_ws == word_ws && font == other.font && box == other.box
@@ -37,26 +35,6 @@ namespace tabular_ocr
 			bbox box;
 			int rows_no;
 			int cols_no;
-
-			cell();
-
-			cell(const cell &) = delete;
-			cell & operator=(const cell&) = delete;
-			cell& operator=(cell&& other)
-			{
-				text = std::move(other.text);
-				box = std::move(other.box);
-				rows_no = std::move(other.rows_no);
-				cols_no = std::move(other.cols_no);
-				return *this;
-			}
-			cell(cell && other)
-			{
-				text = std::move(other.text);
-				box = std::move(other.box);
-				rows_no = std::move(other.rows_no);
-				cols_no = std::move(other.cols_no);
-			}
 
 			json to_json();
 
@@ -75,31 +53,6 @@ namespace tabular_ocr
 
 			std::vector<textline> textlines;
 
-			table(const table &) = delete;
-			table(table && other)
-			{
-				rows = std::move(other.rows);
-				cols = std::move(other.cols);
-				row_repres = std::move(other.row_repres);
-				column_repres = std::move(other.column_repres);
-				table_repres = std::move(other.table_repres);
-				textlines = std::move(other.textlines);
-				cells = std::move(other.cells);
-			}
-			table & operator=(const table&) = delete;
-			table& operator=(table&& other)
-			{
-				rows = std::move(other.rows);
-				cols = std::move(other.cols);
-				row_repres = std::move(other.row_repres);
-				column_repres = std::move(other.column_repres);
-				table_repres = std::move(other.table_repres);
-				textlines = std::move(other.textlines);
-				return *this;
-			}
-
-			table();
-
 			json to_json();
 		};
 
@@ -113,12 +66,7 @@ namespace tabular_ocr
 
 			page(const page &) = delete;
 			page & operator=(const page&) = delete;
-			page();
 			page(file_info & file);
-			~page()
-			{
-
-			};
 
 			// the main function
 			void process_image();

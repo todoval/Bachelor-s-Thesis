@@ -2,9 +2,6 @@
 
 using namespace tabular_ocr;
 using namespace tabular_ocr::ocr;
-page::page()
-{
-}
 
 page::page(file_info & file)
 {
@@ -556,10 +553,6 @@ void page::create_tables_from_cols()
 	init_table(curr_table, merged_cols);
 }
 
-table::table()
-{
-}
-
 void page::delete_footer()
 {
 	if (textlines.empty())
@@ -601,10 +594,6 @@ void page::init_api(image &img)
 	api->SetImage(img.get());
 	//	api->SetVariable("user_defined_dpi", "72");
 	api->Recognize(0);
-}
-
-textline::textline()
-{
 }
 
 void page::init_textlines()
@@ -760,10 +749,6 @@ void page::process_image()
 	create_tables_from_cols();
 
 	end_api();
-}
-
-cell::cell()
-{
 }
 
 json table::to_json()
