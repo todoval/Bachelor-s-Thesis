@@ -23,7 +23,7 @@ Linux:
 
 Follow these steps to run a sample demo:
     
-1. Take one of the pictures from our sample images directory at https://drive.google.com/open?id=1cPPQc0H2AYUB7jHM8_6KwlQ05YNOrJdY, for example 11-1.jpg, and copy it to your-build-directory/bin/Debug.
+1. Take one of the pictures from our sample images directory at https://drive.google.com/open?id=1cPPQc0H2AYUB7jHM8_6KwlQ05YNOrJdY, for example 11-1.jpg, and copy it to your compiled tabularOCR executable.
 2. From this directory, run command:<br />
             Windows: 
 	    	```
@@ -34,10 +34,9 @@ Follow these steps to run a sample demo:
 		./tabularOCR 11-1.jpg
 		```<br />
 	In the rest of this user guide, we will be using a unified command call tabularOCR.
-3. The results can be found in a your-build-directory/bin/Debug/results directory as both 11-1.png and 11-1.json.
+3. The results can be found in a results directory (located where you run the command) as both 11-1.png and 11-1.json.
 
-Note 1: The input image does not necessarily have to be in the same directory as the tabularOCR compiled binary. However, in such case, the path to the image must be provided.<br />
-Note 2: The results will be stored in a directory where you run the command.
+Note 1: The input image does not necessarily have to be in the same directory as the tabularOCR compiled binary. However, in such case, the path to the image must be provided.
 
 It is possible to run the program with several options. The explained usage with complete list of options is as follows:
 
