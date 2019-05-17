@@ -2,7 +2,7 @@
 
 In this appendix, we provide a user guide for compiling and running the project.
 
-The software has been tested on Windows~10 (MSCV 2017) and Ubuntu~18 (G++ 7.4). As we do not provide any binaries, the user must compile the project first.
+The software has been tested on Windows~10 (MSCV~2017) and Ubuntu~18 (g++~7.4). As we do not provide any binaries, the user must compile the project first.
 
 To compile the project, execute the following steps:\\
 \\
@@ -21,24 +21,23 @@ To compile the project, execute the following steps:\\
     \item Clone GitHub directory from\\
     \url{https://github.com/todoval/Bachelor-s-Thesis.git}.
     \item Install the following libraries: libleptonica-dev, libtesseract-dev, libopencv-dev.
-    \item Build the project using CMake (make sure you have installed G++~7.4 and CMake~3.8).
+    \item Build the project using CMake (make sure you have installed g++~7.4 and CMake~3.8).
     \item Set the environment variable \texttt{TESSDATA\_PREFIX} to \texttt{tabularOCR/tessdata directory}.
 \end{enumerate}
 
 Follow these steps to run a sample demo:
 \begin{enumerate}
-    \item Take one of the pictures from our sample images directory at \url{https://drive.google.com/open?id=1cPPQc0H2AYUB7jHM8_6KwlQ05YNOrJdY}, for example \texttt{11-1.jpg}, and copy it to \texttt{your-build-directory/bin/Debug}.
+    \item Take one of the pictures from our sample images directory at \url{https://drive.google.com/open?id=1cPPQc0H2AYUB7jHM8_6KwlQ05YNOrJdY}, for example \texttt{11-1.jpg}, and copy it to your compiled tabularOCR executable.
     \item From this directory, run command:
         \begin{itemize}
             \item Windows: \texttt{tabularOCR.exe 11-1.jpg}
             \item Linux: \texttt{./tabularOCR 11-1.jpg}
         \end{itemize}
         In the rest of this user guide, we will be using a unified command call \texttt{tabularOCR}.
-    \item The results can be found in a \\
-    \texttt{your-build-directory/bin/Debug/results} directory as both \texttt{11-1.png} and \texttt{11-1.json}.
+    \item The results can be found in a results directory (located where you run the command) as both \texttt{11-1.png} and \texttt{11-1.json}.
 \end{enumerate}
 
-\emph{Note}: The input image does not necessarily have to be in the same directory as the tabularOCR compiled binary. However, in such case, the path to the image must be provided.
+\emph{Note 1}: The input image does not necessarily have to be in the same directory as the tabularOCR compiled binary. However, in such case, the path to the image must be provided.
 
 It is possible to run the program with several options. The explained usage with complete list of options is as follows:
 
@@ -64,16 +63,13 @@ where options include:
 \end{verbatim}
 Examples of usage: 
 \begin{itemize}
-    \item \texttt{tabularOCR -e EQUALIZATION --binarize OTSU 11-1.jpg}
+    \item \texttt{tabularOCR -e EQUALIZATION -{}-binarize OTSU 11-1.jpg}
     
     This command will perform the table extraction on a binarized \texttt{11-1.jpg} image (with the exact method of binarization being Otsu) with enhanced contrast (with the exact method of contrast enhancement being histogram equalization).
     
     \item \texttt{tabularOCR ./image\_directory}
     
-    This command will process all the images from\\
-    \texttt{your-build-directory/bin/Debug/image\_directory}
-    and save their results into\\
-    \texttt{your-build-directory/bin/Debug/results/image\_directory} directory.
+    This command will process all the images from image\_directory and save their results into a new results/image\_directory directory.
     
     \item \texttt{tabularOCR --output-image 11-1.jpg 7-1.jpg 5-1.jpg}
     

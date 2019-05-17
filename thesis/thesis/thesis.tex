@@ -52,11 +52,11 @@
 \usepackage{bm}             % boldface symbols (\bm)
 \usepackage{graphicx}       % embedding of pictures
 \usepackage{fancyvrb}       % improved verbatim environment
+\usepackage[nottoc,numbib]{tocbibind} % makes sure that bibliography and the lists
 \usepackage[style=numeric,natbib=true,backend=bibtex,style=alphabetic]{biblatex}
-\addbibresource{bibliography.bib}
+\addbibresource{refs.bib}
 \defbibheading{Bibliography}{}
-
-\usepackage[nottoc]{tocbibind} % makes sure that bibliography and the lists
+%\documentclass[bibliography=totoc]{scrartcl}
 			    % of figures/tables are included in the table
 			    % of contents
 \usepackage{dcolumn}        % improved alignment of table columns
@@ -142,9 +142,13 @@ Table recognition is an important tool for digitalizing documents that contain t
 \include{results}
 
 \include{epilog}
+\clearpage
+
+\include{bibliography}
+%\addcontentsline{toc}{chapter}{Bibliography}
 
 %%% Bibliography
-\include{bibliography}
+%\addcontentsline{toc}{chapter}{Bibliography}
 
 %%% Figures used in the thesis (consider if this is needed)
 %\listoffigures
@@ -172,4 +176,5 @@ Table recognition is an important tool for digitalizing documents that contain t
 \include{userGuide}
 
 \openright
+
 \end{document}
